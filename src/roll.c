@@ -14,8 +14,8 @@
 /*! @uses malloc, free */
 #include <stdlib.h>
 
-/*! @uses bool, false, true */
-#include <stdbool.h>
+/*! @uses mkdir */
+#include <sys/stat.h>
 
 /*! @uses strcmp */
 #include <string.h>
@@ -133,19 +133,20 @@ void rollback(branch_t* branch, const commit_t* commit) {
             // if a file was created and is not in our commit, delete it.
             case (E_DIFF_NEW_FILE): {
                 // then we 'unlink' this diff.
-                if (search_commit_diff(commit, diff) == -1)
+                if (search_commit_name(commit, diff->n_name) == -1)
                     remove(diff->n_name);
                 break;
             }
             // if a file was deleted and is in our commit, restore it.
             case (E_DIFF_FILE_DELETED): {
-                int index = search_commit_diff(commit, diff);
+                int index = search_commit_name(commit, diff->s_name);
                 if (index == -1) continue;
 
                 // write this out to the file.
                 int n = 0;
                 diff_t* restore = commit->diffs[index];
-                write_lines(restore->n_name, rollback_to_diff(restore, &n), n);
+                char** lines = rollback_to_diff(restore, &n);
+                write_lines(restore->n_name, lines, n);
                 break;
             }
             // if the file was modified.
@@ -167,7 +168,22 @@ void rollback(branch_t* branch, const commit_t* commit) {
                 write_lines(restore->n_name, lines, n);
                 break;
             }
-            default: ;
+            // if a folder was created
+            case (E_DIFF_NEW_FOLDER): {
+                // then we 'unlink' this folder.
+                if (search_commit_name(commit, diff->n_name) == -1)
+                    remove(diff->n_name);
+                break;
+            }
+            // if a folder was deleted
+            case (E_DIFF_FOLDER_DELETED): {
+                int index = search_commit_name(commit, diff->s_name);
+                if (index == -1) continue;
+
+                // make a new folder.
+                mkdir(diff->s_name, 0777);
+                break;
+            }
         }
     }
     branch->current_commit = idx;

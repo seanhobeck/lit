@@ -108,15 +108,6 @@ diff_t diff_file_deleted(const diff_t* old_diff);
 diff_t diff_folder(const char* path, const e_diff_type_t type);
 
 /**
- * @brief create a folder diff containing the modified / renamed diff information.
- *
- * @param path the path to the folder.
- * @param new_path the new folder name.
- * @returns a diff_t structure containing the diff information.
- */
-diff_t diff_folder_modified(const char* path, const char* new_path);
-
-/**
  * @brief create a folder diff between two filed (modified + remaining).
 
 /**

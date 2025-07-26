@@ -148,8 +148,6 @@ char* diff_type_str(const e_diff_type_t type) {
             return "ndir";
         case E_DIFF_FOLDER_DELETED:
             return "ddir";
-        case E_DIFF_FOLDER_MODIFIED:
-            return "mdir";
 
         /*! unknown diff type. */
         default:
@@ -391,33 +389,6 @@ diff_t diff_folder(const char* path, const e_diff_type_t type) {
 };
 
 /**
- * @brief create a folder diff containing the modified / renamed diff information.
- *
- * @param path the path to the folder.
- * @param new_path the new folder name.
- * @returns a diff_t structure containing the diff information.
- */
-diff_t diff_folder_modified(const char* path, const char* new_path) {
-    // create a temporary diff_t structure.
-    diff_t diff = {
-        .type = E_DIFF_FOLDER_MODIFIED,
-        .s_name = 0x0,
-        .n_name = 0x0,
-        .count = 0x0,
-        .capacity = 0x0,
-        .lines = 0x0,
-    };
-
-    // capture the old and new path.
-    diff.s_name = malloc(strlen(path) + 1);
-    strcpy(diff.s_name, path);
-    diff.n_name = malloc(strlen(new_path) + 1);
-    strcpy(diff.n_name, new_path);
-    diff.hash = crc32((unsigned char*) &diff.n_name, strlen(path) + 1u);
-    return diff;
-};
-
-/**
  * @brief append a line to the diff structure.
  *
  * @param diff the diff_t structure to append to.
@@ -464,7 +435,7 @@ void diff_write(const diff_t* diff, const char* path) {
     if (diff->type == E_DIFF_TYPE_NONE || diff->type == E_DIFF_NEW_FOLDER || \
         diff->type == E_DIFF_FOLDER_MODIFIED || diff->type == E_DIFF_FOLDER_DELETED) {
         fclose(f);
-        exit(-1); // exit on failure.
+        return;
     }
 
     // then continuously write the lines.
@@ -534,7 +505,7 @@ diff_t diff_read(const char* path) {
     if (diff.type == E_DIFF_TYPE_NONE || diff.type == E_DIFF_NEW_FOLDER || \
         diff.type == E_DIFF_FOLDER_MODIFIED || diff.type == E_DIFF_FOLDER_DELETED) {
         fclose(f);
-        exit(-1); // exit on failure.
+        return diff; // exit on failure.
     }
 
     // now read each of the lines in the diff file.
