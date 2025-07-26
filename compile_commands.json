@@ -1,0 +1,138 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-std=c17",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/branch.o",
+      "src/branch.c"
+    ],
+    "directory": "/home/sean-desktop/Projects/slit",
+    "file": "/home/sean-desktop/Projects/slit/src/branch.c",
+    "output": "/home/sean-desktop/Projects/slit/build/branch.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-std=c17",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/hash.o",
+      "src/hash.c"
+    ],
+    "directory": "/home/sean-desktop/Projects/slit",
+    "file": "/home/sean-desktop/Projects/slit/src/hash.c",
+    "output": "/home/sean-desktop/Projects/slit/build/hash.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-std=c17",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/repo.o",
+      "src/repo.c"
+    ],
+    "directory": "/home/sean-desktop/Projects/slit",
+    "file": "/home/sean-desktop/Projects/slit/src/repo.c",
+    "output": "/home/sean-desktop/Projects/slit/build/repo.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-std=c17",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/main.o",
+      "src/main.c"
+    ],
+    "directory": "/home/sean-desktop/Projects/slit",
+    "file": "/home/sean-desktop/Projects/slit/src/main.c",
+    "output": "/home/sean-desktop/Projects/slit/build/main.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-std=c17",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/commit.o",
+      "src/commit.c"
+    ],
+    "directory": "/home/sean-desktop/Projects/slit",
+    "file": "/home/sean-desktop/Projects/slit/src/commit.c",
+    "output": "/home/sean-desktop/Projects/slit/build/commit.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-std=c17",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/pvc.o",
+      "src/pvc.c"
+    ],
+    "directory": "/home/sean-desktop/Projects/slit",
+    "file": "/home/sean-desktop/Projects/slit/src/pvc.c",
+    "output": "/home/sean-desktop/Projects/slit/build/pvc.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-std=c17",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/diff.o",
+      "src/diff.c"
+    ],
+    "directory": "/home/sean-desktop/Projects/slit",
+    "file": "/home/sean-desktop/Projects/slit/src/diff.c",
+    "output": "/home/sean-desktop/Projects/slit/build/diff.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/gcc",
+      "-Wall",
+      "-Wextra",
+      "-std=c17",
+      "-g",
+      "-Isrc",
+      "-c",
+      "-o",
+      "build/roll.o",
+      "src/roll.c"
+    ],
+    "directory": "/home/sean-desktop/Projects/slit",
+    "file": "/home/sean-desktop/Projects/slit/src/roll.c",
+    "output": "/home/sean-desktop/Projects/slit/build/roll.o"
+  }
+]

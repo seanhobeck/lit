@@ -1,0 +1,9 @@
+type:mfile
+stored:ex/old.v
+new:ex/new.v
+crc32:13264456
+
+ module ex
+ 
+- print("Hello, World!")
++ print("New!\n Hello, World!")
