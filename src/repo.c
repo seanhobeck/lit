@@ -1,6 +1,6 @@
 /**
 * @author Sean Hobeck
- * @date 2025-07-29
+ * @date 2025-08-07
  *
  * @file repo.c
  *    the repository module in the version control system, it is responsible for handling branches,
@@ -20,12 +20,31 @@
 /*! @uses malloc, free. */
 #include <stdlib.h>
 
+/*! @uses getcwd, chdir */
+#include <unistd.h>
+
+/*! @uses PATH_MAX */
+#include <limits.h>
+
 /**
  * @brief create a new repository with the given main branch name.
  *
  * @return a 0 if successful in creating the directory, or -1 if .lit directory already exists.
  */
 repository_t* repository_create() {
+    // get the cwd.
+    char cwd[512];
+    if (getcwd(cwd, sizeof cwd) == 0x0) {
+        fprintf(stderr,"getcwd failed; could not get current working directory.\n");
+        exit(-1);
+    }
+
+    // set the cwd.
+    if (chdir(cwd) != 0) {
+        fprintf(stderr,"chdir failed; could not change to current working directory.\n");
+        exit(-1);
+    }
+
     // create the '.lit' directory in the current working directory.
     if (mkdir(".lit", 0777) == -1) {
         fprintf(stderr, "mkdir failed; '.lit' directory already exists.\n");
@@ -55,7 +74,7 @@ void repository_write(const repository_t* repo) {
     // open the file '.lit/repository' for writing.
     FILE* f = fopen(".lit/repository", "w");
     if (!f) {
-        perror("fopen failed; could not open repository file for writing.\n");
+        fprintf(stderr,"fopen failed; could not open repository file for writing.\n");
         return;
     }
 
@@ -80,17 +99,17 @@ repository_t* repository_read() {
     // open the file '.lit/repository' for reading.
     FILE* f = fopen(".lit/repository", "r");
     if (!f) {
-        perror("fopen failed; could not open repository file for reading.\n");
-        return 0x0;
+        fprintf(stderr,"fopen failed; could not open repository file for reading.\n");
+        exit(-1);
     }
 
     // read the main branch information.
     char* main_branch = calloc(1, 128u);
     int scanned = fscanf(f, "main_branch:%127[^\n]\n", main_branch);
     if (scanned != 1) {
-        perror("fscanf failed; could not read main branch name.\n");
+        fprintf(stderr,"fscanf failed; could not read main branch name.\n");
         fclose(f);
-        return 0x0;
+        exit(-1);
     }
     repo->main = branch_read(main_branch);
     free(main_branch);
@@ -99,9 +118,9 @@ repository_t* repository_read() {
     size_t idx = 0u;
     scanned = fscanf(f, "current_branch:%lu\n", &idx);
     if (scanned != 1) {
-        perror("fscanf failed; could not read current branch index.\n");
+        fprintf(stderr,"fscanf failed; could not read current branch index.\n");
         fclose(f);
-        return repo;
+        exit(-1);
     }
     repo->idx = idx;
 
@@ -109,9 +128,9 @@ repository_t* repository_read() {
     size_t count = 0u;
     scanned = fscanf(f, "branch_count:%lu\n", &count);
     if (scanned != 1) {
-        perror("fscanf failed; could not read branch count.\n");
+        fprintf(stderr,"fscanf failed; could not read branch count.\n");
         fclose(f);
-        return repo;
+        exit(-1);
     }
 
     // if there are no branches, return the repository.
@@ -119,16 +138,16 @@ repository_t* repository_read() {
         repo->count = 0u;
         repo->branches = 0x0;
         fclose(f);
-        return repo;
+        exit(-1);
     }
 
     // write the branches to the repository structure.
     repo->count = count;
     repo->branches = calloc(1, sizeof(branch_t*) * count);
     if (!repo->branches) {
-        perror("malloc failed; could not allocate memory for branches.\n");
+        fprintf(stderr,"malloc failed; could not allocate memory for branches.\n");
         fclose(f);
-        return repo;
+        exit(-1);
     }
 
     // iterate through the count.
@@ -137,7 +156,7 @@ repository_t* repository_read() {
         char* branch_name = calloc(1, 128);
         scanned = fscanf(f, "branch:%lu:%127[^\n]\n", &i, branch_name);
         if (scanned != 2) {
-            perror("fscanf failed; could not read branch name.\n");
+            fprintf(stderr,"fscanf failed; could not read branch name.\n");
             fclose(f);
             free(repo->branches);
             return repo;

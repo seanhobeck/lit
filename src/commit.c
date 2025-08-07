@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-06
+ * @date 2025-08-07
  *
  * @file commit.h
  *    the commit module in the version control system, it is responsible for handling
@@ -62,7 +62,7 @@ commit_t* commit_create(const char* message, char* branch_name) {
     char* path = calloc(1, 512);
     sprintf(path, ".lit/%s/commit-%lu-%s/", branch_name, raw_time, strsha1(commit->hash));
     if (mkdir(path, 0755) == -1) {
-        perror("mkdir failed; could not create commit directory.\n");
+        fprintf(stderr,"mkdir failed; could not create commit directory.\n");
         exit(-1); // exit on failure.
     }
     commit->path = calloc(1, strlen(path) + 1);
@@ -86,7 +86,7 @@ void commit_add_diff(commit_t* commit, diff_t* diff) {
         commit->capacity = commit->capacity ? commit->capacity * 2 : 1; // increment the diff count.
         diff_t** array = realloc(commit->changes, sizeof(diff_t*) * commit->capacity);
         if (!array) {
-            perror("realloc failed; could not allocate memory for commit diffs.\n");
+            fprintf(stderr,"realloc failed; could not allocate memory for commit diffs.\n");
             exit(-1); // exit on failure.
         }
         commit->changes = array;
@@ -113,7 +113,7 @@ void commit_write(const commit_t* commit) {
     sprintf(commit_file, "%scommit", commit->path);
     FILE* f = fopen(commit_file, "w");
     if (!f) {
-        perror("fopen failed; could not open commit file for writing.\n");
+        fprintf(stderr,"fopen failed; could not open commit file for writing.\n");
         fclose(f);
         exit(-1); // exit on failure.
     }
@@ -140,7 +140,7 @@ commit_t* commit_read(const char* path) {
     sprintf(filepath, "%s/commit", path);
     FILE* f = fopen(filepath, "r");
     if (!f) {
-        perror("fopen failed; could not open commit file for reading.\n");
+        fprintf(stderr,"fopen failed; could not open commit file for reading.\n");
         exit(-1); // return an empty commit on failure.
     }
     free(filepath);
@@ -154,7 +154,7 @@ commit_t* commit_read(const char* path) {
         commit->message, commit->timestamp, hash, &count);
     fclose(f);
     if (scanned != 4) {
-        perror("fscanf failed; could not read commit header.\n");
+        fprintf(stderr,"fscanf failed; could not read commit header.\n");
         exit(-1); // exit with -1 on failure.
     }
 
@@ -168,7 +168,7 @@ commit_t* commit_read(const char* path) {
     snprintf(commit->path, strlen(path), "%s\0", path);
     pvc_t* vector = pvc_collect(commit->path, E_PVC_TYPE_NO_RECURSE);
     if (!vector->nodes) {
-        perror("pvc_collect failed; could not collect diffs from commit path.\n");
+        fprintf(stderr,"pvc_collect failed; could not collect diffs from commit path.\n");
         exit(-1); // return an empty commit on failure.
     }
 

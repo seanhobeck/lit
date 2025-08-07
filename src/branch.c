@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-06
+ * @date 2025-08-07
  *
  * @file branch.c
  *    the branch module in the version control system, it is responsible for handling
@@ -32,7 +32,7 @@ branch_t* branch_create(const char* name) {
     char* path = calloc(1, 512);
     sprintf(path, ".lit/%s/", branch->name);
     if (mkdir(path, 0755) == -1) {
-        perror("mkdir failed; could not create branch directory.\n");
+        fprintf(stderr,"mkdir failed; could not create branch directory.\n");
         return branch;
     }
     // copy the branch path into the branch structure.
@@ -60,7 +60,7 @@ void branch_write(const branch_t* branch) {
     sprintf(path, "%sbranch", branch->path);
     FILE* f = fopen(path, "w");
     if (!f) {
-        perror("fopen failed; could not open branch file for writing.\n");
+        fprintf(stderr,"fopen failed; could not open branch file for writing.\n");
         exit(-1); // exit on failure.
     }
     free(path);
@@ -83,7 +83,7 @@ void branch_add_commit(commit_t* commit, branch_t* branch) {
         branch->capacity = branch->capacity ? branch->capacity * 2 : 1; // increment the commit count.
         branch->commits = realloc(branch->commits, sizeof(commit_t*) * branch->capacity);
         if (!branch->commits) {
-            perror("realloc failed; could not allocate memory for branch history commits.\n");
+            fprintf(stderr,"realloc failed; could not allocate memory for branch history commits.\n");
             exit(-1); // exit on failure.
         }
     }
@@ -114,7 +114,7 @@ branch_t* branch_read(const char* name) {
     // open the branch file for reading.
     FILE* f = fopen(path, "r");
     if (!f) {
-        perror("fopen failed; could not open branch file for reading.\n");
+        fprintf(stderr,"fopen failed; could not open branch file for reading.\n");
         exit(-1); // exit on failure.
     }
 
@@ -124,7 +124,7 @@ branch_t* branch_read(const char* name) {
     int scanned = fscanf(f, "name:%128[^\n]\nsha256:%64[^\n]\ncommit_count:%lu\n", \
         branch->name, branch_hash, &branch->idx);
     if (scanned != 3) {
-        perror("fscanf failed; could not read branch header.\n");
+        fprintf(stderr,"fscanf failed; could not read branch header.\n");
         fclose(f);
         exit(-1); // exit on failure.
     }

@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-06
+ * @date 2025-08-07
  *
  * @file main.c
  *    entry point for the program, we read arguments and process files
@@ -193,7 +193,7 @@ int main(int argc, char **argv) {
             // read our repository from disk.
             repository_t* repo = repository_read();
             if (repo == 0x0) {
-                perror("failed to read repository from disk.\n");
+                fprintf(stderr,"failed to read repository from disk.\n");
                 return -1;
             }
 
@@ -254,7 +254,7 @@ int main(int argc, char **argv) {
                     // check if the folders exist.
                     struct stat osb;
                     if (stat(old_folder->stored_path, &osb) != 0) {
-                        perror("stat failed; old folder not found.\n");
+                        fprintf(stderr,"stat failed; old folder not found.\n");
                         return -1;
                     }
 
@@ -276,7 +276,7 @@ int main(int argc, char **argv) {
                 }
 
                 // print a error.
-                perror("cannot modify a folder to be a file, or write a .diff for a folder that hasn't been renamed.\n");
+                fprintf(stderr,"cannot modify a folder to be a file, or write a .diff for a folder that hasn't been renamed.\n");
                 return -1;
             }
 
@@ -302,7 +302,7 @@ int main(int argc, char **argv) {
                     }
                 }
             }
-            perror("file not found in previous commits on this branch.\n");
+            fprintf(stderr,"file not found in previous commits on this branch.\n");
             return -1;
             found:
 
@@ -322,7 +322,7 @@ int main(int argc, char **argv) {
             // write original content to temp file
             FILE* f = fopen(temp_path, "w");
             if (!f) {
-                perror("fopen failed; could not open temp file for writing.\n");
+                fprintf(stderr,"fopen failed; could not open temp file for writing.\n");
                 return -1;
             }
             for (size_t i = 0; i < line_count; i++) {

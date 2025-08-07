@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-07-30
+ * @date 2025-08-07
  *
  * @file utl.c
  *    the utilities module, responsible for miscellaneous utility functions.
@@ -17,7 +17,7 @@ char* strdup(const char* str) {
     // allocate memory for the string.
     char* new_str = calloc(1, strlen(str) + 1);
     if (!new_str) {
-        perror("calloc failed; could not allocate memory for string.\n");
+        fprintf(stderr,"calloc failed; could not allocate memory for string.\n");
         return 0x0;
     }
 
@@ -64,7 +64,7 @@ unsigned char* strtoha(const char* string, size_t n) {
     //  into a unsigned byte, set the value in <hash> and continue.
     unsigned char* hash = calloc(1, n);
     if (!hash) {
-        perror("calloc failed; could not allocate memory for hash.\n");
+        fprintf(stderr,"calloc failed; could not allocate memory for hash.\n");
         exit(-1);
     }
 
@@ -72,7 +72,7 @@ unsigned char* strtoha(const char* string, size_t n) {
         unsigned int byte = 0;
         if (sscanf(string + i * 2, "%2x", &byte) != 1) {
             free(hash);
-            perror("sscanf failed; could not read hash.");  // or handle the error
+            fprintf(stderr,"sscanf failed; could not read hash.");  // or handle the error
             exit(-1);
         }
         hash[i] = (unsigned char) byte;
@@ -112,7 +112,7 @@ char** freadls(FILE* fptr, size_t* size) {
             // realloc if required.
             data = realloc(data, sizeof(char*) * (j + 1024ul));
             if (!data) {
-                perror("realloc failed; could not allocate memory for file data.\n");
+                fprintf(stderr,"realloc failed; could not allocate memory for file data.\n");
                 exit(-1);
             }
         };

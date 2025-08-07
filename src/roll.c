@@ -61,14 +61,14 @@ int ensure_parent_dirs(const char *path) {
 void write_lines(const char* path, char** lines, int n) {
     // ensure that the parent directories exist on <path>.
     if (ensure_parent_dirs(path) == -1) {
-        perror("could not create parent directories.\n");
+        fprintf(stderr,"could not create parent directories.\n");
         exit(-1); // exit on failure.
     }
 
     // open the file.
     FILE* f = fopen(path, "w");
     if (!f) {
-        perror("fopen failed; could not open file for rollback writing.\n");
+        fprintf(stderr,"fopen failed; could not open file for rollback writing.\n");
         return;
     }
 
@@ -147,7 +147,7 @@ void rollback(branch_t* branch, const commit_t* commit) {
 
     // if the commit is not in the history, report the error and return.
     if (idx == -1) {
-        perror("commit not found in branch history.\n");
+        fprintf(stderr,"commit not found in branch history.\n");
         return;
     }
 
@@ -237,7 +237,7 @@ void checkout(branch_t* branch, const commit_t* commit) {
 
     // if the commit is not in the history, report the error and return.
     if (idx == -1) {
-        perror("commit not found in branch history.\n");
+        fprintf(stderr,"commit not found in branch history.\n");
         exit(-1);
     }
 

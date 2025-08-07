@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-07-30
+ * @date 2025-08-07
  *
  * @file diff.c
  *    the diff module, responsible for creating comparisons between files and folders,
@@ -18,7 +18,7 @@ ucrc32_t file_crc32(const char* filepath) {
     // read the file in.
     FILE* file = fopen(filepath, "rb");
     if (!file) {
-        perror("fopen failed; could not open file for hashing");
+        fprintf(stderr,"fopen failed; could not open file for hashing");
         return 0;
     }
 
@@ -34,7 +34,7 @@ ucrc32_t file_crc32(const char* filepath) {
     // allocate buffer for file contents
     unsigned char* buffer = calloc(1, file_size);
     if (!buffer) {
-        perror("calloc failed; could not allocate buffer for file.");
+        fprintf(stderr,"calloc failed; could not allocate buffer for file.");
         fclose(file);
         return 0;
     }
@@ -187,7 +187,7 @@ diff_t* diff_file_modified(const char* old_path, const char* new_path) {
         // close either file.
         if (f_old) fclose(f_old);
         if (f_new) fclose(f_new);
-        perror("fopen failed; could not open file(s) for reading.\n");
+        fprintf(stderr,"fopen failed; could not open file(s) for reading.\n");
         return 0x0;
     }
 
@@ -207,7 +207,7 @@ diff_t* diff_file_modified(const char* old_path, const char* new_path) {
     if (!old_data) {
         fclose(f_old);
         fclose(f_new);
-        perror("failed to read stored changes.\n");
+        fprintf(stderr,"failed to read stored changes.\n");
         return diff;
     }
     size_t new_size = 0;
@@ -215,7 +215,7 @@ diff_t* diff_file_modified(const char* old_path, const char* new_path) {
     if (!new_data) {
         fclose(f_old);
         fclose(f_new);
-        perror("failed to read new file.\n");
+        fprintf(stderr,"failed to read new file.\n");
         return diff;
     }
 
@@ -261,7 +261,7 @@ diff_t* diff_file(const char* path, const e_diff_type_t type) {
     // copy the old information from the file before deleting it.
     FILE* f = fopen(path, "r");
     if (!f) {
-        perror("fopen failed; could not open file for diff. reading.\n");
+        fprintf(stderr,"fopen failed; could not open file for diff. reading.\n");
         exit(-1); // exit on failure.
     }
 
@@ -319,7 +319,7 @@ void diff_append(diff_t* diff, const char* fmt, ...) {
         diff->capacity = diff->capacity ? diff->capacity * 2 : 16;
         char** lines = realloc(diff->lines, sizeof(char*) * diff->capacity);
         if (!lines) {
-            perror("realloc failed; could not allocate memory for diff lines.\n");
+            fprintf(stderr,"realloc failed; could not allocate memory for diff lines.\n");
             exit(-1);
         }
         diff->lines = lines;
@@ -346,7 +346,7 @@ void diff_write(const diff_t* diff, const char* path) {
     // open the file for writing.
     FILE* f = fopen(path, "w");
     if (!f) {
-        perror("fopen failed; could not open file for writing.\n");
+        fprintf(stderr,"fopen failed; could not open file for writing.\n");
         exit(-1); // exit on failure.
     }
 
@@ -381,7 +381,7 @@ diff_t* diff_read(const char* path) {
     // open the file for reading.
     FILE* f = fopen(path, "r");
     if (!f) {
-        perror("fopen failed; could not open file for reading.\n");
+        fprintf(stderr,"fopen failed; could not open file for reading.\n");
         exit(-1); // exit on failure.
     }
 
@@ -392,14 +392,14 @@ diff_t* diff_read(const char* path) {
 
     // allocate memory for the names.
     if (!diff->stored_path || !diff->new_path || !type) {
-        perror("calloc failed; could not allocate memory for diff header.\n");
+        fprintf(stderr,"calloc failed; could not allocate memory for diff header.\n");
         fclose(f);
         exit(-1); // exit on failure.
     }
     int scanned = fscanf(f, "type:%31[^\n]\nstored:%127[^\n]\nnew:%127[^\n]\ncrc32:%u\n", \
         type, diff->stored_path, diff->new_path, &diff->hash);
     if (scanned != 4) {
-        perror("fscanf failed; could not read diff header.\n");
+        fprintf(stderr,"fscanf failed; could not read diff header.\n");
         exit(-1); // exit on failure.
     }
 
