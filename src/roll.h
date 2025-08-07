@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-07-23
+ * @date 2025-07-30
  *
  * @file roll.h
  *    the rollback module in the version control system, it is responsible for being
@@ -10,10 +10,10 @@
 #define ROLL_H
 
 /*! @uses commit_t */
-#include <commit.h>
+#include "commit.h"
 
 /*! @uses branch_t */
-#include <branch.h>
+#include "branch.h"
 
 /**
  * @brief given a older diff, rollback to it (ignore anything -, keep ' ' and +)
@@ -31,4 +31,12 @@ char ** rollback_to_diff(const diff_t* diff, int* n);
  * @param commit the selected commit to be rolled back to.
  */
 void rollback(branch_t* branch, const commit_t* commit);
+
+/**
+ * @brief checkout to a newer commit.
+ *
+ * @param branch the current branch that we are on.
+ * @param commit the selected commit to be rolled back to.
+ */
+void checkout(branch_t* branch, const commit_t* commit);
 #endif //ROLL_H

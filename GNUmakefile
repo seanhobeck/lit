@@ -1,6 +1,6 @@
-# compiler and flags
+# compiler and compiler flags
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c17 -g
+CFLAGS := -Wall -Wextra -std=c17 -g -lncurses -ldl
 
 # recursively find all .c files in src/
 SRCS := $(shell find src/ -name '*.c')

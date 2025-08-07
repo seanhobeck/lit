@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-07-22
+ * @date 2025-07-30
  *
  * @file pvc.h
  *    the path vector module, responsible for snapshotting
@@ -8,6 +8,9 @@
  */
 #ifndef PVC_H
 #define PVC_H
+
+/*! @uses time_t, time */
+#include <time.h>
 
 /// @note a enum to differentiate types of files and folders.
 typedef enum {
@@ -18,13 +21,14 @@ typedef enum {
 /// @note a data structure to hold a file / folder temporarily.
 typedef struct {
     char* path, *name; // path to the inode, and name of the inode.
+    time_t mtime; // modification time.
     e_pvc_inode_type_t type; // type of inode.
 } pvc_inode_t;
 
 /// @note a data structure to hold a path vector, this will contain
 ///     inodes within a directory, as well as a count and capacity for the inode list.
 typedef struct {
-    pvc_inode_t* nodes; // array of inodes in the directory.
+    pvc_inode_t** nodes; // array of inodes in the directory.
     unsigned long count, cap; // number of files in the directory.
 } pvc_t;
 
@@ -35,11 +39,26 @@ typedef enum {
 } e_pvc_type_t;
 
 /**
+ * @brief push a inode into the pvc_t structure.
+ *
+ * @param vector the pvc_t structure to which the inode will be pushed.
+ * @param inode the pvc_inode_t structure to be pushed.
+ */
+void pvc_push(pvc_t* vector, const pvc_inode_t* inode);
+
+/**
+ * @brief sort pvc nodes by modification time (oldest first)
+ *
+ * @param vector the pvc_t structure to sort
+ */
+void pvc_sort_by_time(pvc_t* vector);
+
+/**
  * @brief collect files in the current working directory and its subdirectories
  *
  * @param path the path to the directory to collect files from.
  * @param type the type of collection to perform (no recurse or recurse).
  * @return a pvc_t structure containing the collected files.
  */
-pvc_t pvc_collect(const char* path, const e_pvc_type_t type);
+pvc_t* pvc_collect(const char* path, const e_pvc_type_t type);
 #endif //PVC_H

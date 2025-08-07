@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-07-23
+ * @date 2025-07-29
  *
  * @file commit.h
  *    the commit module in the version control system, it is responsible for handling
@@ -10,19 +10,19 @@
 #define COMMIT_H
 
 /*! @uses diff_t. */
-#include <diff.h>
+#include "diff.h"
 
 /*! @uses sha1_t, sha1, strsha1. */
-#include <hash.h>
+#include "hash.h"
 
 /// @note a data structure to hold a commit, this will contain
 ///     a message, a sha1 hash, and a timestamp.
 typedef struct {
-    unsigned long n_diffs; // number of diffs in the commit.
-    diff_t** diffs; // array of diffs in the commit.
-    char timestamp[80u]; // commit timestamp.
-    char commit_path[512u]; // path to the commit directory.
-    char message[1024u]; // commit message.
+    size_t count, capacity; // number of diffs in the commit.
+    diff_t** changes; // array of diffs in the commit.
+    char* timestamp; // commit timestamp.
+    char* path; // path to the commit directory.
+    char* message; // commit message.
     sha1_t hash; // sha1 hash of the commit.
 } commit_t;
 
@@ -31,9 +31,10 @@ typedef struct {
  *  of your working directory and storing the diffs in the commit.
  *
  * @param message the commit message.
+ * @param branch_name the name of the parent branch that this commit is being placed under.
  * @return a commit_t structure containing the commit information.
  */
-commit_t commit_create(const char* message, char branch_name[128u]);
+commit_t* commit_create(const char* message, char* branch_name);
 
 /**
  * @brief add a diff to the commit, this will be used to store
@@ -57,5 +58,5 @@ void commit_write(const commit_t* commit);
  * @param path the path to the commit file.
  * @return a commit_t structure containing the commit information.
  */
-commit_t commit_read(const char* path);
+commit_t* commit_read(const char* path);
 #endif //COMMIT_H
