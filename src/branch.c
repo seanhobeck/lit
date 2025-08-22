@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-07
+ * @date 2025-08-12
  *
  * @file branch.c
  *    the branch module in the version control system, it is responsible for handling
@@ -11,16 +11,14 @@
 /*! @uses mkdir, getcwd. */
 #include <sys/stat.h>
 
-/*! @uses pvc_t, pvc_collect. */
-#include "pvc.h"
-
 /**
  * @brief create a new branch with the given name.
  *
  * @param name the name of the branch to be created.
  * @return a branch_t structure containing the branch information.
  */
-branch_t* branch_create(const char* name) {
+branch_t*
+create_branch(const char* name) {
     // create a new branch structure.
     branch_t* branch = calloc(1ul, sizeof *branch);
 
@@ -29,22 +27,14 @@ branch_t* branch_create(const char* name) {
     strncpy(branch->name, name, strlen(name) + 1);
 
     // create the branch path based on the cwd.
-    char* path = calloc(1, 512);
-    sprintf(path, ".lit/%s/", branch->name);
-    if (mkdir(path, 0755) == -1) {
-        fprintf(stderr,"mkdir failed; could not create branch directory.\n");
-        return branch;
-    }
-    // copy the branch path into the branch structure.
-    branch->path = calloc(1, 512);
-    strncpy(branch->path, path, 512);
-    free(path);
+    branch->path = calloc(1, 256);
+    sprintf(branch->path, ".lit/refs/heads/%s", branch->name);
 
-    // calculate the sha256 based on the name, and randomized pointer addresses in memory to the branch
+    // calculate the sha1 based on the name, and randomized pointer addresses in memory to the branch
     //  and to the branches fields (path and name) respectively.
     unsigned char* random = calloc(1, 256);
     snprintf((char*) random, 256, "%p%s%s", &branch, branch->name, branch->path);
-    sha256(random, 256, branch->hash);
+    sha1(random, 256, branch->hash);
     free(random);
     return branch;
 };
@@ -54,20 +44,22 @@ branch_t* branch_create(const char* name) {
  *
  * @param branch the branch_t structure to be written to a file.
  */
-void branch_write(const branch_t* branch) {
+void
+write_branch(const branch_t* branch) {
     // create branch file.
-    char* path = calloc(1, 512);
-    sprintf(path, "%sbranch", branch->path);
-    FILE* f = fopen(path, "w");
+    FILE* f = fopen(branch->path, "w");
     if (!f) {
         fprintf(stderr,"fopen failed; could not open branch file for writing.\n");
-        exit(-1); // exit on failure.
+        exit(EXIT_FAILURE); // exit on failure.
     }
-    free(path);
 
     // write the branch name and hash to the file.
-    fprintf(f, "name:%s\nsha256:%s\n", branch->name, strsha256(branch->hash));
-    fprintf(f, "commit_count:%lu\n", branch->idx);
+    fprintf(f, "name:%s\nsha1:%s\nidx:%lu\ncount:%lu\n", \
+        branch->name, strsha1(branch->hash), branch->idx, branch->count);
+
+    // for each commit in this branch, write out the respective sha1 hash.
+    for (size_t i = 0; i < branch->count; i++)
+        fprintf(f, "%s\n", strsha1(branch->commits[i]->hash));
     fclose(f);
 };
 
@@ -77,14 +69,15 @@ void branch_write(const branch_t* branch) {
  * @param commit the commit_t structure to be added to the branch history.
  * @param branch the history_t structure to which the commit will be added.
  */
-void branch_add_commit(commit_t* commit, branch_t* branch) {
+void
+add_commit_branch(commit_t* commit, branch_t* branch) {
     // if the count is greater than the capacity, realloc.
     if (branch->count >= branch->capacity) {
         branch->capacity = branch->capacity ? branch->capacity * 2 : 1; // increment the commit count.
         branch->commits = realloc(branch->commits, sizeof(commit_t*) * branch->capacity);
         if (!branch->commits) {
             fprintf(stderr,"realloc failed; could not allocate memory for branch history commits.\n");
-            exit(-1); // exit on failure.
+            exit(EXIT_FAILURE); // exit on failure.
         }
     }
     // copy the commit into the history.
@@ -97,73 +90,54 @@ void branch_add_commit(commit_t* commit, branch_t* branch) {
  * @param name the name of our branch.
  * @return a branch_t structure containing the branch information.
  */
-branch_t* branch_read(const char* name) {
+branch_t*
+read_branch(const char* name) {
     // create a temporary branch structure.
     branch_t* branch = calloc(1, sizeof *branch);
 
     // create the branch path based on the cwd.
-    size_t len = strlen(name);
-    branch->name = calloc(1,  len + 1);
-    strncpy(branch->name, name, len);
-    char* path = calloc(1, 512);
-    sprintf(path, ".lit/%s/", name);
-    branch->path = calloc(1, strlen(path) + 1);
-    strncpy(branch->path, path, strlen(path));
-    snprintf(path, 512, ".lit/%s/branch", name);
+    branch->name = strdup(name);
+    branch->path = calloc(1, 256);
+    sprintf(branch->path, ".lit/refs/heads/%s", name);
 
     // open the branch file for reading.
-    FILE* f = fopen(path, "r");
+    FILE* f = fopen(branch->path, "r");
     if (!f) {
         fprintf(stderr,"fopen failed; could not open branch file for reading.\n");
-        exit(-1); // exit on failure.
+        exit(EXIT_FAILURE); // exit on failure.
     }
 
     // read the branch information from the file.
+    size_t count = 0;
     branch->name = calloc(1, 128);
-    char *branch_hash = calloc(1, 64);
-    int scanned = fscanf(f, "name:%128[^\n]\nsha256:%64[^\n]\ncommit_count:%lu\n", \
-        branch->name, branch_hash, &branch->idx);
-    if (scanned != 3) {
+    char *branch_hash = calloc(1, 40);
+    int scanned = fscanf(f, "name:%128[^\n]\nsha1:%40[^\n]\nidx:%lu\ncount:%lu\n", \
+        branch->name, branch_hash, &branch->idx, &count);
+    if (scanned != 4) {
         fprintf(stderr,"fscanf failed; could not read branch header.\n");
         fclose(f);
-        exit(-1); // exit on failure.
+        exit(EXIT_FAILURE); // exit on failure.
     }
 
     // conversion to hashes.
-    unsigned char* _hash = strtoha(branch_hash, 32);
-    memcpy(branch->hash, _hash, 32);
+    unsigned char* _hash = strtoha(branch_hash, 20);
+    memcpy(branch->hash, _hash, 20);
     free(_hash);
     free(branch_hash);
 
-    // snapshot the current state of the branch path
-    pvc_t* vector = pvc_collect(branch->path, E_PVC_TYPE_NO_RECURSE);
-    pvc_sort_by_time(vector);
+    // start reading the file for the count of commits, then
+    // use the first byte (2 chars) as the folder path in .lit/objects/commits/xx
+    // and then the rest (name+2) as the file name.
+    for (size_t i = 0; i < count; i++) {
+        char* hash = calloc(1, 40);
+        fscanf(f, "%40[^\n]\n", hash);
 
-    // create the history for the wd.
-    for (size_t i = 0; i < vector->count; i++) {
-        // if we are reading 'branch', ignore it.
-        if (strcmp(vector->nodes[i]->name, "branch") == 0 ||
-            strcmp(vector->nodes[i]->name, ".") == 0) {
-            free(vector->nodes[i]->path);
-            free(vector->nodes[i]->name);
-            free(vector->nodes[i]);
-            continue;
-        }
-
-        // read a commit from the vector.
-        char* path = calloc(1, 512);
-        snprintf(path, 512, "%s/", vector->nodes[i]->path);
-        commit_t* commit = commit_read(path);
-        free(vector->nodes[i]->path);
-        free(vector->nodes[i]->name);
-        free(vector->nodes[i]);
-
-        // add it to our history.
-        branch_add_commit(commit, branch);
+        // construct the file location from the hash.
+        char path[256];
+        snprintf(path, 256, ".lit/objects/commits/%.2s/%38s", hash, hash + 2);
+        commit_t* commit = read_commit(path);
+        add_commit_branch(commit, branch);
+        free(hash);
     }
-    free(vector->nodes);
-
-    // cleanup
-    free(path);
     return branch;
 };

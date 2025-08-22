@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-07-29
+ * @date 2025-08-12
  *
  * @file commit.h
  *    the commit module in the version control system, it is responsible for handling
@@ -15,12 +15,16 @@
 /*! @uses sha1_t, sha1, strsha1. */
 #include "hash.h"
 
+/*! @uses time_t */
+#include <time.h>
+
 /// @note a data structure to hold a commit, this will contain
 ///     a message, a sha1 hash, and a timestamp.
 typedef struct {
     size_t count, capacity; // number of diffs in the commit.
     diff_t** changes; // array of diffs in the commit.
     char* timestamp; // commit timestamp.
+    time_t rawtime; // the raw time as a unsigned long.
     char* path; // path to the commit directory.
     char* message; // commit message.
     sha1_t hash; // sha1 hash of the commit.
@@ -34,7 +38,8 @@ typedef struct {
  * @param branch_name the name of the parent branch that this commit is being placed under.
  * @return a commit_t structure containing the commit information.
  */
-commit_t* commit_create(const char* message, char* branch_name);
+commit_t*
+create_commit(const char* message, char* branch_name);
 
 /**
  * @brief add a diff to the commit, this will be used to store
@@ -43,14 +48,16 @@ commit_t* commit_create(const char* message, char* branch_name);
  * @param commit the commit_t structure to which the diff will be added.
  * @param diff the diff_t structure containing the differences to be added.
  */
-void commit_add_diff(commit_t* commit, diff_t* diff);
+void
+add_diff_commit(commit_t* commit, diff_t* diff);
 
 /**
  * @brief write the commit to a file in our '.lit' directory under our current branch.
  *
  * @param commit the commit_t structure to to be written to a file.
  */
-void commit_write(const commit_t* commit);
+void
+write_commit(const commit_t* commit);
 
 /**
  * @brief read a commit from a file in our '.lit' directory under our current branch.
@@ -58,5 +65,6 @@ void commit_write(const commit_t* commit);
  * @param path the path to the commit file.
  * @return a commit_t structure containing the commit information.
  */
-commit_t* commit_read(const char* path);
+commit_t*
+read_commit(const char* path);
 #endif //COMMIT_H

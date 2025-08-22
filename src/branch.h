@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-07-30
+ * @date 2025-08-12
  *
  * @file branch.h
  *    the branch module in the version control system, it is responsible for handling
@@ -19,9 +19,9 @@
 typedef struct {
     char* name; // branch name.
     char* path; // path to the branch directory.
-    sha256_t hash; // sha256 hash of the branch.
-    size_t count, idx, capacity; // number of commits in the history.
-    commit_t** commits; // array of commits in the history.
+    sha1_t hash; // sha1 hash of the branch.
+    size_t count, idx, capacity; // number of commits in the branch.
+    commit_t** commits; // array of commits hashes for this branch.
 } branch_t;
 
 /**
@@ -30,14 +30,16 @@ typedef struct {
  * @param name the name of the branch to be created.
  * @return a branch_t structure containing the branch information.
  */
-branch_t* branch_create(const char* name);
+branch_t*
+create_branch(const char* name);
 
 /**
  * @brief create a folder to hold all of the branch's commits and diffs.
  *
  * @param branch the branch_t structure to be written to a file.
  */
-void branch_write(const branch_t* branch);
+void
+write_branch(const branch_t* branch);
 
 /**
  * @brief add a commit to the branch history.
@@ -45,7 +47,8 @@ void branch_write(const branch_t* branch);
  * @param commit the commit_t structure to be added to the branch history.
  * @param branch the history_t structure to which the commit will be added.
  */
-void branch_add_commit(commit_t* commit, branch_t* branch);
+void
+add_commit_branch(commit_t* commit, branch_t* branch);
 
 /**
  * @brief read a branch from a file in our '.lit' directory.
@@ -53,5 +56,6 @@ void branch_add_commit(commit_t* commit, branch_t* branch);
  * @param name the name of our branch.
  * @return a branch_t structure containing the branch information.
  */
-branch_t* branch_read(const char* name);
+branch_t*
+read_branch(const char* name);
 #endif //BRANCH_H

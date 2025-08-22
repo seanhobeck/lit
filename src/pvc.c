@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-07-30
+ * @date 2025-08-12
  *
  * @file pvc.c
  *    the path vector module, responsible for snapshotting
@@ -39,10 +39,11 @@ typedef struct dirent* pdir_ent_t;
  * @param vector the pvc_t structure to which the inode will be pushed.
  * @param inode the pvc_inode_t structure to be pushed.
  */
-void pvc_push(pvc_t* vector, const pvc_inode_t* inode) {
+void
+vector_push(vector_t* vector, const vinode_t* inode) {
     if (vector->count == vector->cap) {
         vector->cap = vector->cap ? vector->cap * 2u : 16u;
-        vector->nodes = realloc(vector->nodes, sizeof(pvc_inode_t*) * vector->cap);
+        vector->nodes = realloc(vector->nodes, sizeof(vinode_t*) * vector->cap);
     }
     vector->nodes[vector->count++] = inode;
 };
@@ -54,9 +55,10 @@ void pvc_push(pvc_t* vector, const pvc_inode_t* inode) {
  * @param type the type of collection to perform (no recurse or recurse).
  * @return a pvc_t structure containing the collected files.
  */
-pvc_t* pvc_collect(const char* path, const e_pvc_type_t type) {
+vector_t*
+vector_collect(const char* path, const e_vector_collect_result_t type) {
     /// create a new pvc_t structure to hold the files.
-    pvc_t* pvc = calloc(1, sizeof *pvc);
+    vector_t* pvc = calloc(1, sizeof *pvc);
 
     // using POSIX compliance we can open the directory and read its contents.
     pdir_t d = opendir(path);
@@ -69,7 +71,7 @@ pvc_t* pvc_collect(const char* path, const e_pvc_type_t type) {
         if (!strcmp(ent->d_name, ".") || !strcmp(ent->d_name, "..")) continue;
 
         // get the full path of the entry.
-        char* filepath = malloc(512);
+        char* filepath = calloc(1, 512);
         snprintf(filepath, 512, "%s/%s", path, ent->d_name);
 
         // check the entry type, file vs folder.
@@ -77,8 +79,8 @@ pvc_t* pvc_collect(const char* path, const e_pvc_type_t type) {
         if (stat(filepath, &st) == -1) continue;
 
         // create a new pvc_inode_t structure for the entry.
-        pvc_inode_t* inode = calloc(1, sizeof *inode);
-        *inode = (pvc_inode_t) {
+        vinode_t* inode = calloc(1, sizeof *inode);
+        *inode = (vinode_t) {
             .path = strdup(filepath), // duplicate the path.
             .name = strdup(ent->d_name), // duplicate the name.
             .type = (S_ISDIR(st.st_mode)) ? E_PVC_INODE_TYPE_FOLDER : E_PVC_INODE_TYPE_FILE, // set the type.
@@ -86,16 +88,16 @@ pvc_t* pvc_collect(const char* path, const e_pvc_type_t type) {
         };
 
         // push it to our vector.
-        pvc_push(pvc, inode);
+        vector_push(pvc, inode);
 
         // if we are recursing.
         if (type == E_PVC_TYPE_RECURSE) {
             if (S_ISDIR(st.st_mode)) {
                 // for every file in this new vector, we want to
                 // copy it over to this pvc and then free it.
-                pvc_t* recursed = pvc_collect(filepath, type);
+                vector_t* recursed = vector_collect(filepath, type);
                 for (unsigned long i = 0u; i < recursed->count; i++) {
-                    pvc_push(pvc, recursed->nodes[i]);
+                    vector_push(pvc, recursed->nodes[i]);
                 }
                 // free the recursed memory.
                 free(recursed);
@@ -110,10 +112,13 @@ pvc_t* pvc_collect(const char* path, const e_pvc_type_t type) {
 
 /**
  * @brief comparison function for qsort - sort by modification time (oldest first)
+ *
+ * @return if a vinode_t <a> is older than <b> -1 v. 1.
  */
-int compare_by_mtime(const void* a, const void* b) {
-    const pvc_inode_t* node_a = *(const pvc_inode_t**)a;
-    const pvc_inode_t* node_b = *(const pvc_inode_t**)b;
+int
+compare_by_mtime(const void* a, const void* b) {
+    const vinode_t* node_a = *(const vinode_t**)a;
+    const vinode_t* node_b = *(const vinode_t**)b;
 
     // Sort in descending order (oldest first)
     if (node_a->mtime > node_b->mtime) return 1;
@@ -121,13 +126,32 @@ int compare_by_mtime(const void* a, const void* b) {
     return 0;
 }
 
+/*! @uses; assert */
+#include <assert.h>
+
+/**
+ * @brief frees the entire allocated vector provided.
+ *
+ * @param vector the vector to be free'd.
+ */
+void
+vector_free(vector_t* vector) {
+    for (size_t i = 0; i < vector->count; i++) {
+        free(vector->nodes[i]->path);
+        free(vector->nodes[i]->name);
+        free(vector->nodes[i]);
+    }
+    free(vector);
+};
+
 /**
  * @brief sort pvc nodes by modification time (oldest first)
  *
  * @param vector the pvc_t structure to sort
  */
-void pvc_sort_by_time(pvc_t* vector) {
+void
+vector_sort_by_mtime(vector_t* vector) {
     if (vector && vector->nodes && vector->count > 1) {
-        qsort(vector->nodes, vector->count, sizeof(pvc_inode_t*), compare_by_mtime);
+        qsort(vector->nodes, vector->count, sizeof(vinode_t*), compare_by_mtime);
     }
 }

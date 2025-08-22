@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-07-30
+ * @date 2025-08-12
  *
  * @file diff.h
  *    the diff module, responsible for creating comparisons between files and folders,
@@ -17,42 +17,26 @@ typedef enum {
     E_DIFF_TYPE_NONE = 0,           // no differences made.
 
     /*! file diffs. */
-    E_DIFF_NEW_FILE = 0x1,          // a new file was created.
+    E_DIFF_FILE_NEW = 0x1,          // a new file was created.
     E_DIFF_FILE_DELETED = 0x2,      // a file was deleted.
     E_DIFF_FILE_MODIFIED = 0x3,     // a file was modified.
 
     /*! folder diffs. */
-    E_DIFF_NEW_FOLDER = 0x4,        // a new folder was created.
+    E_DIFF_FOLDER_NEW = 0x4,        // a new folder was created.
     E_DIFF_FOLDER_DELETED = 0x5,    // a folder was deleted.
     E_DIFF_FOLDER_MODIFIED = 0x6,   // a folder was modified.
-} e_diff_type_t;
-
-/**
- * @brief convert a diff type to a string representation.
- *
- * @param type the diff type to be converted.
- * @return a string representation of the diff type.
- */
-char* diff_type_str(const e_diff_type_t type);
-
-/**
- * @brief convert string to a diff type.
- *
- * @param string the string to be converted.
- * @return a enumerator of the string provided.
- */
-e_diff_type_t diff_str_type(const char* string);
+} e_diff_ty_t;
 
 /*! @uses size_t */
 #include "utl.h"
 
 /// @note a data structure to hold difference (diff.) information.
 typedef struct {
-    e_diff_type_t type; // type of diff.
+    e_diff_ty_t type; // type of diff.
     char* stored_path, *new_path; // stored and new filepath.
     size_t count, capacity; // size of the change in bytes.
     char** lines; // our change in lines.
-    ucrc32_t hash; // hash of the diff.
+    ucrc32_t crc; // hash of the diff.
 } diff_t;
 
 /**
@@ -62,7 +46,8 @@ typedef struct {
  * @param new_path filename of the new file we are comparing against.
  * @return a diff_t structure containing the new differences between the two files.
  */
-diff_t* diff_file_modified(const char* old_path, const char* new_path);
+diff_t*
+create_file_modified_diff(const char* old_path, const char* new_path);
 
 /**
  * @brief create a file diff for a new/deleted file.
@@ -71,7 +56,8 @@ diff_t* diff_file_modified(const char* old_path, const char* new_path);
  * @param type enum diff type for either adding or deleting.
  * @return a diff_t structure containing the new differences made.
  */
-diff_t* diff_file(const char* path, const e_diff_type_t type);
+diff_t*
+create_file_diff(const char* path, const e_diff_ty_t type);
 
 /**
  * @brief create a folder diff containing the type of diff.
@@ -80,7 +66,8 @@ diff_t* diff_file(const char* path, const e_diff_type_t type);
  * @param type the diff type (modified should only be used in diff_folder_modified).
  * @returns a diff_t structure containing the diff information.
  */
-diff_t* diff_folder(const char* path, const e_diff_type_t type);
+diff_t*
+create_folder_diff(const char* path, const e_diff_ty_t type);
 
 /**
  * @brief append a line to the diff structure.
@@ -89,7 +76,8 @@ diff_t* diff_folder(const char* path, const e_diff_type_t type);
  * @param fmt the format string for the line.
  * @param ... the arguments for the format string.
  */
-void diff_append(diff_t* diff, const char* fmt, ...);
+void
+append_to_diff(diff_t* diff, const char* fmt, ...);
 
 /**
  * @brief write a .diff file to disk given the diff structure and path.
@@ -97,7 +85,8 @@ void diff_append(diff_t* diff, const char* fmt, ...);
  * @param diff the diff_t structure to write to disk.
  * @param path the path to write the diff file to.
  */
-void diff_write(const diff_t* diff, const char* path);
+void
+write_diff(const diff_t* diff, const char* path);
 
 /**
  * @brief read a diff file from disk and return a diff structure.
@@ -105,5 +94,6 @@ void diff_write(const diff_t* diff, const char* path);
  * @param path the path to the diff file to read.
  * @return a diff structure containing the differences read from the diff file.
  */
-diff_t* diff_read(const char* path);
+diff_t*
+read_diff(const char* path);
 #endif //DIFF_H

@@ -1,6 +1,6 @@
 # compiler and compiler flags
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c17
+CFLAGS := -Wall -Wextra -std=c11 -g
 
 # installation paths
 PREFIX ?= /usr/local
@@ -52,5 +52,4 @@ uninstall:
 # clean target
 .PHONY: clean
 clean:
-	rm -rf .lit/
 	rm -rf build $(TARGET)

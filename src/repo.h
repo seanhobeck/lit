@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-07
+ * @date 2025-08-12
  *
  * @file repo.h
  *    the repository module in the version control system, it is responsible for handling branches,
@@ -15,7 +15,6 @@
 /// @note a data structure to hold a repository, containing a main branch and a list of branches
 ///     if chosen to be used.
 typedef struct {
-    branch_t* main;
     size_t count, capacity, idx; // number of branches in the repository.
     branch_t** branches; // array of branches in the repository.
 } repository_t;
@@ -25,19 +24,88 @@ typedef struct {
  *
  * @return a 0 if successful in creating the directory, or -1 if .lit directory already exists.
  */
-repository_t* repository_create();
+repository_t*
+create_repository();
 
 /**
  * @brief write the repository to disk in our '.lit' directory.
  *
  * @param repo the repository_t structure to be written to a file.
  */
-void repository_write(const repository_t* repo);
+void
+write_repository(const repository_t* repo);
 
 /**
  * @brief read the repository in our cwd.
  *
  * @return a repository_t structure containing the repository information.
  */
-repository_t* repository_read();
+repository_t*
+read_repository();
+
+/**
+ * @brief create a new branch from the current branches HEAD commit.
+ *
+ * @param repository the repository provided.
+ * @param name the name of the new branch.
+ */
+void
+create_branch_repository(repository_t* repository, const char* name);
+
+/**
+ * @brief delete a branch from the repository.
+ *
+ * @param repository the repository provided.
+ * @param name the name of the branch.
+ */
+void
+delete_branch_repository(repository_t* repository, const char* name);
+
+/**
+ * @brief get the current/active branch checked out for this repository.
+ *
+ * @param repository the repository provided.
+ * @return the current/active branch checked out for this repository.
+ */
+branch_t*
+get_active_branch_repository(repository_t* repository);
+
+/**
+ * @brief get the branch from the repository with error checking.
+ *
+ * @param repository the repository read from the cwd.
+ * @param branch_name the name of the branch to get.
+ * @return a branch_t* if the branch was found, and EXIT_FAILURE if it wasn't.
+ */
+branch_t*
+get_branch_repository(const repository_t* repository, const char* branch_name);
+
+/**
+ * @brief switch to the branch provided.
+ *
+ * @param repository the repository provided.
+ * @param name the name of the new branch.
+ */
+void
+switch_branch_repository(repository_t* repository, const char* name);
+
+/**
+ * @brief find a common commit ancestor using hashes and timestamps by going backwards.
+ *
+ * @param branch1 the first branch.
+ * @param branch2 the second branch.
+ * @return pointer to the common ancestor commit, or 0x0 if none found.
+ */
+commit_t*
+find_common_ancestor(branch_t* branch1, branch_t* branch2);
+
+/**
+ * @brief find the index of a commit in a branch.
+ *
+ * @param branch the branch to be searched.
+ * @param commit the commit to find.
+ * @return the index of the commit or -1 if not found.
+ */
+long
+find_index_commit(branch_t* branch, commit_t* commit);
 #endif //REPO_H

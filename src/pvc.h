@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-07-30
+ * @date 2025-08-12
  *
  * @file pvc.h
  *    the path vector module, responsible for snapshotting
@@ -16,27 +16,27 @@
 typedef enum {
     E_PVC_INODE_TYPE_FILE = 0x1, // a file.
     E_PVC_INODE_TYPE_FOLDER = 0x2, // a folder.
-} e_pvc_inode_type_t;
+} e_vinode_ty_t;
 
 /// @note a data structure to hold a file / folder temporarily.
 typedef struct {
     char* path, *name; // path to the inode, and name of the inode.
     time_t mtime; // modification time.
-    e_pvc_inode_type_t type; // type of inode.
-} pvc_inode_t;
+    e_vinode_ty_t type; // type of inode.
+} vinode_t;
 
 /// @note a data structure to hold a path vector, this will contain
 ///     inodes within a directory, as well as a count and capacity for the inode list.
 typedef struct {
-    pvc_inode_t** nodes; // array of inodes in the directory.
-    unsigned long count, cap; // number of files in the directory.
-} pvc_t;
+    vinode_t** nodes; // array of inodes in the directory.
+    size_t count, cap; // number of files in the directory.
+} vector_t;
 
 /// @note a enum to differentiate types of path vector collection.
 typedef enum {
     E_PVC_TYPE_NO_RECURSE = 0x0,
     E_PVC_TYPE_RECURSE = 0x1, // recursively collect files in subdirectories.
-} e_pvc_type_t;
+} e_vector_collect_result_t;
 
 /**
  * @brief push a inode into the pvc_t structure.
@@ -44,14 +44,24 @@ typedef enum {
  * @param vector the pvc_t structure to which the inode will be pushed.
  * @param inode the pvc_inode_t structure to be pushed.
  */
-void pvc_push(pvc_t* vector, const pvc_inode_t* inode);
+void
+vector_push(vector_t* vector, const vinode_t* inode);
+
+/**
+ * @brief frees the entire allocated vector provided.
+ *
+ * @param vector the vector to be free'd.
+ */
+void
+vector_free(vector_t* vector);
 
 /**
  * @brief sort pvc nodes by modification time (oldest first)
  *
  * @param vector the pvc_t structure to sort
  */
-void pvc_sort_by_time(pvc_t* vector);
+void
+vector_sort_by_mtime(vector_t* vector);
 
 /**
  * @brief collect files in the current working directory and its subdirectories
@@ -60,5 +70,6 @@ void pvc_sort_by_time(pvc_t* vector);
  * @param type the type of collection to perform (no recurse or recurse).
  * @return a pvc_t structure containing the collected files.
  */
-pvc_t* pvc_collect(const char* path, const e_pvc_type_t type);
+vector_t*
+vector_collect(const char* path, const e_vector_collect_result_t type);
 #endif //PVC_H

@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-07
+ * @date 2025-08-12
  *
  * @file diff.c
  *    the diff module, responsible for creating comparisons between files and folders,
@@ -8,13 +8,17 @@
  */
 #include "diff.h"
 
+/*! @uses time, time_t */
+#include <time.h>
+
 /**
  * @brief calculate the crc32 hash of a file based on its contents.
  *
  * @param filepath the path to the file to be hashed.
  * @return a crc32 hash for the file.
  */
-ucrc32_t file_crc32(const char* filepath) {
+ucrc32_t
+file_crc32(const char* filepath) {
     // read the file in.
     FILE* file = fopen(filepath, "rb");
     if (!file) {
@@ -55,6 +59,32 @@ ucrc32_t file_crc32(const char* filepath) {
 }
 
 /**
+ * @brief create the crc32 hash for a diff given its information
+ *  (unique to the diff and not the file).
+ *
+ * @param diff the diff for the crc32 to be appended to.
+ */
+void
+create_crc32(diff_t* diff) {
+    // allocate the file and open it.
+    char* tmp = calloc(1, 256);
+    sprintf(tmp, "%lu.tmp", time(0x0));
+    FILE* ftmp = fopen(tmp, "w");
+
+    // iterate through each line
+    for (size_t i = 0; i < diff->count; i++)
+        fprintf(ftmp, "%s\n", diff->lines[i]);
+
+    // at the end add some of the diffs data for uniqueness.
+    fprintf(ftmp, "type:%d\nstored:%s\nnew:%s\nmtime:%lu\n", \
+        diff->type, diff->stored_path, diff->new_path, time(0x0));
+
+    fclose(ftmp);
+    diff->crc = file_crc32(tmp);
+    remove(tmp);
+}
+
+/**
  * @brief calculate the longest common subsequence (lcs) between two strings.
  *
  * @param a the first string.
@@ -63,7 +93,8 @@ ucrc32_t file_crc32(const char* filepath) {
  * @param n the length of the second string.
  * @param diff the diff_t structure to store the differences.
  */
-void lcs(char** a, const int m, char** b, const int n, diff_t* diff) {
+void
+lcs(char** a, const int m, char** b, const int n, diff_t* diff) {
     // @ref[https://en.wikipedia.org/wiki/Longest_common_subsequence]
     int **dp = malloc((m+1) * sizeof(int*));
     for (int i = 0; i <= m; i++)
@@ -83,19 +114,19 @@ void lcs(char** a, const int m, char** b, const int n, diff_t* diff) {
     int i = 0, j = 0;
     while (i < m && j < n) {
         if (strcmp(a[i], b[j]) == 0) {
-            diff_append(diff, " %s", a[i]);
+            append_to_diff(diff, "%s", a[i]);
             i++; j++;
         } else if (dp[i + 1][j] >= dp[i][j + 1u]) {
-            diff_append(diff, "- %s", a[i]);
+            append_to_diff(diff, "- %s", a[i]);
             i++;
         } else {
-            diff_append(diff, "+ %s", b[j]);
+            append_to_diff(diff, "+ %s", b[j]);
             j++;
         }
     }
     // remaining lines
-    while (i < m) diff_append(diff, "- %s", a[i++]);
-    while (j < n) diff_append(diff, "+ %s", b[j++]);
+    while (i < m) append_to_diff(diff, "- %s", a[i++]);
+    while (j < n) append_to_diff(diff, "+ %s", b[j++]);
 
     // cleanup
     for (int k = 0; k <= m; k++)
@@ -104,82 +135,14 @@ void lcs(char** a, const int m, char** b, const int n, diff_t* diff) {
 };
 
 /**
- * @brief convert a diff type to a string representation.
- *
- * @param type the diff type to be converted.
- * @return a string representation of the diff type.
- */
-char* diff_type_str(const e_diff_type_t type) {
-    // switch case will suffice.
-    switch (type) {
-        /*! file diffs. */
-        case E_DIFF_TYPE_NONE:
-            return "none";
-        case E_DIFF_NEW_FILE:
-            return "nfile";
-        case E_DIFF_FILE_DELETED:
-            return "dfile";
-        case E_DIFF_FILE_MODIFIED:
-            return "mfile";
-
-        /*! folder diffs. */
-        case E_DIFF_NEW_FOLDER:
-            return "ndir";
-        case E_DIFF_FOLDER_DELETED:
-            return "ddir";
-
-        /*! unknown diff type. */
-        default:
-            return "none";
-    }
-};
-
-/**
- * @brief convert string to a diff type.
- *
- * @param string the string to be converted.
- * @return a enumerator of the string provided.
- */
-e_diff_type_t diff_str_type(const char* string) {
-    switch (string[0]) {
-        // new something?
-        case 'n': {
-            if (string[1] == 'f') return E_DIFF_NEW_FILE;
-            if (string[1] == 'd') return E_DIFF_NEW_FOLDER;
-            return E_DIFF_TYPE_NONE;
-        }
-
-        // deleted something?
-        case 'd': {
-            if (string[1] == 'f') return E_DIFF_FILE_DELETED;
-            if (string[1] == 'd') return E_DIFF_FOLDER_DELETED;
-            return E_DIFF_TYPE_NONE;
-        }
-
-        // modified something?
-        case 'm': {
-            if (string[1] == 'f') return E_DIFF_FILE_MODIFIED;
-            if (string[1] == 'd') return E_DIFF_FOLDER_MODIFIED;
-            return E_DIFF_TYPE_NONE;
-        }
-
-        /*! default case, no diff type. */
-        default: return E_DIFF_TYPE_NONE;
-    }
-};
-
-
-/*! @section '.diff' files */
-
-
-/**
  * @brief create a file diff between two files (modified only + renaming).
  *
  * @param old_path filename of the old file (stored changes).
  * @param new_path filename of the new file we are comparing against.
  * @return a diff_t structure containing the new differences between the two files.
  */
-diff_t* diff_file_modified(const char* old_path, const char* new_path) {
+diff_t*
+create_file_modified_diff(const char* old_path, const char* new_path) {
     // create the two files in terms of data.
     FILE* f_old = fopen(old_path, "r");
     FILE* f_new = fopen(new_path, "r");
@@ -223,14 +186,7 @@ diff_t* diff_file_modified(const char* old_path, const char* new_path) {
     lcs(old_data, (int) old_size, new_data, (int) new_size, diff);
 
     // write out to a temp file and read the hash then close, and remove it.
-    char* tmp = calloc(1, 512);
-    sprintf(tmp, "%p.tmp", &tmp);
-    FILE* ftmp = fopen(tmp, "w");
-    for (size_t i = 0; i < new_size; i++)
-        fprintf(ftmp, "%s\n", new_data[i]);
-    fclose(ftmp);
-    diff->hash = file_crc32(tmp);
-    remove(tmp);
+    create_crc32(diff);
 
     // cleanup and return the diff.
     for (int i = 0; i < old_size; i++)
@@ -251,7 +207,8 @@ diff_t* diff_file_modified(const char* old_path, const char* new_path) {
  * @param type enum diff type for either adding or deleting.
  * @return a diff_t structure containing the new differences made.
  */
-diff_t* diff_file(const char* path, const e_diff_type_t type) {
+diff_t*
+create_file_diff(const char* path, const e_diff_ty_t type) {
     // creating our diff., and then allocating the memory for the data.
     diff_t* diff = calloc(1, sizeof *diff);
     diff->type = type;
@@ -262,26 +219,19 @@ diff_t* diff_file(const char* path, const e_diff_type_t type) {
     FILE* f = fopen(path, "r");
     if (!f) {
         fprintf(stderr,"fopen failed; could not open file for diff. reading.\n");
-        exit(-1); // exit on failure.
+        exit(EXIT_FAILURE); // exit on failure.
     }
 
     // run lcs and capture the lines.
     size_t size = 0;
     char** lines = freadls(f, &size);
     for (size_t i = 0; i < size; i++) {
-        if (diff->type == E_DIFF_FILE_DELETED) diff_append(diff, "- %s", lines[i]);
-        else diff_append(diff, "+ %s", lines[i]);
+        if (diff->type == E_DIFF_FILE_DELETED) append_to_diff(diff, "- %s", lines[i]);
+        else append_to_diff(diff, "+ %s", lines[i]);
     }
 
     // write out to a temp file and read the hash then close, and remove it.
-    char* tmp = calloc(1, 512);
-    sprintf(tmp, "%p.tmp", &tmp);
-    FILE* ftmp = fopen(tmp, "w");
-    for (size_t i = 0; i < size; i++)
-        fprintf(ftmp, "%s\n", lines[i]);
-    fclose(ftmp);
-    diff->hash = file_crc32(tmp);
-    remove(tmp);
+    create_crc32(diff);
     return diff;
 };
 
@@ -292,7 +242,8 @@ diff_t* diff_file(const char* path, const e_diff_type_t type) {
  * @param type the diff type (modified = renamed).
  * @returns a diff_t structure containing the diff information.
  */
-diff_t* diff_folder(const char* path, const e_diff_type_t type) {
+diff_t*
+create_folder_diff(const char* path, const e_diff_ty_t type) {
     // create a temporary diff_t structure.
     diff_t* diff = calloc(1, sizeof *diff);
     diff->type = type;
@@ -302,7 +253,7 @@ diff_t* diff_folder(const char* path, const e_diff_type_t type) {
     strcpy(diff->new_path, path);
     diff->stored_path = calloc(1, strlen(path) + 1);
     strcpy(diff->stored_path, path);
-    diff->hash = crc32((unsigned char*) diff->new_path, strlen(path) + 1);
+    diff->crc = crc32((unsigned char*) diff->new_path, strlen(path) + 1);
     return diff;
 };
 
@@ -313,14 +264,15 @@ diff_t* diff_folder(const char* path, const e_diff_type_t type) {
  * @param fmt the format string for the line.
  * @param ... the arguments for the format string.
  */
-void diff_append(diff_t* diff, const char* fmt, ...) {
+void
+append_to_diff(diff_t* diff, const char* fmt, ...) {
     // if our count is greater than the capacity, call realloc.
     if (diff->count >= diff->capacity) {
         diff->capacity = diff->capacity ? diff->capacity * 2 : 16;
         char** lines = realloc(diff->lines, sizeof(char*) * diff->capacity);
         if (!lines) {
             fprintf(stderr,"realloc failed; could not allocate memory for diff lines.\n");
-            exit(-1);
+            exit(EXIT_FAILURE);
         }
         diff->lines = lines;
     }
@@ -342,21 +294,22 @@ void diff_append(diff_t* diff, const char* fmt, ...) {
  * @param diff the diff_t structure to write to disk.
  * @param path the path to write the diff file to.
  */
-void diff_write(const diff_t* diff, const char* path) {
+void
+write_diff(const diff_t* diff, const char* path) {
     // open the file for writing.
     FILE* f = fopen(path, "w");
     if (!f) {
         fprintf(stderr,"fopen failed; could not open file for writing.\n");
-        exit(-1); // exit on failure.
+        exit(EXIT_FAILURE); // exit on failure.
     }
 
     // write the header, including the hash.
-    fprintf(f, "type:%s\nstored:%s\nnew:%s\ncrc32:%u\n\n", diff_type_str(diff->type), \
-        diff->stored_path, diff->new_path, diff->hash);
+    fprintf(f, "type:%d\nstored:%s\nnew:%s\ncrc32:%u\n\n", diff->type, \
+        diff->stored_path, diff->new_path, diff->crc);
 
     // if the type is none, or something to do with the folder,
     //  we haven't written anything and it can be ignored.
-    if (diff->type == E_DIFF_TYPE_NONE || diff->type == E_DIFF_NEW_FOLDER || \
+    if (diff->type == E_DIFF_TYPE_NONE || diff->type == E_DIFF_FOLDER_NEW || \
         diff->type == E_DIFF_FOLDER_MODIFIED || diff->type == E_DIFF_FOLDER_DELETED) {
         fclose(f);
         return;
@@ -374,7 +327,8 @@ void diff_write(const diff_t* diff, const char* path) {
  * @param path the path to the diff file to read.
  * @return a diff structure containing the differences read from the diff file.
  */
-diff_t* diff_read(const char* path) {
+diff_t*
+read_diff(const char* path) {
     // create a temporary diff structure.
     diff_t* diff = calloc(1, sizeof *diff);
 
@@ -382,33 +336,29 @@ diff_t* diff_read(const char* path) {
     FILE* f = fopen(path, "r");
     if (!f) {
         fprintf(stderr,"fopen failed; could not open file for reading.\n");
-        exit(-1); // exit on failure.
+        exit(EXIT_FAILURE); // exit on failure.
     }
 
     // read the header first.
     diff->stored_path = calloc(1, 128);
     diff->new_path = calloc(1, 128);
-    char* type = calloc(1, 32);
 
     // allocate memory for the names.
-    if (!diff->stored_path || !diff->new_path || !type) {
+    if (!diff->stored_path || !diff->new_path) {
         fprintf(stderr,"calloc failed; could not allocate memory for diff header.\n");
         fclose(f);
-        exit(-1); // exit on failure.
+        exit(EXIT_FAILURE); // exit on failure.
     }
-    int scanned = fscanf(f, "type:%31[^\n]\nstored:%127[^\n]\nnew:%127[^\n]\ncrc32:%u\n", \
-        type, diff->stored_path, diff->new_path, &diff->hash);
+    int scanned = fscanf(f, "type:%d\nstored:%127[^\n]\nnew:%127[^\n]\ncrc32:%u\n", \
+        &diff->type, diff->stored_path, diff->new_path, &diff->crc);
     if (scanned != 4) {
         fprintf(stderr,"fscanf failed; could not read diff header.\n");
-        exit(-1); // exit on failure.
+        exit(EXIT_FAILURE); // exit on failure.
     }
-
-    // copy over type and crc32 hash for new file.
-    diff->type = diff_str_type(type);
 
     // if the type is none, or something to do with the folder,
     //  we haven't written anything and it can be ignore.
-    if (diff->type == E_DIFF_TYPE_NONE || diff->type == E_DIFF_NEW_FOLDER || \
+    if (diff->type == E_DIFF_TYPE_NONE || diff->type == E_DIFF_FOLDER_NEW || \
         diff->type == E_DIFF_FOLDER_MODIFIED || diff->type == E_DIFF_FOLDER_DELETED) {
         return diff;
     }
@@ -423,7 +373,7 @@ diff_t* diff_read(const char* path) {
         }
 
         // append the line to the diff structure.
-        diff_append(diff, "%s", buffer);
+        append_to_diff(diff, "%s", buffer);
     }
 
     // return the diff structure.
