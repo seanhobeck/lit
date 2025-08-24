@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-08-23
  *
  * @file commit.h
  *    the commit module in the version control system, it is responsible for handling
@@ -33,6 +33,10 @@
  */
 commit_t*
 create_commit(const char* message, char* branch_name) {
+    // assert on the message and the branch name.
+    assert(message != 0x0);
+    assert(branch_name != 0x0);
+
     // create a new commit structure.
     commit_t* commit = calloc(1, sizeof *commit);
 
@@ -49,21 +53,21 @@ create_commit(const char* message, char* branch_name) {
     strftime(commit->timestamp, 21, "%Y-%m-%d %H:%M:%S", local_time);
 
     // calculate the sha1 hash of the commit message, timestamp, random pointer, and a count of diffs.
-    unsigned char* data = calloc(1, 2048);
-    snprintf((char*)data, 2048, "commit\nmessage=%s\ntimestamp=%s\ndiff count=%lu\nrawtime=%lu",
+    unsigned char* data = calloc(1, 2049);
+    snprintf((char*)data, 2049, "commit\nmessage=%s\ntimestamp=%s\ndiff count=%lu\nrawtime=%lu",
         commit->message, commit->timestamp, commit->count, commit->rawtime);
     sha1(data, 128, commit->hash);
     free(data);
 
     // create a directory under our current branch, store all of our diffs
     // in there as well as a commit file.
-    char* path = calloc(1, 256);
+    char* path = calloc(1, 257);
     char* hash = strsha1(commit->hash);
-    sprintf(path, ".lit/objects/commits/%.2s/", hash);
-    mkdir(path, 0755);
-    sprintf(path, ".lit/objects/commits/%.2s/%s", hash, hash + 2);
-    commit->path = calloc(1, strlen(path) + 1);
-    strcpy(commit->path, path);
+    snprintf(path, 256, ".lit/objects/commits/%.2s/", hash);
+    mkdir(path, MKDIR_MOWNER);
+    snprintf(path, 256, ".lit/objects/commits/%.2s/%s", hash, hash + 2);
+    commit->path = calloc(1, 257);
+    strncpy(commit->path, path, 256);
     free(path);
     free(hash);
 
@@ -80,12 +84,16 @@ create_commit(const char* message, char* branch_name) {
  */
 void
 add_diff_commit(commit_t* commit, diff_t* diff) {
+    // assert on the commit ptr, not the array.
+    assert(commit != 0x0);
+    assert(diff != 0x0);
+
     // if our count is greater than the capacity, call realloc.
     if (commit->count >= commit->capacity) {
         commit->capacity = commit->capacity ? commit->capacity * 2 : 1; // increment the diff count.
         diff_t** array = realloc(commit->changes, sizeof(diff_t*) * commit->capacity);
         if (!array) {
-            fprintf(stderr,"realloc failed; could not allocate memory for commit diffs.\n");
+            fprintf(stderr,"realloc failed; could not reallocate memory for commit diffs.\n");
             exit(EXIT_FAILURE); // exit on failure.
         }
         commit->changes = array;
@@ -100,15 +108,18 @@ add_diff_commit(commit_t* commit, diff_t* diff) {
  */
 void
 write_commit(const commit_t* commit) {
+    // assert on the commit.
+    assert(commit != 0x0);
+
     // gather all of our diffs, and then write them to their respective files.
     for (size_t i = 0; i < commit->count; i++) {
         // for our content accessible storage we split the upper and lower into two ints.
-        char* path = calloc(1, 256), *hash = calloc(1, 128);
+        char* path = calloc(1, 257), *hash = calloc(1, 129);
         snprintf(hash, 128, "%04u", commit->changes[i]->crc);
         snprintf(path, 256, ".lit/objects/diffs/%.2s", hash);
 
         // ensure that directory exists.
-        mkdir(path, 0755);
+        mkdir(path, MKDIR_MOWNER);
         snprintf(path, 256, ".lit/objects/diffs/%.2s/%s", hash, hash + 2);
         write_diff(commit->changes[i], path);
         free(hash);
@@ -130,7 +141,6 @@ write_commit(const commit_t* commit) {
     // for each diff in this commit, write out the respective crc32 hash.
     for (size_t i = 0; i < commit->count; i++)
         fprintf(f, "%u\n", commit->changes[i]->crc);
-
     fclose(f);
 };
 
@@ -153,9 +163,9 @@ read_commit(const char* path) {
     }
 
     // read the commit information from the file.
-    char* hash = calloc(1, 40);
-    commit->message = calloc(1, 1024);
-    commit->timestamp = calloc(1, 80);
+    char* hash = calloc(1, 41);
+    commit->message = calloc(1, 1025);
+    commit->timestamp = calloc(1, 81);
     size_t count = 0;
     int scanned = fscanf(f, "message:%1024[^\n]\ntimestamp:%80[^\n]\nsha1:%40[^\n]\n"
         "count:%lu\nrawtime:%lu\n",commit->message, commit->timestamp, hash, &count, &commit->rawtime);
@@ -169,6 +179,7 @@ read_commit(const char* path) {
     unsigned char* _hash = strtoha(hash, 20);
     memcpy(commit->hash, _hash, 20);
     free(_hash);
+    free(hash);
 
     // start reading the file for the count of diffs, then use
     //  the first two chars of the crc32 as the folder and then the
@@ -178,7 +189,7 @@ read_commit(const char* path) {
         fscanf(f, "%u\n", &crc);
 
         // construct the file location from the hash.
-        char* dpath = calloc(1, 256), *dhash = calloc(1, 128);
+        char* dpath = calloc(1, 257), *dhash = calloc(1, 129);
         snprintf(dhash, 128, "%04u", crc);
         snprintf(dpath, 256, ".lit/objects/diffs/%.2s/%s", dhash, dhash + 2);
         diff_t* diff = read_diff(dpath);

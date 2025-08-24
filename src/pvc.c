@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-08-23
  *
  * @file pvc.c
  *    the path vector module, responsible for snapshotting
@@ -41,11 +41,18 @@ typedef struct dirent* pdir_ent_t;
  */
 void
 vector_push(vector_t* vector, const vinode_t* inode) {
+    // assert if the vector is null, not the nodes.
+    assert(vector != 0x0);
     if (vector->count == vector->cap) {
         vector->cap = vector->cap ? vector->cap * 2u : 16u;
-        vector->nodes = realloc(vector->nodes, sizeof(vinode_t*) * vector->cap);
+        vinode_t** nodes = realloc(vector->nodes, sizeof(vinode_t*) * vector->cap);
+        if (!nodes) {
+            fprintf(stderr, "realloc failed; could not reallocate memory for nodes.\n");
+            exit(EXIT_FAILURE);
+        }
+        vector->nodes = nodes;
     }
-    vector->nodes[vector->count++] = inode;
+    vector->nodes[vector->count++] = (vinode_t*) inode;
 };
 
 /**
@@ -57,7 +64,7 @@ vector_push(vector_t* vector, const vinode_t* inode) {
  */
 vector_t*
 vector_collect(const char* path, const e_vector_collect_result_t type) {
-    /// create a new pvc_t structure to hold the files.
+    // create a new pvc_t structure to hold the files.
     vector_t* pvc = calloc(1, sizeof *pvc);
 
     // using POSIX compliance we can open the directory and read its contents.
@@ -111,31 +118,14 @@ vector_collect(const char* path, const e_vector_collect_result_t type) {
 };
 
 /**
- * @brief comparison function for qsort - sort by modification time (oldest first)
- *
- * @return if a vinode_t <a> is older than <b> -1 v. 1.
- */
-int
-compare_by_mtime(const void* a, const void* b) {
-    const vinode_t* node_a = *(const vinode_t**)a;
-    const vinode_t* node_b = *(const vinode_t**)b;
-
-    // Sort in descending order (oldest first)
-    if (node_a->mtime > node_b->mtime) return 1;
-    if (node_a->mtime < node_b->mtime) return -1;
-    return 0;
-}
-
-/*! @uses; assert */
-#include <assert.h>
-
-/**
  * @brief frees the entire allocated vector provided.
  *
- * @param vector the vector to be free'd.
+ * @param vector the vector to be freed.
  */
 void
 vector_free(vector_t* vector) {
+    // assert if the vector is none.
+    assert(vector != 0x0);
     for (size_t i = 0; i < vector->count; i++) {
         free(vector->nodes[i]->path);
         free(vector->nodes[i]->name);
@@ -143,15 +133,3 @@ vector_free(vector_t* vector) {
     }
     free(vector);
 };
-
-/**
- * @brief sort pvc nodes by modification time (oldest first)
- *
- * @param vector the pvc_t structure to sort
- */
-void
-vector_sort_by_mtime(vector_t* vector) {
-    if (vector && vector->nodes && vector->count > 1) {
-        qsort(vector->nodes, vector->count, sizeof(vinode_t*), compare_by_mtime);
-    }
-}

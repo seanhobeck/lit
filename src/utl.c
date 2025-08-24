@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-08-23
  *
  * @file utl.c
  *    the utilities module, responsible for miscellaneous utility functions.
@@ -9,6 +9,9 @@
 
 /*! @uses errno */
 #include <errno.h>
+
+/*! @uses; assert */
+#include <assert.h>
 
 /*! @uses mkdir */
 #include <sys/stat.h>
@@ -21,6 +24,9 @@
  */
 char*
 strdup(const char* str) {
+    // assert check if the string is none.
+    assert(str != 0x0);
+
     // allocate memory for the string.
     char* new_str = calloc(1, strlen(str) + 1);
     if (!new_str) {
@@ -42,6 +48,9 @@ strdup(const char* str) {
  */
 char*
 strtrm(const char* str, size_t n) {
+    // assert the string value.
+    assert(str != 0x0);
+
     // duplicate the string and compare length.
     char* dup = strdup(str);
     unsigned long len = strlen(dup);
@@ -69,6 +78,9 @@ strtrm(const char* str, size_t n) {
  */
 unsigned char*
 strtoha(const char* str, size_t n) {
+    // assert the string value.
+    assert(str != 0x0);
+
     // iterate over n, then read each two characters from <string>
     //  into a unsigned byte, set the value in <hash> and continue.
     unsigned char* hash = calloc(1, n);
@@ -97,6 +109,9 @@ strtoha(const char* str, size_t n) {
  */
 int
 fexistpd(const char* path) {
+    // assert the string value.
+    assert(path != 0x0);
+
     // string duplicate the path to avoid modifying the original.
     char *dpath = strdup(path);
     if (!dpath) {
@@ -130,6 +145,10 @@ fexistpd(const char* path) {
  */
 void
 fwritels(const char* path, char** lines, size_t n) {
+    // assert the path and the lines.
+    assert(path != 0x0);
+    assert(lines != 0x0);
+
     // ensure that the parent directories exist on <path>.
     if (fexistpd(path) == -1) {
         fprintf(stderr,"fexistpd failed; could not create parent directories.\n");
@@ -160,6 +179,9 @@ fwritels(const char* path, char** lines, size_t n) {
  */
 char**
 fcleanls(char** lines, size_t n, size_t* k) {
+    // assert on the value of lines.
+    assert(lines != 0x0);
+
     // allocate the cleaned lines
     char** clines = calloc(1, n * sizeof(char*));
 
@@ -186,6 +208,9 @@ fcleanls(char** lines, size_t n, size_t* k) {
  */
 char**
 freadls(FILE* fptr, size_t* size) {
+    // assert on fptr.
+    assert(fptr != 0x0);
+
     // make a maximum line buffer, and allocate the data of the file.
     char buffer[MAX_LINE_LEN];
     char** data = calloc(1, sizeof(char*) * MAX_LINES);

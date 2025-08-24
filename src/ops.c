@@ -28,6 +28,9 @@
  */
 void
 freels(char** lines, size_t n) {
+    // assert on lines.
+    assert(lines != 0x0);
+    assert(n > 0);
     for (size_t i = 0; i < n; i++)
         free(lines[i]);
     free(lines);
@@ -44,6 +47,11 @@ freels(char** lines, size_t n) {
  */
 char**
 finversels(char** lines, size_t n, size_t* k) {
+    // assert on the parameters.
+    assert(lines != 0x0);
+    assert(k != 0x0);
+    assert(n > 0);
+
     // allocate the cleaned lines
     char** clines = calloc(1, n * sizeof(char*));
 
@@ -73,6 +81,11 @@ finversels(char** lines, size_t n, size_t* k) {
  */
 char**
 fforwardls(char** lines, size_t n, size_t* k) {
+    // assert on the parameters.
+    assert(lines != 0x0);
+    assert(k != 0x0);
+    assert(n > 0);
+
     // allocate the cleaned lines
     char** clines = calloc(1, n * sizeof(char*));
 
@@ -98,6 +111,9 @@ fforwardls(char** lines, size_t n, size_t* k) {
  */
 void
 apply_forward_commit(const commit_t* commit) {
+    // assert on the commit.
+    assert(commit != 0x0);
+
     // iterate for a "delta apply".
     for (size_t i = 0; i < commit->count; i++) {
         diff_t* diff = commit->changes[i];
@@ -147,6 +163,9 @@ apply_forward_commit(const commit_t* commit) {
  */
 void
 apply_inverse_commit(const commit_t* commit) {
+    // assert on the commit.
+    assert(commit != 0x0);
+
     // iterate for a "delta apply".
     for (size_t i = 0; i < commit->count; i++) {
         diff_t* diff = commit->changes[i];
@@ -196,6 +215,10 @@ apply_inverse_commit(const commit_t* commit) {
  */
 void
 rollback(branch_t* branch, const commit_t* commit) {
+    // assert on the branch and commit.
+    assert(branch != 0x0);
+    assert(commit != 0x0);
+
     // first thing to do is to check that this commit is in <branch> history.
     size_t target_idx = (size_t) -1;
     for (size_t i = 0; i < branch->count; i++) {
@@ -228,6 +251,10 @@ rollback(branch_t* branch, const commit_t* commit) {
  */
 void
 checkout(branch_t* branch, const commit_t* commit) {
+    // assert on the branch and the commit.
+    assert(branch != 0x0);
+    assert(commit != 0x0);
+
     // first thing to do is to check that this commit is in <branch> history.
     size_t target_idx = -1;
     for (size_t i = 0; i < branch->count; i++) {

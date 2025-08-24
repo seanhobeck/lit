@@ -18,7 +18,7 @@
 #include <stdlib.h>
 
 /// @note a macro to define the version of the program.
-#define VERSION "1.4.15"
+#define VERSION "1.4.23"
 
 /**
  * @brief print the help message for the command line arguments.

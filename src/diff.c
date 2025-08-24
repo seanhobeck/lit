@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-08-23
  *
  * @file diff.c
  *    the diff module, responsible for creating comparisons between files and folders,
@@ -14,13 +14,16 @@
 /**
  * @brief calculate the crc32 hash of a file based on its contents.
  *
- * @param filepath the path to the file to be hashed.
+ * @param path the path to the file to be hashed.
  * @return a crc32 hash for the file.
  */
 ucrc32_t
-file_crc32(const char* filepath) {
+file_crc32(const char* path) {
+    // assert on the path.
+    assert(path != NULL);
+
     // read the file in.
-    FILE* file = fopen(filepath, "rb");
+    FILE* file = fopen(path, "rb");
     if (!file) {
         fprintf(stderr,"fopen failed; could not open file for hashing");
         return 0;
@@ -66,6 +69,9 @@ file_crc32(const char* filepath) {
  */
 void
 create_crc32(diff_t* diff) {
+    // assert on the diff ptr.
+    assert(diff != 0x0);
+
     // allocate the file and open it.
     char* tmp = calloc(1, 256);
     sprintf(tmp, "%lu.tmp", time(0x0));
@@ -95,6 +101,11 @@ create_crc32(diff_t* diff) {
  */
 void
 lcs(char** a, const int m, char** b, const int n, diff_t* diff) {
+    // assert on all of the ptrs.
+    assert(a != 0x0);
+    assert(b != 0x0);
+    assert(diff != 0x0);
+
     // @ref[https://en.wikipedia.org/wiki/Longest_common_subsequence]
     int **dp = malloc((m+1) * sizeof(int*));
     for (int i = 0; i <= m; i++)
@@ -143,6 +154,10 @@ lcs(char** a, const int m, char** b, const int n, diff_t* diff) {
  */
 diff_t*
 create_file_modified_diff(const char* old_path, const char* new_path) {
+    // assert on the paths.
+    assert(old_path != 0x0);
+    assert(new_path != 0x0);
+
     // create the two files in terms of data.
     FILE* f_old = fopen(old_path, "r");
     FILE* f_new = fopen(new_path, "r");
@@ -209,6 +224,9 @@ create_file_modified_diff(const char* old_path, const char* new_path) {
  */
 diff_t*
 create_file_diff(const char* path, const e_diff_ty_t type) {
+    // assert on the path.
+    assert(path != 0x0);
+
     // creating our diff., and then allocating the memory for the data.
     diff_t* diff = calloc(1, sizeof *diff);
     diff->type = type;
@@ -244,6 +262,9 @@ create_file_diff(const char* path, const e_diff_ty_t type) {
  */
 diff_t*
 create_folder_diff(const char* path, const e_diff_ty_t type) {
+    // assert on the path.
+    assert(path != 0x0);
+
     // create a temporary diff_t structure.
     diff_t* diff = calloc(1, sizeof *diff);
     diff->type = type;
@@ -266,6 +287,10 @@ create_folder_diff(const char* path, const e_diff_ty_t type) {
  */
 void
 append_to_diff(diff_t* diff, const char* fmt, ...) {
+    // assert on the diff ptr, then the fmt.
+    assert(diff != 0x0);
+    assert(fmt != 0x0);
+
     // if our count is greater than the capacity, call realloc.
     if (diff->count >= diff->capacity) {
         diff->capacity = diff->capacity ? diff->capacity * 2 : 16;
@@ -296,6 +321,10 @@ append_to_diff(diff_t* diff, const char* fmt, ...) {
  */
 void
 write_diff(const diff_t* diff, const char* path) {
+    // assert on the diff then the path.
+    assert(diff != 0x0);
+    assert(path != 0x0);
+
     // open the file for writing.
     FILE* f = fopen(path, "w");
     if (!f) {
@@ -329,6 +358,9 @@ write_diff(const diff_t* diff, const char* path) {
  */
 diff_t*
 read_diff(const char* path) {
+    // assert on the path.
+    assert(path != 0x0);
+
     // create a temporary diff structure.
     diff_t* diff = calloc(1, sizeof *diff);
 

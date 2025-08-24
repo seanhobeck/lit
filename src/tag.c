@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-15
+ * @date 2025-08-23
  *
  * @file tag.c
  *    the tag module, responsible for tagging any important rebases,
@@ -25,6 +25,11 @@
 tag_t*
 create_tag(const branch_t* branch, const commit_t* commit, \
     const char* name) {
+    // assert on all of the pointers.
+    assert(branch != 0x0);
+    assert(commit != 0x0);
+    assert(name != 0x0);
+
     // create our tag structure.
     tag_t* tag = calloc(1, sizeof *tag);
     if (!tag) {
@@ -46,6 +51,9 @@ create_tag(const branch_t* branch, const commit_t* commit, \
  */
 void
 write_tag(const tag_t* tag) {
+    // assert on the tag ptr.
+    assert(tag != 0x0);
+
     // open the file given the path and the tag.
     char path[256];
     snprintf(path, 256, ".lit/refs/tags/%s", tag->name);
@@ -68,13 +76,18 @@ write_tag(const tag_t* tag) {
  * @param tag the tag to be appended.
  */
 void append_tag(tag_list_t* list, tag_t* tag) {
+    // assert on the tag list, and then the tag.
+    assert(list != 0x0);
+    assert(tag != 0x0);
+
     if (list->count >= list->capacity) {
         list->capacity = list->capacity ? list->capacity * 2 : 1;
-        list->tags = realloc(list->tags, sizeof(tag_t*) * list->capacity);
-        if (!list->tags) {
-            fprintf(stderr, "realloc failed; could not allocate memory for tag list.\n");
+        tag_t** tags = realloc(list->tags, sizeof(tag_t*) * list->capacity);
+        if (!tags) {
+            fprintf(stderr, "realloc failed; could not reallocate memory for tags.\n");
             exit(EXIT_FAILURE);
         }
+        list->tags = tags;
     }
     list->tags[list->count++] = tag;
 };
@@ -153,12 +166,15 @@ read_tags() {
  * @brief filter tags based on the branch to a new list.
  *
  * @param branch_hash the branch hash to filter for.
- * @param tags the old list of tags to be filtered through.
+ * @param list the old list of tags to be filtered through.
  * @return a structure containing a dynamic list of allocated tags.
  */
 tag_list_t*
 filter_tags(const sha1_t branch_hash, \
-    const tag_list_t* tags) {
+    const tag_list_t* list) {
+    // assert on the tag list.
+    assert(list != 0x0);
+
     // allocate our new list.
     tag_list_t* new_list = calloc(1, sizeof *new_list);
     if (!new_list) {
@@ -167,8 +183,8 @@ filter_tags(const sha1_t branch_hash, \
     }
 
     // iterate through the old list, and run memcmp.
-    for (size_t i = 0; i < tags->count; i++) {
-        tag_t* tag = tags->tags[i];
+    for (size_t i = 0; i < list->count; i++) {
+        tag_t* tag = list->tags[i];
         if (!memcmp(tag->branch_hash, branch_hash, 20))
             append_tag(new_list, tag);
     }

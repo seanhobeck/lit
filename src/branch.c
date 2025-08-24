@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-08-23
  *
  * @file branch.c
  *    the branch module in the version control system, it is responsible for handling
@@ -19,6 +19,9 @@
  */
 branch_t*
 create_branch(const char* name) {
+    // assert on the name.
+    assert(name != 0x0);
+
     // create a new branch structure.
     branch_t* branch = calloc(1ul, sizeof *branch);
 
@@ -46,6 +49,9 @@ create_branch(const char* name) {
  */
 void
 write_branch(const branch_t* branch) {
+    // assert on the branch ptr.
+    assert(branch != 0x0);
+
     // create branch file.
     FILE* f = fopen(branch->path, "w");
     if (!f) {
@@ -71,14 +77,19 @@ write_branch(const branch_t* branch) {
  */
 void
 add_commit_branch(commit_t* commit, branch_t* branch) {
+    // assert on the commit and the branch.
+    assert(branch != 0x0);
+    assert(commit != 0x0);
+
     // if the count is greater than the capacity, realloc.
     if (branch->count >= branch->capacity) {
         branch->capacity = branch->capacity ? branch->capacity * 2 : 1; // increment the commit count.
-        branch->commits = realloc(branch->commits, sizeof(commit_t*) * branch->capacity);
-        if (!branch->commits) {
-            fprintf(stderr,"realloc failed; could not allocate memory for branch history commits.\n");
+        commit_t** commits = realloc(branch->commits, sizeof(commit_t*) * branch->capacity);
+        if (!commits) {
+            fprintf(stderr,"realloc failed; could not reallocate memory for branch.\n");
             exit(EXIT_FAILURE); // exit on failure.
         }
+        branch->commits = commits;
     }
     // copy the commit into the history.
     branch->commits[branch->count++] = commit;
@@ -92,11 +103,13 @@ add_commit_branch(commit_t* commit, branch_t* branch) {
  */
 branch_t*
 read_branch(const char* name) {
+    // assert on the name.
+    assert(name != 0x0);
+
     // create a temporary branch structure.
     branch_t* branch = calloc(1, sizeof *branch);
 
     // create the branch path based on the cwd.
-    branch->name = strdup(name);
     branch->path = calloc(1, 256);
     sprintf(branch->path, ".lit/refs/heads/%s", name);
 
@@ -109,8 +122,8 @@ read_branch(const char* name) {
 
     // read the branch information from the file.
     size_t count = 0;
-    branch->name = calloc(1, 128);
-    char *branch_hash = calloc(1, 40);
+    branch->name = calloc(1, 129);
+    char *branch_hash = calloc(1, 41);
     int scanned = fscanf(f, "name:%128[^\n]\nsha1:%40[^\n]\nidx:%lu\ncount:%lu\n", \
         branch->name, branch_hash, &branch->idx, &count);
     if (scanned != 4) {
@@ -129,7 +142,7 @@ read_branch(const char* name) {
     // use the first byte (2 chars) as the folder path in .lit/objects/commits/xx
     // and then the rest (name+2) as the file name.
     for (size_t i = 0; i < count; i++) {
-        char* hash = calloc(1, 40);
+        char* hash = calloc(1, 41);
         fscanf(f, "%40[^\n]\n", hash);
 
         // construct the file location from the hash.

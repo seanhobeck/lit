@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-08-22
  *
  * @file pvc.h
  *    the path vector module, responsible for snapshotting
@@ -54,14 +54,6 @@ vector_push(vector_t* vector, const vinode_t* inode);
  */
 void
 vector_free(vector_t* vector);
-
-/**
- * @brief sort pvc nodes by modification time (oldest first)
- *
- * @param vector the pvc_t structure to sort
- */
-void
-vector_sort_by_mtime(vector_t* vector);
 
 /**
  * @brief collect files in the current working directory and its subdirectories

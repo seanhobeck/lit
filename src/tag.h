@@ -63,10 +63,10 @@ read_tags();
  * @brief filter tags based on the branch to a new list.
  *
  * @param branch_hash the branch hash to filter for.
- * @param tags the old list of tags to be filtered through.
+ * @param list the old list of tags to be filtered through.
  * @return a structure containing a dynamic list of allocated tags.
  */
 tag_list_t*
 filter_tags(const sha1_t branch_hash, \
-    const tag_list_t* tags);
+    const tag_list_t* list);
 #endif TAG_H //TAG_H

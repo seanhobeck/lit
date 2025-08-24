@@ -12,8 +12,8 @@
       "build/main.o",
       "src/main.c"
     ],
-    "directory": "/home/sean-desktop/Projects/lit",
-    "file": "/home/sean-desktop/Projects/lit/src/main.c",
-    "output": "/home/sean-desktop/Projects/lit/build/main.o"
+    "directory": "/home/sean/Dev/lit",
+    "file": "/home/sean/Dev/lit/src/main.c",
+    "output": "/home/sean/Dev/lit/build/main.o"
   }
 ]

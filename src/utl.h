@@ -1,6 +1,6 @@
 /**
 * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-08-22
  *
  * @file utl.h
  *    the utilities module, responsible for miscellaneous utility functions.
@@ -38,6 +38,9 @@
 
 /*! @uses size_t */
 #include <stddef.h>
+
+/*! @uses; assert */
+#include <assert.h>
 
 /**
  * @brief duplicate a string.

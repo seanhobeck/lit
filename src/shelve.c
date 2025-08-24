@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-21
+ * @date 2025-08-22
  *
  * @file shelve.c
  *    the shelving module, responsible for being able to shelve
@@ -26,4 +26,5 @@ shelve_changes(const char* branch_name, const diff_t* diff) {
         exit(EXIT_FAILURE);
     }
 
+    /// TODO: shelve the changes to the respective directory.
 };

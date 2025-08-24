@@ -88,7 +88,7 @@ cli_handle(arg_t args) {
             repository_t* repo = read_repository();
 
             // get the current branch.
-            branch_t* current = get_active_branch_repository(repo);
+            branch_t* current = repo->branches[repo->idx];
 
             // pvc all files in .lit/staging and create a commit with the diffs.
             vector_t* vector = vector_collect(".lit/stashed/", E_PVC_TYPE_NO_RECURSE);
@@ -161,7 +161,7 @@ cli_handle(arg_t args) {
             repository_t* repo = read_repository();
 
             // get the current branch.
-            branch_t* current = get_active_branch_repository(repo);
+            branch_t* current = repo->branches[repo->idx];
 
             // convert user hash to a sha1_t type.
             sha1_t user_hash = {0};
@@ -259,7 +259,7 @@ cli_handle(arg_t args) {
             repository_t* repo = read_repository();
 
             // get the current branch.
-            branch_t* current = get_active_branch_repository(repo);
+            branch_t* current = repo->branches[repo->idx];
 
             // what filename are we looking for?
             if (args.argv[2][strlen(args.argv[2]) - 1] == '/') {
@@ -361,7 +361,7 @@ cli_handle(arg_t args) {
             repository_t* repo = read_repository();
 
             // get the current branch.
-            branch_t* current = get_active_branch_repository(repo);
+            branch_t* current = repo->branches[repo->idx];
             create_branch_repository(repo, args.argv[2]);
             printf("created branch '%s' from '%s'.\n", args.argv[2], current->name);
             break;
@@ -372,7 +372,7 @@ cli_handle(arg_t args) {
             repository_t* repo = read_repository();
 
             // get the current branch.
-            branch_t* current = get_active_branch_repository(repo);
+            branch_t* current = repo->branches[repo->idx];
             delete_branch_repository(repo, args.argv[2]);
 
             // switching back to the main branch.
@@ -421,7 +421,7 @@ cli_handle(arg_t args) {
 
             // find the commit for this tag, (if it exists)
             commit_t* commit = 0x0;
-            branch_t* active = get_active_branch_repository(repo);
+            branch_t* active = repo->branches[repo->idx];
             for (size_t i = 0; i < active->count; i++) {
 
                 // memcmp the sha1 hashes.

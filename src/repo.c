@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-13
+ * @date 2025-08-23
  *
  * @file repo.c
  *    the repository module in the version control system, it is responsible for handling branches,
@@ -36,7 +36,9 @@
 commit_t*
 find_common_ancestor(branch_t* branch1, branch_t* branch2) {
     // is there any issues with the commits provided?
-    if (!branch1 || !branch2 || branch1->count == 0 || branch2->count == 0)
+    assert(branch1 != 0x0);
+    assert(branch2 != 0x0);
+    if (branch1->count == 0 || branch2->count == 0)
         return 0x0;
 
     // start from the most recent comits and work backwards
@@ -69,6 +71,9 @@ find_common_ancestor(branch_t* branch1, branch_t* branch2) {
  */
 long
 find_index_commit(branch_t* branch, commit_t* commit) {
+    // assert the branch and the commit.
+    assert(branch);
+    assert(commit);
     for (size_t i = 0; i < branch->count; i++) {
         if (memcmp(branch->commits[i]->hash, commit->hash, 32) == 0) {
             return (long) i;
@@ -84,16 +89,19 @@ find_index_commit(branch_t* branch, commit_t* commit) {
  * @param repository the repository where <branch> should be added.
  */
 void
-add_branch_to_repository(branch_t* branch, repository_t* repository) {
+add_branch_to_repository(const branch_t* branch, repository_t* repository) {
+    // assert the repository.
+    assert(repository != 0x0);
     if (repository->count >= repository->capacity) {
         repository->capacity = repository->capacity ? repository->capacity * 2 : 1; // increment the branch count.
-        repository->branches = realloc(repository->branches, sizeof(branch_t*) * repository->capacity);
-        if (!repository->branches) {
-            fprintf(stderr,"realloc failed; could not allocate memory for branches.\n");
+        branch_t** branches = realloc(repository->branches, sizeof(branch_t*) * repository->capacity);
+        if (!branches) {
+            fprintf(stderr,"realloc failed; could not reallocate memory for branches.\n");
             exit(EXIT_FAILURE);
         }
+        repository->branches = branches;
     }
-    repository->branches[repository->count++] = branch;
+    repository->branches[repository->count++] = (branch_t*) branch;
 }
 
 /**
@@ -117,19 +125,19 @@ create_repository() {
     }
 
     // create the '.lit' directory in the current working directory.
-    if (mkdir(".lit", 0755) == -1) {
+    if (mkdir(".lit", MKDIR_MOWNER) == -1) {
         fprintf(stderr, "mkdir failed; '.lit' directory already exists.\n");
         exit(EXIT_FAILURE);
     }
     // content-addressable storage folders.
-    mkdir(".lit/objects", 0755);
-    mkdir(".lit/objects/commits", 0755);
-    mkdir(".lit/objects/diffs", 0755);
+    mkdir(".lit/objects", MKDIR_MOWNER);
+    mkdir(".lit/objects/commits", MKDIR_MOWNER);
+    mkdir(".lit/objects/diffs", MKDIR_MOWNER);
 
     // references (branches, tags).
-    mkdir(".lit/refs", 0755);
-    mkdir(".lit/refs/heads/", 0755);
-    mkdir(".lit/refs/tags/", 0755);
+    mkdir(".lit/refs", MKDIR_MOWNER);
+    mkdir(".lit/refs/heads/", MKDIR_MOWNER);
+    mkdir(".lit/refs/tags/", MKDIR_MOWNER);
 
     // create a new repository structure.
     repository_t* repo = calloc(1, sizeof(*repo));
@@ -148,6 +156,9 @@ create_repository() {
  */
 void
 write_repository(const repository_t* repo) {
+    // assert the repository.
+    assert(repo != 0x0);
+
     // open the file '.lit/repository' for writing.
     FILE* f = fopen(".lit/index", "w");
     if (!f) {
@@ -173,7 +184,7 @@ read_repository() {
     // create a temporary repository structure.
     repository_t* repo = calloc(1, sizeof *repo);
 
-    // open the file '.lit/repository' for reading.
+    // open the file '.lit/index' for reading.
     FILE* f = fopen(".lit/index", "r");
     if (!f) {
         fprintf(stderr,"fopen failed; could not open repository file for reading.\n");
@@ -189,7 +200,7 @@ read_repository() {
     }
 
     // if there are no branches, return the repository.
-    if (repo->count == 0u) {
+    if (repo->count == 0) {
         repo->branches = 0x0;
         fclose(f);
         return repo;
@@ -204,10 +215,10 @@ read_repository() {
     }
 
     // iterate through the count.
-    for (size_t i = 0u; i < repo->count; i++) {
+    for (size_t i = 0; i < repo->count; i++) {
         // allocate and read.
-        char* branch_name = calloc(1, 128);
-        scanned = fscanf(f, "%lu:%127[^\n]\n", &i, branch_name);
+        char* branch_name = calloc(1, 129);
+        scanned = fscanf(f, "%lu:%128[^\n]\n", &i, branch_name);
         if (scanned != 2) {
             fprintf(stderr,"fscanf failed; could not read branch name.\n");
             fclose(f);
@@ -216,9 +227,10 @@ read_repository() {
         }
 
         /// read the branch from refs/heads/
-        char *path = calloc(1, 256);
+        char *path = calloc(1, 257);
         snprintf(path, 256, ".lit/refs/heads/%s", branch_name);
         repo->branches[i] = read_branch(branch_name);
+        free(path);
         free(branch_name);
     };
     return repo;
@@ -232,6 +244,10 @@ read_repository() {
  */
 void
 create_branch_repository(repository_t* repository, const char* name) {
+    // assert the repository and the name.
+    assert(repository != 0x0);
+    assert(name != 0x0);
+
     // check if the branch exists.
     for (size_t i = 0; i < repository->count; i++) {
         if (!strcmp(repository->branches[i]->name, name)) {
@@ -248,18 +264,10 @@ create_branch_repository(repository_t* repository, const char* name) {
     }
 
     // add the branch to this repository.
-    if (repository->count >= repository->capacity) {
-        repository->capacity = repository->capacity ? repository->capacity * 2 : 1; // increment the branch count.
-        repository->branches = realloc(repository->branches, sizeof(branch_t*) * repository->capacity);
-        if (!repository->branches) {
-            fprintf(stderr,"realloc failed; could not allocate memory for branches.\n");
-            exit(EXIT_FAILURE);
-        }
-    }
-    repository->branches[repository->count++] = branch;
+    add_branch_to_repository(branch, repository);
 
     // get the current branch, and copy all of the commits from the top to the branch.
-    branch_t* current = get_active_branch_repository(repository);
+    branch_t* current = repository->branches[repository->idx];
     for (size_t i = 0; i < current->count; i++) {
         commit_t* commit = calloc(1, sizeof *commit);
         memcpy(commit, current->commits[i], sizeof *commit);
@@ -284,6 +292,10 @@ create_branch_repository(repository_t* repository, const char* name) {
  */
 void
 delete_branch_repository(repository_t* repository, const char* name) {
+    // assert the repository and the name.
+    assert(repository != 0x0);
+    assert(name != 0x0);
+
     // check if the branch exists.
     size_t i = 0;
     for (; i < repository->count; i++) {
@@ -311,18 +323,6 @@ delete_branch_repository(repository_t* repository, const char* name) {
 };
 
 /**
- * @brief get the current branch checked out for this repository.
- *
- * @param repository the repository provided.
- * @return the current branch checked out for this repository.
- */
-branch_t*
-get_active_branch_repository(repository_t* repository) {
-    // if the index is -1, return main, else return the branch at the current index.
-    return repository->branches[repository->idx];
-};
-
-/**
  * @brief get the branch from the repository with error checking.
  *
  * @param repository the repository read from the cwd.
@@ -331,6 +331,10 @@ get_active_branch_repository(repository_t* repository) {
  */
 branch_t*
 get_branch_repository(const repository_t* repository, const char* branch_name) {
+    // assert the repository and the branch name.
+    assert(repository != 0x0);
+    assert(branch_name != 0x0);
+
     // iterate through each branch in the repository.
     for (size_t i = 0; i < repository->count; i++) {
         if (!strcmp(repository->branches[i]->name, branch_name)) {
@@ -350,6 +354,10 @@ get_branch_repository(const repository_t* repository, const char* branch_name) {
  */
 void
 switch_branch_repository(repository_t* repository, const char* name) {
+    // assert the repository and the new branch name.
+    assert(repository != 0x0);
+    assert(name != 0x0);
+
     // find which branch we are going to switch to.
     branch_t* target = 0x0;
     size_t target_idx = 0;
@@ -378,7 +386,7 @@ switch_branch_repository(repository_t* repository, const char* name) {
     // find the common ancestor of the branch via timestamp, then
     //  do a checkout or rollback based on the direction that we are
     //  heading with this commit.
-    branch_t* current = get_active_branch_repository(repository);
+    branch_t* current = repository->branches[repository->idx];
     commit_t* ancestor = find_common_ancestor(current , target);
     if (!ancestor) {
         // this should NOT happen, warn the user.

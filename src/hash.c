@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-15
+ * @date 2025-08-23
  *
  * @file hash.c
  *    the hash module, responsible for generating sha1, sha256, and crc32 hashes
@@ -15,7 +15,11 @@
 #include <string.h>
 
 /*! @uses sprintf. */
+#include "hash.h"
 #include <stdio.h>
+
+/*! @uses assert */
+#include <assert.h>
 
 /// @note macro for rotating bits to the left in a 32-bit integer.
 #define rotl32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
@@ -69,6 +73,10 @@ static const unsigned int k256[64u] = {
  */
 void
 sha1(const unsigned char* data, unsigned long size, sha1_t hash) {
+    // assert on the parameters.
+    assert(data != 0x0);
+    assert(size > 0);
+
     // initial hash values (sha1 standard)
     unsigned int h0 = 0x67452301, h1 = 0xefcdaB89, h2 = 0x98badcfe,
         h3 = 0x10325476, h4 = 0xc3d2e1f0;
@@ -140,6 +148,9 @@ sha1(const unsigned char* data, unsigned long size, sha1_t hash) {
  */
 char*
 strsha1(const sha1_t hash) {
+    // assert on the hash.
+    assert(hash != 0x0);
+
     // convert the sha1 hash to a string representation.
     char* str = malloc(41); // 40 hex chars + null terminator
     for (unsigned long i = 0u; i < 20; i++)
@@ -157,6 +168,10 @@ strsha1(const sha1_t hash) {
  */
 void
 sha256(const unsigned char* data, unsigned long size, sha256_t hash) {
+    // assert on the parameters.
+    assert(data != 0x0);
+    assert(size > 0);
+
     // initial hash values (first 32 bits of the square roots of the first 64 primes)
     unsigned int hashes[8] = {
         0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
@@ -219,6 +234,9 @@ sha256(const unsigned char* data, unsigned long size, sha256_t hash) {
  */
 char*
 strsha256(const sha256_t hash) {
+    // assert on the hash.
+    assert(hash != 0x0);
+
     // convert the sha1 hash to a string representation.
     char* str = malloc(65); // 64 hex chars + null terminator
     for (unsigned long i = 0; i < 32; i++)
@@ -236,9 +254,11 @@ strsha256(const sha256_t hash) {
  */
 ucrc32_t
 crc32(const unsigned char* data, unsigned long size) {
-    // according to ieee 802.3  vvv
-    //
-    // @ref[https://docs.amd.com/v/u/en-US/xapp209]
+    // assert on the data.
+    assert(data != 0x0);
+    assert(size > 0);
+
+    // according to ieee 802.3, @link[https://docs.amd.com/v/u/en-US/xapp209]
     ucrc32_t crc = ~0u;
     for (unsigned long i = 0; i < size; i++) {
         crc ^= data[i];
@@ -257,6 +277,8 @@ crc32(const unsigned char* data, unsigned long size) {
  */
 char*
 strcrc32(const ucrc32_t hash) {
+    // assert on the hash.
+    assert(hash != 0x0);
     char* string = calloc(1, 11); // 10 hex chars + null terminator
     sprintf(string, "%d\0", hash);
     return string;

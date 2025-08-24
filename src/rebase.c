@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-15
+ * @date 2025-08-23
  *
  * @file rebase.c
  *    the rebase module, responsible for rebasing, and checking collisions
@@ -23,6 +23,9 @@
  */
 bool
 is_conflicting_commits(const commit_t* first, const commit_t* second) {
+    // assert on the commits.
+    assert(first != 0x0);
+    assert(second != 0x0);
     bool is_conflicting = false;
 
     // iterate through each change in the first commit
@@ -58,6 +61,11 @@ is_conflicting_commits(const commit_t* first, const commit_t* second) {
 bool
 is_rebase_possible(const repository_t* repository, const char* destination_branch_name, \
     const char* source_branch_name) {
+    // assert on the repository, destination and then branch name.
+    assert(repository != 0x0);
+    assert(destination_branch_name != 0x0);
+    assert(destination_branch_name != 0x0);
+
     // find the current and active branches.
     branch_t* destination = get_branch_repository(repository, destination_branch_name),\
     * source = get_branch_repository(repository, source_branch_name);
@@ -103,6 +111,11 @@ is_rebase_possible(const repository_t* repository, const char* destination_branc
 e_rebase_result_t
 rebase_branch(const repository_t* repository, const char* destination_branch_name, \
     const char* source_branch_name) {
+    // assert on the repository, destination and then branch name.
+    assert(repository != 0x0);
+    assert(destination_branch_name != 0x0);
+    assert(destination_branch_name != 0x0);
+
     // check if the rebase is even possible first.
     if (!is_rebase_possible(repository, destination_branch_name, source_branch_name)) {
         fprintf(stderr, "rebase is not possible on branch \'%s\', "
@@ -126,10 +139,11 @@ rebase_branch(const repository_t* repository, const char* destination_branch_nam
     }
 
     // checkout the most recent commits just added if it is the active branch.
-    if (!strcmp(destination->name, get_active_branch_repository(repository)->name))
+    if (!strcmp(destination->name, repository->branches[repository->idx]->name))
         checkout(destination, destination->commits[destination->idx + rebase_count]);
     else destination->idx += rebase_count;
 
+    // write and log.
     write_branch(destination);
     write_repository(repository);
     printf("successfully rebased \'%s\' onto \'%s\' with %lu commit(s).\n", \

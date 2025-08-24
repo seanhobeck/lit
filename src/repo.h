@@ -62,15 +62,6 @@ void
 delete_branch_repository(repository_t* repository, const char* name);
 
 /**
- * @brief get the current/active branch checked out for this repository.
- *
- * @param repository the repository provided.
- * @return the current/active branch checked out for this repository.
- */
-branch_t*
-get_active_branch_repository(repository_t* repository);
-
-/**
  * @brief get the branch from the repository with error checking.
  *
  * @param repository the repository read from the cwd.
