@@ -1,10 +1,10 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-08-29
  *
  * @file cli.h
  *    the cli module of lit, responsible for handling the arguments passed by the user and
- *    doing certain actions (CRUD, repository actions, etc).
+ *    doing certain actions (diff, commit, branch, repository).
  */
 #ifndef CLI_H
 #define CLI_H
@@ -20,4 +20,4 @@
  */
 int
 cli_handle(arg_t args);
-#endif
+#endif //CLI_H

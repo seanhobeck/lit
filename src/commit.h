@@ -39,7 +39,7 @@ typedef struct {
  * @return a commit_t structure containing the commit information.
  */
 commit_t*
-create_commit(const char* message, char* branch_name);
+create_commit(const char* message, const char* branch_name);
 
 /**
  * @brief add a diff to the commit, this will be used to store

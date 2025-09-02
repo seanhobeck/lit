@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-15
+ * @date 2025-09-01
  *
  * @file arg.h
  *      the argument module, responsible for parsing command line arguments
@@ -18,7 +18,7 @@
 #include <stdlib.h>
 
 /// @note a macro to define the version of the program.
-#define VERSION "1.4.23"
+#define VERSION "1.5.11"
 
 /**
  * @brief print the help message for the command line arguments.
@@ -81,7 +81,7 @@ parse_args(int argc, char** argv, arg_t* cmd) {
     // --version or -v to print out the current version of the program.
     if (!strcmp(argv[1], "-v") || !strcmp(argv[1], "--version")) {
         cmd->type = E_ARG_TYPE_VERSION;
-        fprintf(stderr,"lit version %s\n", VERSION);
+        fprintf(stdout,"lit version %s\n", VERSION);
         return;
     }
     // --init or -i to initialize a new repository.

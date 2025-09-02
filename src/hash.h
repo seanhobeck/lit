@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-09-01
  *
  * @file hash.h
  *    the hash module, responsible for generating sha1, sha256, and crc32 hashes
@@ -44,7 +44,7 @@ strsha1(const sha1_t hash);
  * @param size size of the data in bytes.
  * @param hash sha256_t structure to store the hash.
  */
-void
+__attribute__((deprecated)) void
 sha256(const unsigned char* data, unsigned long size, sha256_t hash);
 
 /**
@@ -53,7 +53,7 @@ sha256(const unsigned char* data, unsigned long size, sha256_t hash);
  * @param hash the sha256 hash to be converted.
  * @return a string representation of the sha256 hash.
  */
-char*
+__attribute__((deprecated)) char*
 strsha256(const sha256_t hash);
 
 /**

@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-23
+ * @date 2025-08-31
  *
  * @file utl.c
  *    the utilities module, responsible for miscellaneous utility functions.
@@ -54,7 +54,7 @@ strtrm(const char* str, size_t n) {
     // duplicate the string and compare length.
     char* dup = strdup(str);
     unsigned long len = strlen(dup);
-    if (len <= n)
+    if (len <= n || len < 3 || n <= 0)
         return dup;
 
     // if less, allocate a new string and trim it
@@ -80,6 +80,7 @@ unsigned char*
 strtoha(const char* str, size_t n) {
     // assert the string value.
     assert(str != 0x0);
+    if (n == 0) return 0x0;
 
     // iterate over n, then read each two characters from <string>
     //  into a unsigned byte, set the value in <hash> and continue.
@@ -88,7 +89,6 @@ strtoha(const char* str, size_t n) {
         fprintf(stderr,"calloc failed; could not allocate memory for hash.\n");
         exit(-1);
     }
-
     for (size_t i = 0; i < n; i++) {
         unsigned int byte = 0;
         if (sscanf(str + i * 2, "%2x", &byte) != 1) {
@@ -163,14 +163,17 @@ fwritels(const char* path, char** lines, size_t n) {
     }
 
     // iterate over the lines and use fprintf();
-    for (size_t i = 0; i < n; i++)
+    for (size_t i = 0; i < n; i++) {
+        // sanity assert on each line.
+        assert(lines[i] != 0x0);
         fprintf(f, "%s\n", lines[i]);
+    }
     fclose(f);
 };
 
 /**
  * @brief given some lines from a lcs algorithm, clean them and return
- *  only the lines without the '+' and '-'.
+ *  only the lines without the '+' and ignoring '-'.
  *
  * @param lines the array of strings to be cleaned.
  * @param n the number of lines to be cleaned.
@@ -188,6 +191,7 @@ fcleanls(char** lines, size_t n, size_t* k) {
     // iterate...
     size_t m = 0;
     for (size_t i = 0; i < n; i++) {
+        // sanity assert on each line.
         char* line = lines[i];
 
         // if there is a space, there isn't a two char prefix.

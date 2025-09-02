@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-15
+ * @date 2025-08-26
  *
  * @file rebase.h
  *    the rebase module, responsible for rebasing, and checking collisions
@@ -30,4 +30,4 @@ typedef enum {
 e_rebase_result_t
 rebase_branch(const repository_t* repository, const char* destination_branch_name, \
     const char* source_branch_name);
-#endif REBASE_H //REBASE_H
+#endif //REBASE_H

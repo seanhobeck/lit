@@ -1,6 +1,6 @@
 /**
-* @author Sean Hobeck
- * @date 2025-08-22
+ * @author Sean Hobeck
+ * @date 2025-08-31
  *
  * @file utl.h
  *    the utilities module, responsible for miscellaneous utility functions.
@@ -92,7 +92,7 @@ fwritels(const char* path, char** lines, size_t n);
 
 /**
  * @brief given some lines from a lcs algorithm, clean them and return
- *  only the lines without the '+' and '-'.
+ *  only the lines without the '+' and ignoring '-'.
  *
  * @param lines the array of strings to be cleaned.
  * @param n the number of lines to be cleaned.

@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-23
+ * @date 2025-08-29
  *
  * @file repo.c
  *    the repository module in the version control system, it is responsible for handling branches,
@@ -142,6 +142,7 @@ create_repository() {
     // create a new repository structure.
     repository_t* repo = calloc(1, sizeof(*repo));
     add_branch_to_repository(create_branch("origin"), repo);
+    repo->readonly = false;
 
     // write the repository and branch to disk.
     write_branch(repo->branches[0]);
@@ -169,6 +170,7 @@ write_repository(const repository_t* repo) {
     // write the main branch information.
     fprintf(f, "active:%lu\n", repo->idx);
     fprintf(f, "count:%lu\n", repo->count);
+    fprintf(f, "readonly:%d\n", repo->readonly ? 1 : 0);
     for (size_t i = 0u; i < repo->count; i++)
         fprintf(f, "%lu:%s\n", i, repo->branches[i]->name);
     fclose(f);
@@ -192,8 +194,8 @@ read_repository() {
     }
 
     // read the current branch index.
-    int scanned = fscanf(f, "active:%lu\ncount:%lu\n", &repo->idx, &repo->count);
-    if (scanned != 2) {
+    int scanned = fscanf(f, "active:%lu\ncount:%lu\nreadonly:%d", &repo->idx, &repo->count, &repo->readonly);
+    if (scanned != 3) {
         fprintf(stderr,"fscanf failed; could not read current branch header.\n");
         fclose(f);
         exit(EXIT_FAILURE);
@@ -379,7 +381,7 @@ switch_branch_repository(repository_t* repository, const char* name) {
 
     // if we are already on the branch, do nothing.
     if (repository->idx == target_idx) {
-        printf("already on branch \'%s\'\n", name);
+        printf("already on branch \'%s\'.\n", name);
         exit(0);
     }
 

@@ -1,6 +1,6 @@
 # compiler and compiler flags
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c11 -g
+CFLAGS := -Wall -Wextra -std=c17
 
 # installation paths
 PREFIX ?= /usr/local
@@ -22,7 +22,6 @@ TARGET := lit
 # default target
 all: $(TARGET)
 
-
 # link objects into the final binary
 $(TARGET): $(OBJS)
 	@mkdir -p $(@D)
@@ -32,6 +31,11 @@ $(TARGET): $(OBJS)
 build/%.o: src/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
+
+# debug target
+.PHONY: debug
+debug: CFLAGS += -O0 -g
+debug: $(TARGET)
 
 # install target
 .PHONY: install

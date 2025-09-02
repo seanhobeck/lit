@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-08-29
  *
  * @file repo.h
  *    the repository module in the version control system, it is responsible for handling branches,
@@ -9,12 +9,16 @@
 #ifndef REPO_H
 #define REPO_H
 
+/*! @uses bool, true, false*/
+#include <stdbool.h>
+
 /*! @uses branch_t. */
 #include "branch.h"
 
 /// @note a data structure to hold a repository, containing a main branch and a list of branches
 ///     if chosen to be used.
 typedef struct {
+    bool readonly; // whether the repository is in read-only mode.
     size_t count, capacity, idx; // number of branches in the repository.
     branch_t** branches; // array of branches in the repository.
 } repository_t;

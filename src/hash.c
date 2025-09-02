@@ -1,12 +1,12 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-23
+ * @date 2025-09-01
  *
  * @file hash.c
  *    the hash module, responsible for generating sha1, sha256, and crc32 hashes
  *    for commits, diffs, and other files if required by the user and or vcs.
  */
-#include <hash.h>
+#include "hash.h"
 
 /*! @uses calloc, free, itoa. */
 #include <stdlib.h>
@@ -15,7 +15,6 @@
 #include <string.h>
 
 /*! @uses sprintf. */
-#include "hash.h"
 #include <stdio.h>
 
 /*! @uses assert */
@@ -78,8 +77,8 @@ sha1(const unsigned char* data, unsigned long size, sha1_t hash) {
     assert(size > 0);
 
     // initial hash values (sha1 standard)
-    unsigned int h0 = 0x67452301, h1 = 0xefcdaB89, h2 = 0x98badcfe,
-        h3 = 0x10325476, h4 = 0xc3d2e1f0;
+    unsigned int h0 = 0x67452301, h1 = 0xEFCDAB89, h2 = 0x98BADCFE,
+        h3 = 0x10325476, h4 = 0xC3D2E1F0;
 
     // compute padded msg len (mod 64)
     unsigned long padded_len = ((size + 9u + 63) / 64) * 64;
@@ -166,7 +165,7 @@ strsha1(const sha1_t hash) {
  * @param size size of the data in bytes.
  * @param hash sha256_t structure to store the hash.
  */
-void
+__attribute__((deprecated)) void
 sha256(const unsigned char* data, unsigned long size, sha256_t hash) {
     // assert on the parameters.
     assert(data != 0x0);
@@ -186,8 +185,8 @@ sha256(const unsigned char* data, unsigned long size, sha256_t hash) {
 
     // append original bit length (little endian).
     unsigned long bit_len = size * 8;
-    for (unsigned long i = 0u; i < 8; i++)
-        msg[padded_len - 1u - i] = (unsigned char) (bit_len >> (i * 8));
+    for (int i = 0; i < 8; i++)
+        msg[padded_len - 1 - i] = (unsigned char)(bit_len >> (i * 8));  // big-endian
 
     // process the message in 512-bit chunks (64 bytes)
     for (unsigned long offset = 0; offset < padded_len; offset += 64) {
@@ -195,8 +194,10 @@ sha256(const unsigned char* data, unsigned long size, sha256_t hash) {
 
         // first 16 big-endian 32-bit words
         for (unsigned long i = 0; i < 16; i++)
-            words[i] = (msg[offset + 4 * i] << 24) | (msg[offset + 4 * i + 1] << 16) | \
-                (msg[offset + 4 * i + 2] << 8) | (msg[offset + 4 * i + 3]);
+            words[i] = ((unsigned int) msg[offset + 4 * i] << 24) | \
+                ((unsigned int) msg[offset + 4 * i + 1] << 16) | \
+                ((unsigned int) msg[offset + 4 * i + 2] << 8) | \
+                ((unsigned int) msg[offset + 4 * i + 3]);
 
         // extend to our 64 words using sha256's specific schedule
         for (unsigned long i = 16; i < 64; i++)
@@ -221,7 +222,7 @@ sha256(const unsigned char* data, unsigned long size, sha256_t hash) {
     free(msg);
 
     // produce the final hash but now in big-endian.
-    for (unsigned long i = 0; i < 5; i++)
+    for (unsigned long i = 0; i < 8; i++)
         for (unsigned long j = 0; j < 4; j++)
             hash[i * 4 + j] = (unsigned char) (hashes[i] >> (24 - j * 8));
 };
@@ -232,7 +233,7 @@ sha256(const unsigned char* data, unsigned long size, sha256_t hash) {
  * @param hash the sha256 hash to be converted.
  * @return a string representation of the sha1 hash.
  */
-char*
+__attribute__((deprecated)) char*
 strsha256(const sha256_t hash) {
     // assert on the hash.
     assert(hash != 0x0);
@@ -280,6 +281,6 @@ strcrc32(const ucrc32_t hash) {
     // assert on the hash.
     assert(hash != 0x0);
     char* string = calloc(1, 11); // 10 hex chars + null terminator
-    sprintf(string, "%d\0", hash);
+    sprintf(string, "%d", hash);
     return string;
 };

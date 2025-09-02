@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-15
+ * @date 2025-08-26
  *
  * @file tag.h
  *    the tag module, responsible for tagging any important rebases,
@@ -69,4 +69,4 @@ read_tags();
 tag_list_t*
 filter_tags(const sha1_t branch_hash, \
     const tag_list_t* list);
-#endif TAG_H //TAG_H
+#endif //TAG_H

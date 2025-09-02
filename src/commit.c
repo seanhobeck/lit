@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-23
+ * @date 2025-08-26
  *
  * @file commit.h
  *    the commit module in the version control system, it is responsible for handling
@@ -32,7 +32,7 @@
  * @return a commit_t structure containing the commit information.
  */
 commit_t*
-create_commit(const char* message, char* branch_name) {
+create_commit(const char* message, const char* branch_name) {
     // assert on the message and the branch name.
     assert(message != 0x0);
     assert(branch_name != 0x0);
@@ -45,7 +45,6 @@ create_commit(const char* message, char* branch_name) {
     strcpy(commit->message, message);
 
     // grab the timestamp as well.
-    commit->rawtime;
     struct tm *local_time;
     time(&commit->rawtime);
     local_time = localtime(&commit->rawtime);
