@@ -17,6 +17,9 @@
 /*! @uses stat, struct stat */
 #include <sys/stat.h>
 
+/*! @uses strcmp */
+#include <string.h>
+
 /*! @uses testing against this header and the code provided. */
 #include "../../src/cli.h"
 
@@ -105,6 +108,74 @@ test_handle_status() {
     return E_TAPI_TEST_RESULT_PASS;
 };
 
+/// @test test the handle_commit funcction specifically from cli_handle
+///     (without shelved changes)
+e_tapi_test_result_t
+test_handle_commit_no_shelved_changes() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_COMMIT,
+        .argv = (char*[]) { "lit", "-c", "example.txt" },
+    };
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stderr);
+    int result = cli_handle(args);
+    tapi_stop_capture_output(capture, stderr);
+
+    // assert.
+    tapi_assert(result == -1, "result from cli_handle did not return -1.\n");
+    tapi_assert(capture->data != 0x0, "handle_commit didn't print to stderr.");
+    tapi_assert(strcmp(capture->data, "no diffs to commit; nothing stashed.\n") == 0x0, \
+        "handle_commit didn't print the correct error message to stderr.");
+    free(capture->data);
+    free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+};
+
+/// @note setup function to also have shelved changes.
+void
+setup_repo_shelved() {
+    // copy the directory to the wd and the file.
+    system("cp -r workspace2/.lit/ .lit/");
+    system("cp workspace2/example.c example.c");
+};
+
+/// @test test the handle_commit function specifically from cli_handle
+///     (with shelved changes, thus it should commit)
+e_tapi_test_result_t
+test_handle_commit_shelved_changes() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_COMMIT,
+        .argv = (char*[]) { "lit", "-c", "printing argc*2 in example.c" },
+    };
+    // open the file of the origin branch and check the count.
+    FILE* fptr = fopen(".lit/refs/heads/origin", "r");
+    if (!fptr) return E_TAPI_TEST_RESULT_SKIP;
+    fclose(fptr);
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    int result = cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(result == 0, "handle_commit failed / returned -1");
+    tapi_assert(capture->data != 0x0, "handle_commit didn't print to stdout.");
+    tapi_assert(strcmp(capture->data, \
+        "added commit \'printing argc*2 in example.c\' to branch origin with 1 change(s).\n") == 0, \
+        "stdout message does not match, printed something else to stdout.");
+
+    // we then need to check if the file was actually commited.
+    struct stat st;
+    tapi_assert(stat(".lit/objects/shelved/origin", &st) != 0, \
+        "handle_commit failed to remove the shelved directory.");
+    free(capture->data);
+    free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+};
+
 int main() {
     // initialize the testing api.
     tapi_init();
@@ -121,9 +192,19 @@ int main() {
             .test = test_handle_status,
             .setup = setup_repo, .teardown = teardown_repo,
         },
+        {
+            .name = "test_handle_commit_no_shelved_changes",
+            .test = test_handle_commit_no_shelved_changes,
+            .setup = setup_repo, .teardown = teardown_repo,
+        },
+        {
+            .name = "test_handle_commit_shelved_changes",
+            .test = test_handle_commit_shelved_changes,
+            .setup = setup_repo_shelved, .teardown = teardown_repo,
+        }
     };
 
     // run the tests.
-    tapi_run(tests, 2);
+    tapi_run(tests, 4);
     return 0;
 };

@@ -1,0 +1,12 @@
+type:3
+stored:example.c
+new:example.c
+crc32:4040023568
+
+#include <stdio.h>
+
+int main(int argc, char** argv) {
+-     return 1;
++     printf("Hello, World!\n%d\n", argc);
++     return 100;
+}

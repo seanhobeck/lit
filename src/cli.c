@@ -174,7 +174,13 @@ handle_commit(arg_t args) {
     write_commit(commit);
     branch->idx = branch->count-1; // set the active commit index to the new commit.
     write_branch(branch);
-    remove(".lit/stashed/"); // remove the staging directory.
+
+    // remove the staging directory.
+    char path[256];
+    snprintf(path, 256, ".lit/objects/shelved/%s", branch->name);
+    remove(path);
+
+    // log out to the console.
     printf("added commit '%s' to branch '%s' with %lu change(s).\n", \
         strtrm(commit->message, 32), branch->name, i);
     return 0;

@@ -1,0 +1,15 @@
+type:3
+stored:example.c
+new:example.c
+crc32:661323071
+
+#include <stdio.h>
+
+int main(int argc, char** argv) {
+-     printf("Hello, World!\n%d\n", argc);
+-     return 100;
++     printf("Hello, World!\n%s\n", argv[argc]);
++ 
++     float a = -12.0f;
++     return (size_t) a;
+}
