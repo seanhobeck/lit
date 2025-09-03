@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-09-01
+ * @date 2025-09-03
  *
  * @file test_cli.c
  *    testing the src/cli.c functions, responsible for handling the command-line
@@ -35,8 +35,8 @@ teardown_repo() {
 void
 setup_repo() {
     // copy the directory to the wd and the file.
-    system("cp -r workspace/.lit/ .lit/");
-    system("cp workspace/example.c example.c");
+    system("cp -r data/workspace_rebase/.lit/ .lit/");
+    system("cp data/workspace_rebase/example.c example.c");
 };
 
 /// @test test the handle_init function specifically from cli_handle.
@@ -109,7 +109,7 @@ test_handle_status() {
 };
 
 /// @test test the handle_commit funcction specifically from cli_handle
-///     (without shelved changes)
+///     (without shelved changes).
 e_tapi_test_result_t
 test_handle_commit_no_shelved_changes() {
     // arrange.
@@ -137,12 +137,12 @@ test_handle_commit_no_shelved_changes() {
 void
 setup_repo_shelved() {
     // copy the directory to the wd and the file.
-    system("cp -r workspace2/.lit/ .lit/");
-    system("cp workspace2/example.c example.c");
+    system("cp -r data/workspace_basic_shelved/.lit/ .lit/");
+    system("cp data/workspace_basic_shelved/example.c example.c");
 };
 
 /// @test test the handle_commit function specifically from cli_handle
-///     (with shelved changes, thus it should commit)
+///     (with shelved changes, thus it should commit).
 e_tapi_test_result_t
 test_handle_commit_shelved_changes() {
     // arrange.
@@ -164,13 +164,65 @@ test_handle_commit_shelved_changes() {
     tapi_assert(result == 0, "handle_commit failed / returned -1");
     tapi_assert(capture->data != 0x0, "handle_commit didn't print to stdout.");
     tapi_assert(strcmp(capture->data, \
-        "added commit \'printing argc*2 in example.c\' to branch origin with 1 change(s).\n") == 0, \
+        "added commit 'printing argc*2 in example.c' to branch 'origin' with 1 change(s).\n") == 0, \
         "stdout message does not match, printed something else to stdout.");
 
     // we then need to check if the file was actually commited.
     struct stat st;
     tapi_assert(stat(".lit/objects/shelved/origin", &st) != 0, \
         "handle_commit failed to remove the shelved directory.");
+    free(capture->data);
+    free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+};
+
+/// @note setup function to be on a commit behind of the head on origin.
+void
+setup_repo_checkout() {
+    // copy the directory to the wd and the file.
+    system("cp -r data/workspace_commit_behind/.lit/ .lit/");
+    system("cp data/workspace_commit_behind/example.c example.c");
+};
+
+/// @test test the handle_cr_move function specifically from cli_handle.
+e_tapi_test_result_t
+test_handle_checkout() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_CHECKOUT,
+        .argv = (char*[]) { "lit", "-C", \
+            "d26a53beca2dfb2f06af973a34b3b88ff86c6866" },
+    };
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(capture->data != 0x0, "handle_cr_move didn't print to stdout.");
+    free(capture->data);
+    free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+};
+
+/// @test test the handle_cr_move function specifically from cli_handle.
+e_tapi_test_result_t
+test_handle_rollback() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_ROLLBACK,
+        .argv = (char*[]) { "lit", "-r", \
+            "b2b20989de7ff7ea33071ad8efb376f8dcb936bc" },
+    };
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(capture->data != 0x0, "handle_cr_move didn't print to stdout.");
     free(capture->data);
     free(capture);
     return E_TAPI_TEST_RESULT_PASS;
@@ -201,10 +253,20 @@ int main() {
             .name = "test_handle_commit_shelved_changes",
             .test = test_handle_commit_shelved_changes,
             .setup = setup_repo_shelved, .teardown = teardown_repo,
+        },
+        {
+            .name = "test_handle_checkout",
+            .test = test_handle_checkout,
+            .setup = setup_repo_checkout, .teardown = teardown_repo,
+        },
+        {
+            .name = "test_handle_rollback",
+            .test = test_handle_rollback,
+            .setup = setup_repo, .teardown = teardown_repo,
         }
     };
 
     // run the tests.
-    tapi_run(tests, 4);
+    tapi_run(tests, 6);
     return 0;
 };
