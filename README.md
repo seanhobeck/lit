@@ -1,2 +1,2 @@
 # LIT
-A localize git-like version control system.
+A linear and localized git-like version control system.
