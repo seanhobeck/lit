@@ -57,3 +57,9 @@ uninstall:
 .PHONY: clean
 clean:
 	rm -rf build $(TARGET)
+
+
+# tests target (unit and integration)
+.PHONY: tests
+tests:
+	cd tests && sh run_tests.sh

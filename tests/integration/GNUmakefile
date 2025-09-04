@@ -67,7 +67,6 @@ clean:
 # run tests
 .PHONY: run
 run: all
-	clear
 	@set -e; \
 	for t in $(TEST_BINS); do "$$t"; done
 

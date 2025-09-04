@@ -16,8 +16,10 @@
 /*! @uses clock_t, clock */
 #include <time.h>
 
-/*! @uses dup, dup2 */
+/*! @uses strcmp */
 #include <string.h>
+
+/*! @uses dup, dup2 */
 #include <unistd.h>
 
 /// @note file pointers for logging and error logging.

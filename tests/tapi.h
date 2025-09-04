@@ -14,7 +14,7 @@
 /*! @uses size_t, calloc, realloc, free */
 #include <stdlib.h>
 
-/*! @uses FILE, open_memstream, fdopen, dup, ... */
+/*! @uses FILE, fdopen, ... */
 #include <stdio.h>
 
 /// @note an enum for logging levels (info, warn error).

@@ -20,6 +20,9 @@
 /*! @uses strcmp */
 #include <string.h>
 
+/*! @uses bool, true, false */
+#include <stdbool.h>
+
 /*! @uses testing against this header and the code provided. */
 #include "../../src/cli.h"
 
@@ -201,6 +204,23 @@ test_handle_checkout() {
 
     // assert.
     tapi_assert(capture->data != 0x0, "handle_cr_move didn't print to stdout.");
+
+    // read the branch file.
+    FILE* fptr = fopen(".lit/refs/heads/origin", "r");
+    tapi_assert(fptr != 0x0, "handle_cr_move failed to open the branch file for reading.");
+    char line[256];
+    for (size_t i = 1; i <= 3; i++) {
+        if (!fgets(line, 256, fptr)) {
+            tapi_assert(false, "handle_cr_move failed to read the branch file.");
+        }
+    }
+    size_t index = 0;
+    int scanned = sscanf(line, "idx:%lu\n", &index);
+    tapi_assert(scanned == 1, "handle_cr_move failed to read the index file.");
+    tapi_assert(index == 1, "handle_cr_move failed to change the active commit index.");
+
+    // close everything.
+    fclose(fptr);
     free(capture->data);
     free(capture);
     return E_TAPI_TEST_RESULT_PASS;
@@ -223,6 +243,46 @@ test_handle_rollback() {
 
     // assert.
     tapi_assert(capture->data != 0x0, "handle_cr_move didn't print to stdout.");
+
+    // read the branch file.
+    FILE* fptr = fopen(".lit/refs/heads/origin", "r");
+    tapi_assert(fptr != 0x0, "handle_cr_move failed to open the branch file for reading.");
+    char line[256];
+    for (size_t i = 1; i <= 3; i++) {
+        if (!fgets(line, 256, fptr)) {
+            tapi_assert(false, "handle_cr_move failed to read the branch file.");
+        }
+    }
+    size_t index = 0;
+    int scanned = sscanf(line, "idx:%lu\n", &index);
+    tapi_assert(scanned == 1, "handle_cr_move failed to read the index file.");
+    tapi_assert(index == 0, "handle_cr_move failed to change the active commit index.");
+
+    // close everything.
+    fclose(fptr);
+    free(capture->data);
+    free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+};
+
+/// @test test the handle_add_delete_inode function specifically from cli_handle.
+e_tapi_test_result_t
+test_handle_add_inode() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_ADD_INODE,
+        .argv = (char*[]) { "lit", "-a", "newfile.txt" },
+    };
+    system("echo 'this is a new file' > newfile.txt");
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    int result = cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(result == 0, "handle_add_inode failed to return 0.");
+    tapi_assert(capture->data != 0x0, "handle_add_inode didn't print to stdout.");
     free(capture->data);
     free(capture);
     return E_TAPI_TEST_RESULT_PASS;
