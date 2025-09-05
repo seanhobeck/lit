@@ -40,6 +40,7 @@ shelve_changes(const char* branch_name, const diff_t* diff) {
 
     // write the diff and log.
     write_diff(diff, shelved_path);
+    printf("shelved changes on branch \'%s\'.\n", branch_name);
 };
 
 /**

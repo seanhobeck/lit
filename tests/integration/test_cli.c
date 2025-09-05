@@ -238,10 +238,11 @@ test_handle_rollback() {
 
     // act.
     tapi_output_capture_t* capture = tapi_capture_output(stdout);
-    cli_handle(args);
+    int result = cli_handle(args);
     tapi_stop_capture_output(capture, stdout);
 
     // assert.
+    tapi_assert(result == 0, "handle_cr_move didn't return 0.");
     tapi_assert(capture->data != 0x0, "handle_cr_move didn't print to stdout.");
 
     // read the branch file.
@@ -283,6 +284,39 @@ test_handle_add_inode() {
     // assert.
     tapi_assert(result == 0, "handle_add_inode failed to return 0.");
     tapi_assert(capture->data != 0x0, "handle_add_inode didn't print to stdout.");
+    struct stat st;
+    tapi_assert(stat(".lit/objects/shelved/origin/", &st) == 0, \
+        "cli_handle failed to create the shelved directory.");
+    free(capture->data);
+    free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+};
+
+/// @test test the handle_add_delete_inode function specifically from cli_handle.
+e_tapi_test_result_t
+test_handle_delete_inode() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_ADD_INODE,
+        .argv = (char*[]) { "lit", "-d", "newfile.txt" },
+    };
+    system("echo 'this is a new file' > newfile.txt");
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    int result = cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(result == 0, "handle_add_inode failed to return 0.");
+    tapi_assert(capture->data != 0x0, "handle_add_inode didn't print to stdout.");
+    struct stat st;
+    tapi_assert(stat(".lit/objects/shelved/origin/", &st) == 0, \
+        "cli_handle failed to create the shelved directory.");
+    FILE* fp = fopen("newfile.txt", "r");
+    tapi_assert(fp == 0x0, \
+        "handle_delete_inode failed to delete the file from the working directory.");
+    fclose(fp);
     free(capture->data);
     free(capture);
     return E_TAPI_TEST_RESULT_PASS;
@@ -323,10 +357,20 @@ int main() {
             .name = "test_handle_rollback",
             .test = test_handle_rollback,
             .setup = setup_repo, .teardown = teardown_repo,
+        },
+        {
+            .name = "test_handle_add_inode",
+            .test = test_handle_add_inode,
+            .setup = setup_repo, .teardown = teardown_repo,
+        },
+        {
+            .name = "test_handle_delete_inode",
+            .test = test_handle_delete_inode,
+            .setup = setup_repo, .teardown = teardown_repo,
         }
     };
 
     // run the tests.
-    tapi_run(tests, 6);
+    tapi_run(tests, 8);
     return 0;
 };
