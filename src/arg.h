@@ -35,6 +35,7 @@ typedef enum {
 typedef struct {
     e_arg_type_t type;  // type of command.
     char **argv;
+    int argc;
     // extra data for the command, such as a branch name or commit message.
 } arg_t;
 

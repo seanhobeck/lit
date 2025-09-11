@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-09-03
+ * @date 2025-09-10
  *
  * @file test_cli.c
  *    testing the src/cli.c functions, responsible for handling the command-line
@@ -48,7 +48,8 @@ test_handle_init() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_INIT,
-        .argv = (char*[]) { "lit", "-i" }
+        .argv = (char*[]) { "lit", "-i" },
+        .argc = 2,
     };
 
     // act.
@@ -95,7 +96,8 @@ test_handle_status() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_STATUS,
-        .argv = (char*[]) { "lit", "-s" }
+        .argv = (char*[]) { "lit", "-s" },
+        .argc = 2
     };
 
     // act.
@@ -119,6 +121,7 @@ test_handle_commit_no_shelved_changes() {
     arg_t args = {
         .type = E_ARG_TYPE_COMMIT,
         .argv = (char*[]) { "lit", "-c", "example.txt" },
+        .argc = 3
     };
 
     // act.
@@ -152,6 +155,7 @@ test_handle_commit_shelved_changes() {
     arg_t args = {
         .type = E_ARG_TYPE_COMMIT,
         .argv = (char*[]) { "lit", "-c", "printing argc*2 in example.c" },
+        .argc = 3
     };
     // open the file of the origin branch and check the count.
     FILE* fptr = fopen(".lit/refs/heads/origin", "r");
@@ -195,6 +199,7 @@ test_handle_checkout() {
         .type = E_ARG_TYPE_CHECKOUT,
         .argv = (char*[]) { "lit", "-C", \
             "d26a53beca2dfb2f06af973a34b3b88ff86c6866" },
+        .argc = 3
     };
 
     // act.
@@ -234,6 +239,7 @@ test_handle_rollback() {
         .type = E_ARG_TYPE_ROLLBACK,
         .argv = (char*[]) { "lit", "-r", \
             "b2b20989de7ff7ea33071ad8efb376f8dcb936bc" },
+        .argc = 3
     };
 
     // act.
@@ -273,6 +279,7 @@ test_handle_add_inode() {
     arg_t args = {
         .type = E_ARG_TYPE_ADD_INODE,
         .argv = (char*[]) { "lit", "-a", "newfile.txt" },
+        .argc = 3
     };
     system("echo 'this is a new file' > newfile.txt");
 
@@ -297,8 +304,9 @@ e_tapi_test_result_t
 test_handle_delete_inode() {
     // arrange.
     arg_t args = {
-        .type = E_ARG_TYPE_ADD_INODE,
+        .type = E_ARG_TYPE_DELETE_INODE,
         .argv = (char*[]) { "lit", "-d", "newfile.txt" },
+        .argc = 3,
     };
     system("echo 'this is a new file' > newfile.txt");
 
@@ -313,12 +321,159 @@ test_handle_delete_inode() {
     struct stat st;
     tapi_assert(stat(".lit/objects/shelved/origin/", &st) == 0, \
         "cli_handle failed to create the shelved directory.");
-    FILE* fp = fopen("newfile.txt", "r");
-    tapi_assert(fp == 0x0, \
+    tapi_assert(stat("newfile.txt", &st) != 0x0, \
         "handle_delete_inode failed to delete the file from the working directory.");
-    fclose(fp);
     free(capture->data);
     free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+};
+
+/// @note setup function to have a file that has already been added to the history.
+void
+setup_repo_modified() {
+    // copy the directory to the wd and the file.
+    system("cp -r data/workspace_modified/.lit/ .lit/");
+    system("cp data/workspace_modified/example.c example.c");
+};
+
+/// @test test the handle_modified_inode function specifically from cli_handle.
+e_tapi_test_result_t
+test_handle_modified_inode() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_MODIFIED_INODE,
+        .argv = (char*[]) { "lit", "-m", "example.c" },
+        .argc = 3,
+    };
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    int result = cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(result == 0, "handle_modified_inode failed to return 0.");
+    tapi_assert(capture->data != 0x0, "handle_modified_inode didn't print to stdout.");
+    struct stat st;
+    tapi_assert(stat(".lit/objects/shelved/origin/", &st) == 0, \
+        "cli_handle failed to create the shelved directory.");
+    free(capture->data);
+    free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+};
+
+/// @test test the handle_create_branch function specifically from cli_handle.
+e_tapi_test_result_t
+test_handle_create_branch() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_CREATE_BRANCH,
+        .argv = (char*[]) { "lit", "-aB", "new-branch" },
+        .argc = 3
+    };
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    int result = cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(result == 0, "handle_create_branch failed to return 0.");
+    tapi_assert(capture->data != 0x0, "handle_create_branch didn't print to stdout.");
+    tapi_assert(strcmp(capture->data, "created branch \'new-branch\' from \'origin\'.\n") == 0x0, \
+        "handle_create_branch did not print the correct message to stdout.");
+    struct stat st;
+    tapi_assert(stat(".lit/refs/heads/new-branch", &st) == 0, \
+        "handle_create_branch failed to create the new branch.");
+    free(capture->data);
+    free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+};
+
+/// @test test the handle_delete_branch function specifically from cli_handle.
+e_tapi_test_result_t
+test_handle_delete_branch() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_DELETE_BRANCH,
+        .argv = (char*[]) { "lit", "-dB", "dev" },
+        .argc = 3
+    };
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    int result = cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(result == 0, "handle_delete_branch failed to return 0.");
+    tapi_assert(capture->data != 0x0, "handle_delete_branch didn't print to stdout.");
+    tapi_assert(strcmp(capture->data, "deleted branch \'dev\'.\n") == 0x0, \
+        "handle_delete_branch did not print the correct message to stdout.");
+    struct stat st;
+    tapi_assert(stat(".lit/refs/heads/dev", &st) != 0, \
+        "handle_delete_branch failed to delete the new branch.");
+    free(capture->data);
+    free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+}
+
+/// @test test the handle_switch_branch function specifically from cli_handle.
+e_tapi_test_result_t
+test_handle_switch_branch() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_SWITCH_BRANCH,
+        .argv = (char*[]) { "lit", "-sB", "dev" },
+        .argc = 3
+    };
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    int result = cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(result == 0, "handle_switch_branch failed to return 0.");
+    struct stat st;
+    tapi_assert(stat(".lit/refs/heads/dev", &st) == 0x0, \
+        "handle_switch_branch modified the \'.lit/refs/heads/dev\' branch.");
+    FILE* fptr = fopen(".lit/index", "r");
+    tapi_assert(fptr != 0x0, "handle_switch_branch failed to open the file.");
+    char line[256];
+    fgets(line, 256, fptr);
+    fclose(fptr);
+    tapi_assert(strcmp(line, "active:1\n") == 0x0, \
+        "handle_switch_branch didn't switch the branch in \'.lit/index\'");
+    free(capture->data);
+    free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+}
+
+/// @test test the handle_rebase_branch function specifically from cli_handle.
+e_tapi_test_result_t
+test_handle_rebase_branch() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_REBASE_BRANCH,
+        .argv = (char*[]) { "lit", "-rB", "origin", "dev" },
+        .argc = 4
+    };
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    int result = cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(result == 0, "handle_rebase_branch failed to return 0.");
+    tapi_assert(strcmp(capture->data, "successfully rebased \'dev\' onto \'origin\' with 1 commit(s).\n") == 0x0,
+        "handle_rebase_branch didn't print the correct message to stdout.");
+    struct stat st;
+    tapi_assert(stat(".lit/refs/heads/origin", &st) == 0x0, \
+        "handle_rebase_branch modified a \'.lit/refs/heads/origin\'.");
+    tapi_assert(stat(".lit/refs/heads/dev", &st) == 0x0, \
+        "handle_rebase_branch modified a \'.lit/refs/heads/dev\'.");
     return E_TAPI_TEST_RESULT_PASS;
 };
 
@@ -367,10 +522,35 @@ int main() {
             .name = "test_handle_delete_inode",
             .test = test_handle_delete_inode,
             .setup = setup_repo, .teardown = teardown_repo,
-        }
+        },
+        {
+            .name = "test_handle_modified_inode",
+            .test = test_handle_modified_inode,
+            .setup = setup_repo_modified, .teardown = teardown_repo,
+        },
+        {
+            .name = "test_handle_create_branch",
+            .test = test_handle_create_branch,
+            .setup = setup_repo, .teardown = teardown_repo,
+        },
+        {
+            .name = "test_handle_delete_branch",
+            .test = test_handle_delete_branch,
+            .setup = setup_repo, .teardown = teardown_repo,
+        },
+        {
+            .name = "test_handle_switch_branch",
+            .test = test_handle_switch_branch,
+            .setup = setup_repo, .teardown = teardown_repo,
+        },
+        {
+            .name = "test_handle_rebase_branch",
+            .test = test_handle_rebase_branch,
+            .setup = setup_repo, .teardown = teardown_repo,
+        },
     };
 
     // run the tests.
-    tapi_run(tests, 8);
+    tapi_run(tests, 13);
     return 0;
 };

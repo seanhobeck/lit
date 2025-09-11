@@ -284,7 +284,7 @@ handle_add_delete_inode(arg_t args) {
             E_DIFF_FILE_NEW : E_DIFF_FILE_DELETED);
     }
 
-    // if we are deleting a folder, we need to remove it.
+    // if we are deleting a folder/file, we need to remove it.
     if (args.type == E_ARG_TYPE_DELETE_INODE) {
         remove(diff->stored_path);
     }
@@ -399,7 +399,7 @@ handle_modified_inode(arg_t args) {
     fclose(f);
 
     // determine the new path (use extra data if provided for renaming)
-    const char* new_path = args.argv[3] ? args.argv[3] : args.argv[2];
+    const char* new_path = args.argc == 4 ? args.argv[3] : args.argv[2];
 
     // create the modified diff between original and active
     diff_t* diff = create_file_modified_diff(temp_path, new_path);
@@ -500,7 +500,6 @@ handle_add_tag(arg_t args) {
     // find the commit for this tag, (if it exists)
     commit_t* commit = 0x0;
     for (size_t i = 0; i < branch->count; i++) {
-
         // memcmp the sha1 hashes.
         if (memcmp(_hash, branch->commits[i]->hash, 20) == 0) {
             commit = branch->commits[i];

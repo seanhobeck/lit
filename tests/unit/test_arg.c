@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-09-01
+ * @date 2025-09-10
  *
  * @file test_arg.c
  *    testing the src/arg.c functions, responsible for parsing command-line
@@ -35,6 +35,7 @@ test_parse_args_no_args() {
         "parse_args set type to something other than NONE with no args.");
     tapi_assert(args.argv[0] == argv[0], \
         "parse_args did not set argv[0] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data != 0x0, "parse_args didn't print to stdout.");
     free(capture->data);
     free(capture);
@@ -61,6 +62,7 @@ test_parse_args_init() {
         "parse_args did not set argv[0] correctly.");
     tapi_assert(args.argv[1] == argv[1], \
         "parse_args did not set argv[1] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -87,6 +89,7 @@ test_parse_args_help() {
         "parse_args did not set argv[0] correctly.");
     tapi_assert(args.argv[1] == argv[1], \
         "parse_args did not set argv[1] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data != 0x0, "parse_args didn't print to stdout.");
     free(capture->data);
     free(capture);
@@ -113,6 +116,7 @@ test_parse_args_version() {
         "parse_args did not set argv[0] correctly.");
     tapi_assert(args.argv[1] == argv[1], \
         "parse_args did not set argv[1] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data != 0x0, "parse_args didn't print to stdout.");
     free(capture->data);
     free(capture);
@@ -141,6 +145,7 @@ test_parse_args_commit_message() {
         "parse_args did not set argv[1] correctly.");
     tapi_assert(args.argv[2] == argv[2], \
         "parse_args did not set argv[2] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -169,6 +174,7 @@ test_parse_args_rollback_hash() {
         "parse_args did not set argv[1] correctly.");
     tapi_assert(args.argv[2] == argv[2], \
         "parse_args did not set argv[2] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -197,6 +203,7 @@ test_parse_args_checkout_hash() {
         "parse_args did not set argv[1] correctly.");
     tapi_assert(args.argv[2] == argv[2], \
         "parse_args did not set argv[2] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -223,6 +230,7 @@ test_parse_args_status() {
         "parse_args did not set argv[0] correctly.");
     tapi_assert(args.argv[1] == argv[1], \
         "parse_args did not set argv[1] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -251,6 +259,7 @@ test_parse_args_add_inode() {
         "parse_args did not set argv[1] correctly.");
     tapi_assert(args.argv[2] == argv[2], \
         "parse_args did not set argv[2] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -278,7 +287,8 @@ test_parse_args_delete_inode() {
     tapi_assert(args.argv[1] == argv[1], \
         "parse_args did not set argv[1] correctly.");
     tapi_assert(args.argv[2] == argv[2], \
-        "parse_args did not set argv[2] correctly.");
+        "parse_args did not set argv[2] correctly.")
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -307,6 +317,7 @@ test_parse_args_modify_inode() {
         "parse_args did not set argv[1] correctly.");
     tapi_assert(args.argv[2] == argv[2], \
         "parse_args did not set argv[2] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -335,6 +346,7 @@ test_parse_args_add_branch() {
         "parse_args did not set argv[1] correctly.");
     tapi_assert(args.argv[2] == argv[2], \
         "parse_args did not set argv[2] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -363,6 +375,7 @@ test_parse_args_delete_branch() {
         "parse_args did not set argv[1] correctly.");
     tapi_assert(args.argv[2] == argv[2], \
         "parse_args did not set argv[2] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -390,7 +403,8 @@ test_parse_args_switch_branch() {
     tapi_assert(args.argv[1] == argv[1], \
         "parse_args did not set argv[1] correctly.");
     tapi_assert(args.argv[2] == argv[2], \
-        "parse_args did not set argv[2] correctly.");
+        "parse_args did not set argv[2] correctly.")
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -421,6 +435,7 @@ test_parse_args_rebase_branch() {
         "parse_args did not set argv[2] correctly.");
     tapi_assert(args.argv[3] == argv[3], \
         "parse_args did not set argv[3] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -447,6 +462,7 @@ test_parse_args_clear_cache() {
         "parse_args did not set argv[0] correctly.");
     tapi_assert(args.argv[1] == argv[1], \
         "parse_args did not set argv[1] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -479,6 +495,7 @@ test_parse_args_add_tag_hash() {
         "parse_args did not set argv[2] correctly.");
     tapi_assert(args.argv[3] == argv[3], \
         "parse_args did not set argv[3] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);
@@ -507,6 +524,7 @@ test_parse_args_delete_tag_name() {
         "parse_args did not set argv[1] correctly.");
     tapi_assert(args.argv[2] == argv[2], \
         "parse_args did not set argv[2] correctly.");
+    tapi_assert(args.argc == argc, "parse_args did not capture argc correctly.");
     tapi_assert(capture->data == 0x0, "parse_args printed to stdout.");
     free(capture->data);
     free(capture);

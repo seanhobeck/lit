@@ -70,5 +70,12 @@ run: all
 	@set -e; \
 	for t in $(TEST_BINS); do "$$t"; done
 
+# clean run tests (no verbose)
+.PHONY: clean-run
+clean-run: all
+	clear
+	@set -e; \
+	for t in $(TEST_BINS); do "$$t"; done
+
 # don't auto-delete object files
 .PRECIOUS: $(OBJS) $(TAPI_OBJ) $(TEST_OBJS)

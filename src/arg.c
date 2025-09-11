@@ -64,6 +64,7 @@ parse_args(int argc, char** argv, arg_t* cmd) {
     // initialize our command structure to be empty.
     cmd->type = E_ARG_TYPE_NONE;
     cmd->argv = argv;
+    cmd->argc = argc;
 
     // if there are no arguments, print the help message.
     if (argc < 2) {
