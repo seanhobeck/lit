@@ -521,6 +521,7 @@ handle_add_tag(arg_t args) {
 
     // then write the tag.
     write_tag(tag);
+    printf("added tag \'%s\' to the repository.\n", args.argv[3]);
     return 0;
 }
 
@@ -553,6 +554,7 @@ handle_delete_tag(arg_t args) {
     char path[256];
     snprintf(path, 256, ".lit/refs/tags/%s", args.argv[2]);
     remove(path);
+    printf("deleted tag \'%s\' from the repository.\n", args.argv[2]);
     return 0;
 }
 

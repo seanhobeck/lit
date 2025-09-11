@@ -416,7 +416,7 @@ test_handle_delete_branch() {
     free(capture->data);
     free(capture);
     return E_TAPI_TEST_RESULT_PASS;
-}
+};
 
 /// @test test the handle_switch_branch function specifically from cli_handle.
 e_tapi_test_result_t
@@ -448,7 +448,7 @@ test_handle_switch_branch() {
     free(capture->data);
     free(capture);
     return E_TAPI_TEST_RESULT_PASS;
-}
+};
 
 /// @test test the handle_rebase_branch function specifically from cli_handle.
 e_tapi_test_result_t
@@ -474,6 +474,96 @@ test_handle_rebase_branch() {
         "handle_rebase_branch modified a \'.lit/refs/heads/origin\'.");
     tapi_assert(stat(".lit/refs/heads/dev", &st) == 0x0, \
         "handle_rebase_branch modified a \'.lit/refs/heads/dev\'.");
+    return E_TAPI_TEST_RESULT_PASS;
+};
+
+/// @test test the handle_clear_cache function specifically from cli_handle.
+e_tapi_test_result_t
+test_handle_clear_cache() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_CLEAR_CACHE,
+        .argv = (char*[]) { "lit", "-cc" },
+        .argc = 2
+    };
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    int result = cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(result == 0, "handle_clear_cache failed to clear the cache.");
+    tapi_assert(capture->data != 0x0, "handle_clear_cache didn't print to stdout.");
+    struct stat st;
+    tapi_assert(stat(".lit/objects/commits/ab/cdefgh", &st) != 0, \
+        "handle_clear_cache failed to delete useless caches.");
+    tapi_assert(stat(".lit/objects/diffs/ab/cdefgh", &st) != 0, \
+        "handle_clear_cache failed to delete useless caches.");
+    free(capture->data);
+    free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+};
+
+/// @test test the handle_add_tag function specifically from cli_handle.
+e_tapi_test_result_t
+test_handle_add_tag() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_ADD_TAG,
+        .argv = (char*[]) { "lit", "-aT", \
+            "d26a53beca2dfb2f06af973a34b3b88ff86c6866", \
+            "rebase_window" },
+        .argc = 4
+    };
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    int result = cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(result == 0, "handle_add_tag failed to return 0.")
+    tapi_assert(capture->data != 0x0, "handle_add_tag didn't print to stdout.");
+    struct stat st;
+    tapi_assert(stat(".lit/refs/tags/rebase_window", &st) == 0, \
+        "handle_add_tag failed to create tag file in repository.");
+    free(capture->data);
+    free(capture);
+    return E_TAPI_TEST_RESULT_PASS;
+};
+
+/// @note setup function to have a pre-existing tag called 'rebase_window'.
+void
+setup_repo_tag() {
+    // copy the directory to the wd and the file.
+    system("cp -r data/workspace_basic_tag/.lit/ .lit/");
+    system("cp data/workspace_basic_tag/example.c example.c");
+};
+
+/// @test test the handle_delete_tag function specifically from cli_handle.
+e_tapi_test_result_t
+test_handle_delete_tag() {
+    // arrange.
+    arg_t args = {
+        .type = E_ARG_TYPE_DELETE_TAG,
+        .argv = (char*[]) { "lit", "-dT", "rebase_window" },
+        .argc = 3
+    };
+
+    // act.
+    tapi_output_capture_t* capture = tapi_capture_output(stdout);
+    int result = cli_handle(args);
+    tapi_stop_capture_output(capture, stdout);
+
+    // assert.
+    tapi_assert(result == 0, "handle_delete_tag failed to return 0.")
+    tapi_assert(capture->data != 0x0, "handle_delete_tag didn't print to stdout.");
+    struct stat st;
+    tapi_assert(stat(".lit/refs/tags/rebase_window", &st) != 0, \
+        "handle_add_tag failed to delete tag file in repository.");
+    free(capture->data);
+    free(capture);
     return E_TAPI_TEST_RESULT_PASS;
 };
 
@@ -548,9 +638,24 @@ int main() {
             .test = test_handle_rebase_branch,
             .setup = setup_repo, .teardown = teardown_repo,
         },
+        {
+            .name = "test_handle_clear_cache",
+            .test = test_handle_clear_cache,
+            .setup = setup_repo_shelved, .teardown = teardown_repo,
+        },
+        {
+            .name = "test_handle_add_tag",
+            .test = test_handle_add_tag,
+            .setup = setup_repo, .teardown = teardown_repo,
+        },
+        {
+            .name = "test_handle_delete_tag",
+            .test = test_handle_delete_tag,
+            .setup = setup_repo_tag, .teardown = teardown_repo,
+        }
     };
 
     // run the tests.
-    tapi_run(tests, 13);
+    tapi_run(tests, 16);
     return 0;
 };
