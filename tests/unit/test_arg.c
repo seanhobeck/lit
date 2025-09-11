@@ -46,7 +46,7 @@ test_parse_args_no_args() {
 e_tapi_test_result_t
 test_parse_args_init() {
     // arrange.
-    char* argv[] = { "lit", "-i" };
+    char* argv[] = { "lit", "init" };
     int argc = 2;
     arg_t args = {};
 
@@ -73,7 +73,7 @@ test_parse_args_init() {
 e_tapi_test_result_t
 test_parse_args_help() {
     // arrange.
-    char* argv[] = { "lit", "-h" };
+    char* argv[] = { "lit", "--help" };
     int argc = 2;
     arg_t args = {};
 
@@ -100,7 +100,7 @@ test_parse_args_help() {
 e_tapi_test_result_t
 test_parse_args_version() {
     // arrange.
-    char* argv[] = { "lit", "-v" };
+    char* argv[] = { "lit", "--version" };
     int argc = 2;
     arg_t args = {};
 
@@ -127,7 +127,7 @@ test_parse_args_version() {
 e_tapi_test_result_t
 test_parse_args_commit_message() {
     // arrange.
-    char* argv[] = { "lit", "-c", "this is an example commit message" };
+    char* argv[] = { "lit", "commit", "this is an example commit message" };
     int argc = 3;
     arg_t args = {};
 
@@ -156,7 +156,7 @@ test_parse_args_commit_message() {
 e_tapi_test_result_t
 test_parse_args_rollback_hash() {
     // arrange.
-    char* argv[] = { "lit", "-r", "ec1e7fb8656dba32737acabc2e5a1fb2d02a973f" };
+    char* argv[] = { "lit", "rollback", "ec1e7fb8656dba32737acabc2e5a1fb2d02a973f" };
     int argc = 3;
     arg_t args = {};
 
@@ -185,7 +185,7 @@ test_parse_args_rollback_hash() {
 e_tapi_test_result_t
 test_parse_args_checkout_hash() {
     // arrange.
-    char* argv[] = { "lit", "-C", "ec1e7fb8656dba32737acabc2e5a1fb2d02a973f" };
+    char* argv[] = { "lit", "checkout", "ec1e7fb8656dba32737acabc2e5a1fb2d02a973f" };
     int argc = 3;
     arg_t args = {};
 
@@ -214,7 +214,7 @@ test_parse_args_checkout_hash() {
 e_tapi_test_result_t
 test_parse_args_status() {
     // arrange.
-    char* argv[] = { "lit", "-s" };
+    char* argv[] = { "lit", "status" };
     int argc = 2;
     arg_t args = {};
 
@@ -241,7 +241,7 @@ test_parse_args_status() {
 e_tapi_test_result_t
 test_parse_args_add_inode() {
     // arrange.
-    char* argv[] = { "lit", "-a", "something.txt" };
+    char* argv[] = { "lit", "add", "something.txt" };
     int argc = 3;
     arg_t args = {};
 
@@ -270,7 +270,7 @@ test_parse_args_add_inode() {
 e_tapi_test_result_t
 test_parse_args_delete_inode() {
     // arrange.
-    char* argv[] = { "lit", "-d", "something.txt" };
+    char* argv[] = { "lit", "delete", "something.txt" };
     int argc = 3;
     arg_t args = {};
 
@@ -299,7 +299,7 @@ test_parse_args_delete_inode() {
 e_tapi_test_result_t
 test_parse_args_modify_inode() {
     // arrange.
-    char* argv[] = { "lit", "-m", "something.txt" };
+    char* argv[] = { "lit", "modified", "something.txt" };
     int argc = 3;
     arg_t args = {};
 
@@ -328,7 +328,7 @@ test_parse_args_modify_inode() {
 e_tapi_test_result_t
 test_parse_args_add_branch() {
     // arrange.
-    char* argv[] = { "lit", "-aB", "dev1" };
+    char* argv[] = { "lit", "add-branch", "dev1" };
     int argc = 3;
     arg_t args = {};
 
@@ -357,7 +357,7 @@ test_parse_args_add_branch() {
 e_tapi_test_result_t
 test_parse_args_delete_branch() {
     // arrange.
-    char* argv[] = { "lit", "-dB", "dev1" };
+    char* argv[] = { "lit", "delete-branch", "dev1" };
     int argc = 3;
     arg_t args = {};
 
@@ -386,7 +386,7 @@ test_parse_args_delete_branch() {
 e_tapi_test_result_t
 test_parse_args_switch_branch() {
     // arrange.
-    char* argv[] = { "lit", "-sB", "dev1" };
+    char* argv[] = { "lit", "switch-branch", "dev1" };
     int argc = 3;
     arg_t args = {};
 
@@ -415,7 +415,7 @@ test_parse_args_switch_branch() {
 e_tapi_test_result_t
 test_parse_args_rebase_branch() {
     // arrange.
-    char* argv[] = { "lit", "-rB", "origin", "dev1" };
+    char* argv[] = { "lit", "rebase-branch", "origin", "dev1" };
     int argc = 4;
     arg_t args = {};
 
@@ -446,7 +446,7 @@ test_parse_args_rebase_branch() {
 e_tapi_test_result_t
 test_parse_args_clear_cache() {
     // arrange.
-    char* argv[] = { "lit", "-cc", };
+    char* argv[] = { "lit", "clear-cache", };
     int argc = 2;
     arg_t args = {};
 
@@ -473,7 +473,7 @@ test_parse_args_clear_cache() {
 e_tapi_test_result_t
 test_parse_args_add_tag_hash() {
     // arrange.
-    char* argv[] = { "lit", "-aT",
+    char* argv[] = { "lit", "add-tag",
         "ec1e7fb8656dba32737acabc2e5a1fb2d02a973f",
         "rebase_window10" };
     int argc = 4;
@@ -506,7 +506,7 @@ test_parse_args_add_tag_hash() {
 e_tapi_test_result_t
 test_parse_args_delete_tag_name() {
     // arrange.
-    char* argv[] = { "lit", "-dT", "rebase_window10" };
+    char* argv[] = { "lit", "delete-tag", "rebase_window10" };
     int argc = 3;
     arg_t args = {};
 

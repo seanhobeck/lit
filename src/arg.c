@@ -25,29 +25,30 @@
  */
 void
 help_args() {
-    printf("usage: lit [-v | --version] [-h | --help] [-i | --init] [-c | --commit <msg>]\n"
-           "\t[-r | --rollback <hash>] [-C | -checkout <hash>] [-s | --status] [-sB | --switch-branch <name>]\n"
-           "\t[-dB | --delete-branch <name>] [-aB | --add-branch <name>] [-rB | --rebase-branch <src> <dest>]\n"
-           "\t[-a | --add <path>] [-d <hash>| --delete <path>] [-m | --modified <path> :<new_path>] \n"
-           "\t[-aT | --add-tag <hash> <name> ] [-dT | --delete-tag <name>] \n\n");
+    printf("usage: lit [-v | --version] [-h | --help] [-i | init] [-c | commit <msg>]\n"
+           "\t[-r | rollback <hash>] [-C | -checkout <hash>] [-s | status] [-sB | switch-branch <name>]\n"
+           "\t[-dB | delete-branch <name>] [-aB | add-branch <name>] [-rB | rebase-branch <src> <dest>]\n"
+           "\t[-a | add <path>] [-d <hash>| delete <path>] [-m | modified <path> :<new_path>] \n"
+           "\t[-aT | add-tag <hash> <name> ] [-dT | delete-tag <name>] [-cc | clear-cache]\n\n");
 
     // print out the options to the user. (disable warnings in ~/.lit/config with disable_warnings=1)
     printf("options:\n"
            "\t-v | --version\t\t\tprint the current version of the program.\n"
            "\t-h | --help\t\t\tprint this help message.\n"
-           "\t-i | --i\t\t\tinitialize a new repository in the current working directory.\n"
-           "\t-a | --add <path>\t\tadd a file or folder to the branch.\n"
-           "\t-m | --modified <path> :(optional) <new_path>\tstate that a file has been changed.\n"
-           "\t-d | --delete <path>\t\tdelete a file or folder from the branch.\n\n"
-           "\t-r | --rollback <hash>\t\t*rollback to a previous commit.\n"
-           "\t-C | --checkout <hash>\t\t*checkout a commit.\n"
-           "\t-s | --status\t\t\tprint the status of the repository on the active branch.\n\n"
-           "\t-aB | --add-branch <name>\t\tcreate a new branch to the repository.\n"
-           "\t-sB | --switch-branch <name>\t\tswitch to a branch.\n"
-           "\t-rB | --rebase-branch <src> <dest>\trebase a branch onto another.\n"
-           "\t-dB | --delete-branch <name>\t\tdelete a branch from the repository.\n\n"
-           "\t-aT | --add-tag <hash> <name>\t\tadd a tag to a commit on the active branch.\n"
-           "\t-dT | --delete-tag <name>\t\tdelete a tag from the repository.\n\n\n"
+           "\t-i | init\t\t\tinitialize a new repository in the current working directory.\n"
+           "\t-a | add <path>\t\tadd a file or folder to the branch.\n"
+           "\t-m | modified <path> :(optional) <new_path>\tstate that a file has been changed.\n"
+           "\t-d | delete <path>\t\tdelete a file or folder from the branch.\n\n"
+           "\t-r | rollback <hash>\t\t*rollback to a previous commit.\n"
+           "\t-C | checkout <hash>\t\t*checkout a commit.\n"
+           "\t-s | status\t\t\tprint the status of the repository on the active branch.\n\n"
+           "\t-aB | add-branch <name>\t\tcreate a new branch to the repository.\n"
+           "\t-sB | switch-branch <name>\t\tswitch to a branch.\n"
+           "\t-rB | rebase-branch <src> <dest>\trebase a branch onto another.\n"
+           "\t-dB | delete-branch <name>\t\tdelete a branch from the repository.\n\n"
+           "\t-aT | add-tag <hash> <name>\t\tadd a tag to a commit on the active branch.\n"
+           "\t-dT | delete-tag <name>\t\tdelete a tag from the repository.\n\n\n"
+           "\t-cc | clear-cache\t\t\tclear any cache leftover from deleting a branch."
            "any option with an asterisk (*) can produce a warning in stdout, to remove\n"
            " set disable_warnings=1 in configuration file at, \'~/.lit/config\'\n");
 };
@@ -85,13 +86,13 @@ parse_args(int argc, char** argv, arg_t* cmd) {
         fprintf(stdout,"lit version %s\n", VERSION);
         return;
     }
-    // --init or -i to initialize a new repository.
-    if (!strcmp(argv[1], "-i") || !strcmp(argv[1], "--init")) {
+    // init or -i to initialize a new repository.
+    if (!strcmp(argv[1], "-i") || !strcmp(argv[1], "init")) {
         cmd->type = E_ARG_TYPE_INIT;
         return;
     }
-    // --commit or -c to commit changes to the repository.
-    if (!strcmp(argv[1], "-c") || !strcmp(argv[1], "--commit")) {
+    // commit or -c to commit changes to the repository.
+    if (!strcmp(argv[1], "-c") || !strcmp(argv[1], "commit")) {
         cmd->type = E_ARG_TYPE_COMMIT;
         // if there is no extra_cmd argument, print the help message.
         if (argc < 3) {
@@ -100,8 +101,8 @@ parse_args(int argc, char** argv, arg_t* cmd) {
         }
         return;
     }
-    // --rollback or -r to rollback to a previous commit.
-    if (!strcmp(argv[1], "-r") || !strcmp(argv[1], "--rollback")) {
+    // rollback or -r to rollback to a previous commit.
+    if (!strcmp(argv[1], "-r") || !strcmp(argv[1], "rollback")) {
         cmd->type = E_ARG_TYPE_ROLLBACK;
         // if there is no extra_cmd argument, print the help message.
         if (argc < 3) {
@@ -110,8 +111,8 @@ parse_args(int argc, char** argv, arg_t* cmd) {
         }
         return;
     }
-    // --checkout or -C to checkout a commit.
-    if (!strcmp(argv[1], "-C") || !strcmp(argv[1], "--checkout")) {
+    // checkout or -C to checkout a commit.
+    if (!strcmp(argv[1], "-C") || !strcmp(argv[1], "checkout")) {
         cmd->type = E_ARG_TYPE_CHECKOUT;
         // if there is no extra_cmd argument, print the help message.
         if (argc < 3) {
@@ -120,13 +121,13 @@ parse_args(int argc, char** argv, arg_t* cmd) {
         }
         return;
     }
-    // --status or -s to show the status of the repository.
-    if (!strcmp(argv[1], "-s") || !strcmp(argv[1], "--status")) {
+    // status or -s to show the status of the repository.
+    if (!strcmp(argv[1], "-s") || !strcmp(argv[1], "status")) {
         cmd->type = E_ARG_TYPE_STATUS;
         return;
     }
-    // --add or -a to add a file or folder to the branch.
-    if (!strcmp(argv[1], "-a") || !strcmp(argv[1], "--add")) {
+    // add or -a to add a file or folder to the branch.
+    if (!strcmp(argv[1], "-a") || !strcmp(argv[1], "add")) {
         cmd->type = E_ARG_TYPE_ADD_INODE;
         // if there is no extra_cmd argument, print the help message.
         if (argc < 3) {
@@ -135,8 +136,8 @@ parse_args(int argc, char** argv, arg_t* cmd) {
         }
         return;
     }
-    // --delete or -d to delete a file or folder from the branch.
-    if (!strcmp(argv[1], "-d") || !strcmp(argv[1], "--delete")) {
+    // delete or -d to delete a file or folder from the branch.
+    if (!strcmp(argv[1], "-d") || !strcmp(argv[1], "delete")) {
         cmd->type = E_ARG_TYPE_DELETE_INODE;
         // if there is no extra_cmd argument, print the help message.
         if (argc < 3) {
@@ -145,8 +146,8 @@ parse_args(int argc, char** argv, arg_t* cmd) {
         }
         return;
     }
-    // --modified or -m to state that a file has been changed.
-    if (!strcmp(argv[1], "-m") || !strcmp(argv[1], "--modified")) {
+    // modified or -m to state that a file has been changed.
+    if (!strcmp(argv[1], "-m") || !strcmp(argv[1], "modified")) {
         cmd->type = E_ARG_TYPE_MODIFIED_INODE;
         // if there is no extra_cmd argument, print the help message.
         if (argc < 3) {
@@ -155,8 +156,8 @@ parse_args(int argc, char** argv, arg_t* cmd) {
         }
         return;
     }
-    // -aB or --add-branch
-    if (!strcmp(argv[1], "-aB") || !strcmp(argv[1], "--add-branch")) {
+    // -aB or add-branch
+    if (!strcmp(argv[1], "-aB") || !strcmp(argv[1], "add-branch")) {
         cmd->type = E_ARG_TYPE_CREATE_BRANCH;
 
         // if there is no argv[2], print the help message.
@@ -166,8 +167,8 @@ parse_args(int argc, char** argv, arg_t* cmd) {
         }
         return;
     }
-    // -dB or --delete-branch
-    if (!strcmp(argv[1], "-dB") || !strcmp(argv[1], "--delete-branch")) {
+    // -dB or delete-branch
+    if (!strcmp(argv[1], "-dB") || !strcmp(argv[1], "delete-branch")) {
         cmd->type = E_ARG_TYPE_DELETE_BRANCH;
         // if there is no extra_cmd argument, print the help message.
         if (argc < 3) {
@@ -176,8 +177,8 @@ parse_args(int argc, char** argv, arg_t* cmd) {
         }
         return;
     }
-    // -sB or --switch-branch
-    if (!strcmp(argv[1], "-sB") || !strcmp(argv[1], "--switch-branch")) {
+    // -sB or switch-branch
+    if (!strcmp(argv[1], "-sB") || !strcmp(argv[1], "switch-branch")) {
         cmd->type = E_ARG_TYPE_SWITCH_BRANCH;
 
         // if there is no argv[2], print the help message.
@@ -187,8 +188,8 @@ parse_args(int argc, char** argv, arg_t* cmd) {
         }
         return;
     }
-    // -rB or --rebase-branch
-    if (!strcmp(argv[1], "-rB") || !strcmp(argv[1], "--rebase-branch")) {
+    // -rB or rebase-branch
+    if (!strcmp(argv[1], "-rB") || !strcmp(argv[1], "rebase-branch")) {
         cmd->type = E_ARG_TYPE_REBASE_BRANCH;
 
         // if there is no argv[2], print the help message.
@@ -198,13 +199,13 @@ parse_args(int argc, char** argv, arg_t* cmd) {
         }
         return;
     }
-    // -cc or --clear-cache
-    if (!strcmp(argv[1], "-cc") || !strcmp(argv[1], "--clear-cache")) {
+    // -cc or clear-cache
+    if (!strcmp(argv[1], "-cc") || !strcmp(argv[1], "clear-cache")) {
         cmd->type = E_ARG_TYPE_CLEAR_CACHE;
         return;
     }
-    // -aT or --add-tag
-    if (!strcmp(argv[1], "-aT") || !strcmp(argv[1], "--add-tag")) {
+    // -aT or add-tag
+    if (!strcmp(argv[1], "-aT") || !strcmp(argv[1], "add-tag")) {
         cmd->type = E_ARG_TYPE_ADD_TAG;
 
         // if the argument count does not match, fail.
@@ -214,8 +215,8 @@ parse_args(int argc, char** argv, arg_t* cmd) {
         }
         return;
     }
-    // -dT or --delete-tag
-    if (!strcmp(argv[1], "-dT") || !strcmp(argv[1], "--delete-tag")) {
+    // -dT or delete-tag
+    if (!strcmp(argv[1], "-dT") || !strcmp(argv[1], "delete-tag")) {
         cmd->type = E_ARG_TYPE_DELETE_TAG;
 
         // if the argument count does not match, fail.

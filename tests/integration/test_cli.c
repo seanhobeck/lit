@@ -48,7 +48,7 @@ test_handle_init() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_INIT,
-        .argv = (char*[]) { "lit", "-i" },
+        .argv = (char*[]) { "lit", "init" },
         .argc = 2,
     };
 
@@ -96,7 +96,7 @@ test_handle_status() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_STATUS,
-        .argv = (char*[]) { "lit", "-s" },
+        .argv = (char*[]) { "lit", "status" },
         .argc = 2
     };
 
@@ -120,7 +120,7 @@ test_handle_commit_no_shelved_changes() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_COMMIT,
-        .argv = (char*[]) { "lit", "-c", "example.txt" },
+        .argv = (char*[]) { "lit", "commit", "example.txt" },
         .argc = 3
     };
 
@@ -154,7 +154,7 @@ test_handle_commit_shelved_changes() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_COMMIT,
-        .argv = (char*[]) { "lit", "-c", "printing argc*2 in example.c" },
+        .argv = (char*[]) { "lit", "commit", "printing argc*2 in example.c" },
         .argc = 3
     };
     // open the file of the origin branch and check the count.
@@ -197,7 +197,7 @@ test_handle_checkout() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_CHECKOUT,
-        .argv = (char*[]) { "lit", "-C", \
+        .argv = (char*[]) { "lit", "checkout", \
             "d26a53beca2dfb2f06af973a34b3b88ff86c6866" },
         .argc = 3
     };
@@ -237,7 +237,7 @@ test_handle_rollback() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_ROLLBACK,
-        .argv = (char*[]) { "lit", "-r", \
+        .argv = (char*[]) { "lit", "rollback", \
             "b2b20989de7ff7ea33071ad8efb376f8dcb936bc" },
         .argc = 3
     };
@@ -278,7 +278,7 @@ test_handle_add_inode() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_ADD_INODE,
-        .argv = (char*[]) { "lit", "-a", "newfile.txt" },
+        .argv = (char*[]) { "lit", "add", "newfile.txt" },
         .argc = 3
     };
     system("echo 'this is a new file' > newfile.txt");
@@ -305,7 +305,7 @@ test_handle_delete_inode() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_DELETE_INODE,
-        .argv = (char*[]) { "lit", "-d", "newfile.txt" },
+        .argv = (char*[]) { "lit", "delete", "newfile.txt" },
         .argc = 3,
     };
     system("echo 'this is a new file' > newfile.txt");
@@ -342,7 +342,7 @@ test_handle_modified_inode() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_MODIFIED_INODE,
-        .argv = (char*[]) { "lit", "-m", "example.c" },
+        .argv = (char*[]) { "lit", "modified", "example.c" },
         .argc = 3,
     };
 
@@ -368,7 +368,7 @@ test_handle_create_branch() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_CREATE_BRANCH,
-        .argv = (char*[]) { "lit", "-aB", "new-branch" },
+        .argv = (char*[]) { "lit", "add-branch", "new-branch" },
         .argc = 3
     };
 
@@ -396,7 +396,7 @@ test_handle_delete_branch() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_DELETE_BRANCH,
-        .argv = (char*[]) { "lit", "-dB", "dev" },
+        .argv = (char*[]) { "lit", "delete-branch", "dev" },
         .argc = 3
     };
 
@@ -424,7 +424,7 @@ test_handle_switch_branch() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_SWITCH_BRANCH,
-        .argv = (char*[]) { "lit", "-sB", "dev" },
+        .argv = (char*[]) { "lit", "switch-branch", "dev" },
         .argc = 3
     };
 
@@ -456,7 +456,7 @@ test_handle_rebase_branch() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_REBASE_BRANCH,
-        .argv = (char*[]) { "lit", "-rB", "origin", "dev" },
+        .argv = (char*[]) { "lit", "rebase-branch", "origin", "dev" },
         .argc = 4
     };
 
@@ -483,7 +483,7 @@ test_handle_clear_cache() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_CLEAR_CACHE,
-        .argv = (char*[]) { "lit", "-cc" },
+        .argv = (char*[]) { "lit", "clear-cache" },
         .argc = 2
     };
 
@@ -511,7 +511,7 @@ test_handle_add_tag() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_ADD_TAG,
-        .argv = (char*[]) { "lit", "-aT", \
+        .argv = (char*[]) { "lit", "add-tag", \
             "d26a53beca2dfb2f06af973a34b3b88ff86c6866", \
             "rebase_window" },
         .argc = 4
@@ -547,7 +547,7 @@ test_handle_delete_tag() {
     // arrange.
     arg_t args = {
         .type = E_ARG_TYPE_DELETE_TAG,
-        .argv = (char*[]) { "lit", "-dT", "rebase_window" },
+        .argv = (char*[]) { "lit", "delete-tag", "rebase_window" },
         .argc = 3
     };
 
