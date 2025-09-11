@@ -1,6 +1,6 @@
 # compiler and compiler flags
 CC := gcc
-CFLAGS := -Wall -Wextra -std=c17
+CFLAGS := -g -O0 -Wall -Wextra -std=c17
 
 # installation paths
 PREFIX ?= /usr/local

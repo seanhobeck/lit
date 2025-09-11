@@ -381,22 +381,36 @@ handle_modified_inode(arg_t args) {
 
     // reconstruct the original file from the diff
     size_t line_count = 0;
-    char** original_lines = fcleanls(recent_diff->lines, recent_diff->count, &line_count);
-    if (!original_lines) {
-        fprintf(stderr, "error: failed to reconstruct original file content.\n");
-        return -1;
+    bool not_empty_flag = recent_diff->count != 0 && recent_diff->lines != 0x0;
+    if (not_empty_flag) {
+        char** original_lines = fcleanls(recent_diff->lines, recent_diff->count, &line_count);
+        if (!original_lines) {
+            fprintf(stderr, "error: failed to reconstruct original file content.\n");
+            return -1;
+        }
+
+        // write original content to temp file
+        FILE* f = fopen(temp_path, "w");
+        if (!f) {
+            fprintf(stderr,"fopen failed; could not open temp file for writing.\n");
+            return -1;
+        }
+        for (size_t i = 0; i < line_count; i++) {
+            fprintf(f, "%s\n", original_lines[i]);
+        }
+        fclose(f);
+    }
+    // if the original file is empty.
+    else {
+        // write original content to temp file
+        FILE* f = fopen(temp_path, "w");
+        if (!f) {
+            fprintf(stderr,"fopen failed; could not open temp file for writing.\n");
+            return -1;
+        }
+        fclose(f);
     }
 
-    // write original content to temp file
-    FILE* f = fopen(temp_path, "w");
-    if (!f) {
-        fprintf(stderr,"fopen failed; could not open temp file for writing.\n");
-        return -1;
-    }
-    for (size_t i = 0; i < line_count; i++) {
-        fprintf(f, "%s\n", original_lines[i]);
-    }
-    fclose(f);
 
     // determine the new path (use extra data if provided for renaming)
     const char* new_path = args.argc == 4 ? args.argv[3] : args.argv[2];
