@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-23
+ * @date 2025-11-13
  *
  * @file tag.c
  *    the tag module, responsible for tagging any important rebases,
@@ -12,7 +12,7 @@
 #include "hash.h"
 
 /*! @uses vector_t, vector_collect, vector_free */
-#include "pvc.h"
+#include "inw.h"
 
 /**
  * @brief create a tag for a commit with a message.
@@ -37,7 +37,7 @@ create_tag(const branch_t* branch, const commit_t* commit, \
         exit(EXIT_FAILURE);
     }
 
-    // copy over all of the information.
+    // copy over all the information.
     tag->name = strdup(name);
     memcpy(tag->commit_hash, commit->hash, 20);
     memcpy(tag->branch_hash, branch->hash, 20);
@@ -70,56 +70,24 @@ write_tag(const tag_t* tag) {
 };
 
 /**
- * @brief append a tag to a list of tags.
- *
- * @param list the list of tags to append the tag to.
- * @param tag the tag to be appended.
- */
-void append_tag(tag_list_t* list, tag_t* tag) {
-    // assert on the tag list, and then the tag.
-    assert(list != 0x0);
-    assert(tag != 0x0);
-
-    if (list->count >= list->capacity) {
-        list->capacity = list->capacity ? list->capacity * 2 : 1;
-        tag_t** tags = realloc(list->tags, sizeof(tag_t*) * list->capacity);
-        if (!tags) {
-            fprintf(stderr, "realloc failed; could not reallocate memory for tags.\n");
-            exit(EXIT_FAILURE);
-        }
-        list->tags = tags;
-    }
-    list->tags[list->count++] = tag;
-};
-
-/**
  * @brief read tags from the folder '.lit/refs/tags/'
  *
- * @return a list of allocated tag structures as well as
- *  a count and capacity.
+ * @return a dynamic array of allocated tag structures.
  */
-tag_list_t*
+dyna_t*
 read_tags() {
     // vector collect all tags in the './lit/refs/tags/' folder.
-    vector_t* vector = vector_collect(".lit/refs/tags", E_PVC_TYPE_NO_RECURSE);
-    if (!vector) {
-        fprintf(stderr, "vector_collect failed; could not collect tags.\n");
-        exit(EXIT_FAILURE);
-    }
+    dyna_t* array = inw_walk(".lit/refs/tags", E_INW_TYPE_NO_RECURSE);
 
     // create our tag list.
-    tag_list_t* list = calloc(1, sizeof *list);
-    if (!list) {
-        fprintf(stderr, "calloc failed; could not allocate memory for tag list.\n");
-        exit(EXIT_FAILURE);
-    }
+    dyna_t* new_array = dyna_create(sizeof(tag_t*));
 
-    // iterate through each vinode_t.
-    for (size_t i = 0; i < vector->count; i++) {
-        vinode_t* node = vector->nodes[i];
+    // iterate through each inode_t.
+    for (size_t i = 0; i < array->length; i++) {
+        inode_t* node = dyna_get(array, i);
 
         // ignore everything that is not a file.
-        if (node->type != E_PVC_INODE_TYPE_FILE)
+        if (node->type != E_INODE_TYPE_FILE)
             continue;
 
         // allocate and open the file.
@@ -144,7 +112,7 @@ read_tags() {
             exit(EXIT_FAILURE);
         }
 
-        // conver the hashes.
+        // convert the hashes.
         unsigned char *_commit_hash = strtoha(commit_hash, 20), \
             *_branch_hash = strtoha(branch_hash, 20);
         memcpy(tag->commit_hash, _commit_hash, 20);
@@ -156,37 +124,33 @@ read_tags() {
         free(_commit_hash);
         free(_branch_hash);
         fclose(f);
-        append_tag(list, tag);
+        dyna_push(new_array, tag);
     }
-    vector_free(vector);
-    return list;
+    dyna_free(array);
+    return new_array;
 };
 
 /**
- * @brief filter tags based on the branch to a new list.
+ * @brief filter tags based on the branch to a new array.
  *
- * @param branch_hash the branch hash to filter for.
- * @param list the old list of tags to be filtered through.
- * @return a structure containing a dynamic list of allocated tags.
+ * @param branch_hash hash to filter for.
+ * @param array the old dynamic array of tags to be filtered through.
+ * @return a dynamic array of the tags within the repository.
  */
-tag_list_t*
+dyna_t*
 filter_tags(const sha1_t branch_hash, \
-    const tag_list_t* list) {
-    // assert on the tag list.
-    assert(list != 0x0);
+    const dyna_t* array) {
+    // assert on the tag array.
+    assert(array != 0x0);
 
-    // allocate our new list.
-    tag_list_t* new_list = calloc(1, sizeof *new_list);
-    if (!new_list) {
-        fprintf(stderr, "calloc failed; could not allocate memory for tag list.\n");
-        exit(EXIT_FAILURE);
-    }
+    // allocate our new array.
+    dyna_t* new_array = dyna_create(sizeof(tag_t*));
 
-    // iterate through the old list, and run memcmp.
-    for (size_t i = 0; i < list->count; i++) {
-        tag_t* tag = list->tags[i];
+    // iterate through the old array and run memcmp.
+    for (size_t i = 0; i < array->length; i++) {
+        tag_t* tag = dyna_get(array, i);
         if (!memcmp(tag->branch_hash, branch_hash, 20))
-            append_tag(new_list, tag);
+            dyna_push(new_array, tag);
     }
-    return new_list;
+    return new_array;
 };

@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-31
+ * @date 2025-11-12
  *
  * @file utl.c
  *    the utilities module, responsible for miscellaneous utility functions.
@@ -44,7 +44,7 @@ strdup(const char* str) {
  *
  * @param str the string to be trimmed.
  * @param n size to be trimmed at
- * @return a allocated string that has been trimmed with '...' if larger than <n>.
+ * @return an allocated string that has been trimmed with '...' if larger than n.
  */
 char*
 strtrm(const char* str, size_t n) {
@@ -105,7 +105,7 @@ strtoha(const char* str, size_t n) {
  * @brief check if a folder path absolutely exists in the filesystem.
  *
  * @param path the absolute path of the location that we are trying to check exists.
- * @return 0 if the parent directories already exist, and -1 if it doesnt.
+ * @return 0 if the parent directories already exist, and -1 if it doesn't.
  */
 int
 fexistpd(const char* path) {
@@ -137,7 +137,7 @@ fexistpd(const char* path) {
 };
 
 /**
- * @brief write lines out to a file at <path>.
+ * @brief write lines out to a file at the specified path.
  *
  * @param path the path of the file to write the lines to.
  * @param lines the array of lines that are to be written.
@@ -254,6 +254,90 @@ freadls(FILE* fptr, size_t* size) {
     *size = i;
     return data;
 };
+
+/**
+ * @brief free lines of n size.
+ *
+ * @param lines the ptr to the array in memory.
+ * @param n the count/capacity of lines as an array.
+ */
+void
+ffreels(char** lines, size_t n) {
+    // assert on lines.
+    assert(lines != 0x0);
+    assert(n > 0);
+    for (size_t i = 0; i < n; i++)
+        free(lines[i]);
+    free(lines);
+};
+
+/**
+ * @brief given some lines from a lcs algorithm, extract only the original lines
+ *  (keep ' ' and '-', ignore '+') for inverse application.
+ *
+ * @param lines the diff lines
+ * @param n the number of lines in the diff
+ * @param k pointer to store the resulting count
+ * @return allocated array of cleaned lines
+ */
+char**
+finversels(char** lines, size_t n, size_t* k) {
+    // assert on the parameters.
+    assert(lines != 0x0);
+    assert(k != 0x0);
+    assert(n > 0);
+
+    // allocate the cleaned lines
+    char** clines = calloc(1, n * sizeof(char*));
+
+    // iterate...
+    size_t m = 0;
+    for (size_t i = 0; i < n; i++) {
+        char* line = lines[i];
+
+        // keep unchanged lines and removed lines (for restore)
+        if (line[0] == ' ') clines[m++] = strdup(line + 1);
+        else if (line[0] == '-') clines[m++] = strdup(line + 2);
+        else if (line[0] != '+') clines[m++] = strdup(line);
+        // ignore '+' lines (these were additions we want to remove)
+    }
+    *k = m;
+    return clines;
+}
+
+/**
+ * @brief given some lines from a lcs algorithm, extract only the original lines
+ *  (keep ' ' and '+', ignore '-') for forward application.
+ *
+ * @param lines the diff lines
+ * @param n the number of lines in the diff
+ * @param k pointer to store the resulting count
+ * @return allocated array of cleaned lines
+ */
+char**
+fforwardls(char** lines, size_t n, size_t* k) {
+    // assert on the parameters.
+    assert(lines != 0x0);
+    assert(k != 0x0);
+    assert(n > 0);
+
+    // allocate the cleaned lines
+    char** clines = calloc(1, n * sizeof(char*));
+
+    // iterate...
+    size_t m = 0;
+    for (size_t i = 0; i < n; i++) {
+        char* line = lines[i];
+
+        // keep unchanged lines and removed lines (for restore)
+        if (line[0] == ' ') clines[m++] = strdup(line + 1);
+        else if (line[0] == '+') clines[m++] = strdup(line + 2);
+        else if (line[0] != '-') clines[m++] = strdup(line);
+        // ignore '-' lines (these were additions we want to remove)
+    }
+    *k = m;
+    return clines;
+}
 
 /**
  * @brief read parent path given some path.

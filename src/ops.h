@@ -1,9 +1,9 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-11-12
  *
  * @file ops.h
- *    the branch module in the version control system, it is responsible for handling
+ *    the operations module, it is responsible for handling
  *    commits and applying changes between branches.
  */
 #ifndef OPS_H
@@ -21,7 +21,7 @@
  * @param commit the commit to be applied forward.
  */
 void
-apply_forward_commit(const commit_t* commit);
+forward_commit_op(const commit_t* commit);
 
 /**
  * @brief apply the commit backwards (inverse) to the files currently existing.
@@ -29,16 +29,16 @@ apply_forward_commit(const commit_t* commit);
  * @param commit the commit to be applied forward.
  */
 void
-apply_inverse_commit(const commit_t* commit);
+reverse_commit_op(const commit_t* commit);
 
 /**
- * @brief rollback / checkout a older commit.
+ * @brief rollback to an older commit.
  *
  * @param branch the current branch that we are on.
  * @param commit the selected commit to be rolled back to.
  */
 void
-rollback(branch_t* branch, const commit_t* commit);
+rollback_op(branch_t* branch, const commit_t* commit);
 
 /**
  * @brief checkout to a newer commit.
@@ -47,5 +47,5 @@ rollback(branch_t* branch, const commit_t* commit);
  * @param commit the selected commit to be rolled back to.
  */
 void
-checkout(branch_t* branch, const commit_t* commit);
+checkout_op(branch_t* branch, const commit_t* commit);
 #endif //OPS_H

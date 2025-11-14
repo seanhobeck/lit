@@ -61,7 +61,7 @@ write_branch(const branch_t* branch) {
 
     // write the branch name and hash to the file.
     fprintf(f, "name:%s\nsha1:%s\nidx:%lu\ncount:%lu\n", \
-        branch->name, strsha1(branch->hash), branch->idx, branch->count);
+        branch->name, strsha1(branch->hash), branch->head, branch->count);
 
     // for each commit in this branch, write out the respective sha1 hash.
     for (size_t i = 0; i < branch->count; i++)
@@ -125,7 +125,7 @@ read_branch(const char* name) {
     branch->name = calloc(1, 129);
     char *branch_hash = calloc(1, 41);
     int scanned = fscanf(f, "name:%128[^\n]\nsha1:%40[^\n]\nidx:%lu\ncount:%lu\n", \
-        branch->name, branch_hash, &branch->idx, &count);
+        branch->name, branch_hash, &branch->head, &count);
     if (scanned != 4) {
         fprintf(stderr,"fscanf failed; could not read branch header.\n");
         fclose(f);

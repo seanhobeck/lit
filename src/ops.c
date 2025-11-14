@@ -1,10 +1,10 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-11-12
  *
  * @file ops.c
- *    the branch module in the version control system, it is responsible for handling
- *    commits and applying operations between branches
+ *    the operations module, it is responsible for handling
+ *    commits and applying operations between branches.
  */
 #include "ops.h"
 
@@ -21,96 +21,12 @@
 #include <sys/stat.h>
 
 /**
- * @brief free lines of <n> size.
- *
- * @param lines the ptr to the lines array in memory.
- * @param n the count/capacity of <lines> as an array.
- */
-void
-freels(char** lines, size_t n) {
-    // assert on lines.
-    assert(lines != 0x0);
-    assert(n > 0);
-    for (size_t i = 0; i < n; i++)
-        free(lines[i]);
-    free(lines);
-};
-
-/**
- * @brief given some lines from a lcs algorithm, extract only the original lines
- *  (keep ' ' and '-', ignore '+') for inverse application.
- *
- * @param lines the diff lines
- * @param n the number of lines in the diff
- * @param k pointer to store the resulting count
- * @return allocated array of cleaned lines
- */
-char**
-finversels(char** lines, size_t n, size_t* k) {
-    // assert on the parameters.
-    assert(lines != 0x0);
-    assert(k != 0x0);
-    assert(n > 0);
-
-    // allocate the cleaned lines
-    char** clines = calloc(1, n * sizeof(char*));
-
-    // iterate...
-    size_t m = 0;
-    for (size_t i = 0; i < n; i++) {
-        char* line = lines[i];
-
-        // keep unchanged lines and removed lines (for restore)
-        if (line[0] == ' ') clines[m++] = strdup(line + 1);
-        else if (line[0] == '-') clines[m++] = strdup(line + 2);
-        else if (line[0] != '+') clines[m++] = strdup(line);
-        // ignore '+' lines (these were additions we want to remove)
-    }
-    *k = m;
-    return clines;
-}
-
-/**
- * @brief given some lines from a lcs algorithm, extract only the original lines
- *  (keep ' ' and '+', ignore '-') for forward application.
- *
- * @param lines the diff lines
- * @param n the number of lines in the diff
- * @param k pointer to store the resulting count
- * @return allocated array of cleaned lines
- */
-char**
-fforwardls(char** lines, size_t n, size_t* k) {
-    // assert on the parameters.
-    assert(lines != 0x0);
-    assert(k != 0x0);
-    assert(n > 0);
-
-    // allocate the cleaned lines
-    char** clines = calloc(1, n * sizeof(char*));
-
-    // iterate...
-    size_t m = 0;
-    for (size_t i = 0; i < n; i++) {
-        char* line = lines[i];
-
-        // keep unchanged lines and removed lines (for restore)
-        if (line[0] == ' ') clines[m++] = strdup(line + 1);
-        else if (line[0] == '+') clines[m++] = strdup(line + 2);
-        else if (line[0] != '-') clines[m++] = strdup(line);
-        // ignore '-' lines (these were additions we want to remove)
-    }
-    *k = m;
-    return clines;
-}
-
-/**
  * @brief apply the commit forward to the files currently existing.
  *
  * @param commit the commit to be applied forward.
  */
 void
-apply_forward_commit(const commit_t* commit) {
+forward_commit_op(const commit_t* commit) {
     // assert on the commit.
     assert(commit != 0x0);
 
@@ -123,7 +39,7 @@ apply_forward_commit(const commit_t* commit) {
                 size_t n = 0;
                 char** lines = fforwardls(diff->lines, diff->count, &n);
                 fwritels(diff->new_path, lines, n);
-                freels(lines, n);
+                ffreels(lines, n);
                 break;
             }
             case (E_DIFF_FILE_MODIFIED): {
@@ -136,7 +52,7 @@ apply_forward_commit(const commit_t* commit) {
                 size_t n = 0;
                 char** lines = fforwardls(diff->lines, diff->count, &n);
                 fwritels(diff->new_path, lines, n);
-                freels(lines, n);
+                ffreels(lines, n);
                 break;
             }
             case (E_DIFF_FOLDER_NEW): {
@@ -162,7 +78,7 @@ apply_forward_commit(const commit_t* commit) {
  * @param commit the commit to be applied forward.
  */
 void
-apply_inverse_commit(const commit_t* commit) {
+reverse_commit_op(const commit_t* commit) {
     // assert on the commit.
     assert(commit != 0x0);
 
@@ -186,7 +102,7 @@ apply_inverse_commit(const commit_t* commit) {
                 size_t n = 0;
                 char** lines = finversels(diff->lines, diff->count, &n);
                 fwritels(diff->stored_path, lines, n);
-                freels(lines, n);
+                ffreels(lines, n);
                 break;
             }
             case (E_DIFF_FOLDER_DELETED): {
@@ -199,7 +115,7 @@ apply_inverse_commit(const commit_t* commit) {
                 size_t n = 0;
                 char** lines = finversels(diff->lines, diff->count, &n);
                 fwritels(diff->stored_path, lines, n);
-                freels(lines, n);
+                ffreels(lines, n);
                 break;
             }
             default: ; /// ?
@@ -208,13 +124,13 @@ apply_inverse_commit(const commit_t* commit) {
 };
 
 /**
- * @brief rollback to a older commit.
+ * @brief rollback to an older commit.
  *
  * @param branch the current branch that we are on.
  * @param commit the selected commit to be rolled back to.
  */
 void
-rollback(branch_t* branch, const commit_t* commit) {
+rollback_op(branch_t* branch, const commit_t* commit) {
     // assert on the branch and commit.
     assert(branch != 0x0);
     assert(commit != 0x0);
@@ -237,10 +153,10 @@ rollback(branch_t* branch, const commit_t* commit) {
 
     // apply inverse of commits from current back to target
     //      go backwards from current position to target
-    for (size_t i = branch->idx; i > target_idx; i--) {
-        apply_inverse_commit(branch->commits[i]);
+    for (size_t i = branch->head; i > target_idx; i--) {
+        reverse_commit_op(branch->commits[i]);
     }
-    branch->idx = target_idx;
+    branch->head = target_idx;
 };
 
 /**
@@ -250,7 +166,7 @@ rollback(branch_t* branch, const commit_t* commit) {
  * @param commit the selected commit to be rolled back to.
  */
 void
-checkout(branch_t* branch, const commit_t* commit) {
+checkout_op(branch_t* branch, const commit_t* commit) {
     // assert on the branch and the commit.
     assert(branch != 0x0);
     assert(commit != 0x0);
@@ -271,10 +187,10 @@ checkout(branch_t* branch, const commit_t* commit) {
         exit(EXIT_FAILURE);
     }
 
-    // apply commits from current forward to target
+    // apply commits from current forward to target,
     //      go forwards from current position to target
-    for (size_t i = branch->idx + 1; i <= target_idx; i++) {
-        apply_forward_commit(branch->commits[i]);
+    for (size_t i = branch->head + 1; i <= target_idx; i++) {
+        forward_commit_op(branch->commits[i]);
     }
-    branch->idx = target_idx;
+    branch->head = target_idx;
 };

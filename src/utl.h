@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-31
+ * @date 2025-11-12
  *
  * @file utl.h
  *    the utilities module, responsible for miscellaneous utility functions.
@@ -8,8 +8,8 @@
 #ifndef UTL_H
 #define UTL_H
 
-// @note starting size to calculate for is 1024 lines of 256 chars per line.
-#define MAX_LINES 1024ul
+// @note starting size to calculate for is 8192 lines of 256 chars per line.
+#define MAX_LINES 8192ul
 
 // @note at the most 256 characters can be stored in a line.
 #define MAX_LINE_LEN 256ul
@@ -56,7 +56,7 @@ strdup(const char* str);
  *
  * @param str the string to be trimmed.
  * @param n size to be trimmed at
- * @return a allocated string that has been trimmed with '...' if larger than <n>.
+ * @return an allocated string that has been trimmed with '...' if larger than n.
  */
 char*
 strtrm(const char* str, size_t n);
@@ -75,13 +75,13 @@ strtoha(const char* str, size_t n);
  * @brief check if a folder path absolutely exists in the filesystem.
  *
  * @param path the absolute path of the location that we are trying to check exists.
- * @return 0 if the parent directories already exist, and -1 if it doesnt.
+ * @return 0 if the parent directories already exist, and -1 if it doesn't.
  */
 int
 fexistpd(const char* path);
 
 /**
- * @brief write lines out to a file at <path>.
+ * @brief write lines out to a file at the specified path.
  *
  * @param path the path of the file to write the lines to.
  * @param lines the array of lines that are to be written.
@@ -111,6 +111,39 @@ fcleanls(char** lines, size_t n, size_t* k);
  */
 char**
 freadls(FILE* fptr, size_t* size);
+
+/**
+ * @brief free lines of n size.
+ *
+ * @param lines the ptr to the array in memory.
+ * @param n the count/capacity of lines as an array.
+ */
+void
+ffreels(char** lines, size_t n);
+
+/**
+ * @brief given some lines from a lcs algorithm, extract only the original lines
+ *  (keep ' ' and '-', ignore '+') for inverse application.
+ *
+ * @param lines the diff lines
+ * @param n the number of lines in the diff
+ * @param k pointer to store the resulting count
+ * @return allocated array of cleaned lines
+ */
+char**
+finversels(char** lines, size_t n, size_t* k);
+
+/**
+ * @brief given some lines from a lcs algorithm, extract only the original lines
+ *  (keep ' ' and '+', ignore '-') for forward application.
+ *
+ * @param lines the diff lines
+ * @param n the number of lines in the diff
+ * @param k pointer to store the resulting count
+ * @return allocated array of cleaned lines
+ */
+char**
+fforwardls(char** lines, size_t n, size_t* k);
 
 /**
  * @brief read parent path given some path.

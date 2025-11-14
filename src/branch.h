@@ -20,7 +20,7 @@ typedef struct {
     char* name; // branch name.
     char* path; // path to the branch directory.
     sha1_t hash; // sha1 hash of the branch.
-    size_t count, idx, capacity; // number of commits in the branch.
+    size_t count, head, capacity; // number of commits in the branch.
     commit_t** commits; // array of commits hashes for this branch.
 } branch_t;
 

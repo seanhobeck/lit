@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-13
+ * @date 2025-11-13
  *
  * @file cache.c
  *    the cache module, responsible for clearing any possible object
@@ -9,7 +9,7 @@
 #include "cache.h"
 
 /*! @uses vector_t*, vector_collect */
-#include "pvc.h"
+#include "inw.h"
 
 /*! @uses bool, true, false */
 #include <stdbool.h>
@@ -30,8 +30,8 @@ scan_object_cache(const repository_t* repository) {
 
     // scan the .lit/objects directory recursively to find all the objects.
     // then we look through each one of the inodes, if it is not found in there, we
-    // then remove it as it is not needed (cache).
-    vector_t* objects = vector_collect(".lit/objects", E_PVC_TYPE_RECURSE);
+    // then remove it as it isn't needed (cache).
+    dyna_t* objects = inw_walk(".lit/objects", E_INW_TYPE_RECURSE);
     if (!objects) {
         fprintf(stderr, "failed to collect objects from the .lit/objects directory.\n");
         exit(EXIT_FAILURE);
@@ -41,11 +41,11 @@ scan_object_cache(const repository_t* repository) {
     size_t count = 0;
 
     // iterate...
-    for (size_t i = 0; i < objects->count; i++) {
-        vinode_t* node = objects->nodes[i];
+    for (size_t i = 0; i < objects->length; i++) {
+        inode_t* node = dyna_get(objects, i);
 
         // if this is not a file, ignore it.
-        if (node->type != E_PVC_INODE_TYPE_FILE)
+        if (node->type != E_INODE_TYPE_FILE)
             continue;
 
         // iterate through each change in each branch.
@@ -88,14 +88,14 @@ scan_object_cache(const repository_t* repository) {
             // set the result and get the parent directory as well.
             result = E_CACHE_RESULT_SUCCESS;
             char* parent_path = rpwd(node->path);
-            vector_t* parent = vector_collect(parent_path, E_PVC_TYPE_NO_RECURSE);
+            dyna_t* parent = inw_walk(parent_path, E_INW_TYPE_NO_RECURSE);
 
             // if this is the only object that needs to be removed in this folder, then remove the
             //  parent folder as well.
             remove(node->path);
-            if (parent->count == 1)
+            if (parent->length == 1)
                 remove(parent_path);
-            vector_free(parent);
+            dyna_free(parent);
             count++;
         }
     }
@@ -105,6 +105,6 @@ scan_object_cache(const repository_t* repository) {
         printf("cache cleaned successfully, removed %lu unreferenced objects.\n", count);
 
     // free and return the result.
-    vector_free(objects);
+    dyna_free(objects);
     return result;
 };

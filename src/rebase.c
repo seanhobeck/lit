@@ -1,46 +1,46 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-23
+ * @date 2025-11-12
  *
  * @file rebase.c
- *    the rebase module, responsible for rebasing, and checking collisions
+ *    the rebase module, responsible for rebasing and checking collisions
  *    between the rebasing of branches.
  */
 #include "rebase.h"
 
-/*! @uses apply_forward_commit */
+/*! @uses checkout_op. */
 #include "ops.h"
 
-/*! @uses bool, true, false */
+/*! @uses bool, true, false. */
 #include <stdbool.h>
 
 /**
  * @brief are the two commits conflicting in their changes at all?
  *
- * @param first the first commit to compare.
- * @param second the second commit to compare.
+ * @param first_commit the first commit to compare.
+ * @param second_commit the second commit to compare.
  * @return true if there are any commit conflicts (printed to stderr).
  */
 bool
-is_conflicting_commits(const commit_t* first, const commit_t* second) {
+is_conflicting_commits(const commit_t* first_commit, const commit_t* second_commit) {
     // assert on the commits.
-    assert(first != 0x0);
-    assert(second != 0x0);
+    assert(first_commit != 0x0);
+    assert(second_commit != 0x0);
     bool is_conflicting = false;
 
     // iterate through each change in the first commit
-    for (size_t i = 0; i < first->count; i++) {
-        diff_t* first_change = first->changes[i];
+    for (size_t i = 0; i < first_commit->count; i++) {
+        diff_t* first_change = first_commit->changes[i];
 
         // iterate through each change in the second commit.
-        for (size_t j = 0; j < second->count; j++) {
-            diff_t* second_change = second->changes[j];
+        for (size_t j = 0; j < second_commit->count; j++) {
+            diff_t* second_change = second_commit->changes[j];
 
             // if the filenames match at all, there could be a conflict.
             if (!strcmp(first_change->new_path, second_change->new_path)) {
                 is_conflicting = true;
                 fprintf(stderr, "found conflicting changes in %s/@%u vs %s/@%u\n", \
-                    strsha1(first->hash), first_change->crc, strsha1(second->hash), second_change->crc);
+                    strsha1(first_commit->hash), first_change->crc, strsha1(second_commit->hash), second_change->crc);
             }
         }
     }
@@ -51,12 +51,12 @@ is_conflicting_commits(const commit_t* first, const commit_t* second) {
 #define min(a, b) ((a) < (b) ? (a) : (b))
 
 /**
- * @brief if the branch <current> can rebase commits ontop of <source> (without modifications).
+ * @brief if the current branch can rebase commits ontop of the source, without modifications.
  *
  * @param repository the repository read from the cwd.
  * @param destination_branch_name the destination branch name.
  * @param source_branch_name the source branch name.
- * @return if rebase is possible on branch <source>.
+ * @return if rebase is possible on the source branch.
  */
 bool
 is_rebase_possible(const repository_t* repository, const char* destination_branch_name, \
@@ -89,7 +89,7 @@ is_rebase_possible(const repository_t* repository, const char* destination_branc
     //  report the conflict found, continue, and then eventually
     //  return false.
     bool conflict_found = false;
-    for (size_t i = ancestor_idx + 1; i < source->idx && i < min(source->count, destination->count); i++) {
+    for (size_t i = ancestor_idx + 1; i < source->head && i < min(source->count, destination->count); i++) {
         // get the commit after the ancestor on the source branch.
         commit_t* source_commit = source->commits[i], * destination_commit = destination->commits[i];
 
@@ -101,7 +101,7 @@ is_rebase_possible(const repository_t* repository, const char* destination_branc
 };
 
 /**
- * @brief rebase the current/active branch onto source branch.
+ * @brief rebase the current/active branch onto the source branch.
  *
  * @param repository the repository read from the cwd.
  * @param destination_branch_name the destination branch to rebase onto.
@@ -109,7 +109,7 @@ is_rebase_possible(const repository_t* repository, const char* destination_branc
  * @return rebase result status enum.
  */
 e_rebase_result_t
-rebase_branch(const repository_t* repository, const char* destination_branch_name, \
+branch_rebase(const repository_t* repository, const char* destination_branch_name, \
     const char* source_branch_name) {
     // assert on the repository, destination and then branch name.
     assert(repository != 0x0);
@@ -130,7 +130,7 @@ rebase_branch(const repository_t* repository, const char* destination_branch_nam
     // find the common ancestor
     commit_t* ancestor = find_common_ancestor(destination, source);
     size_t source_ancestor_idx = find_index_commit(source, ancestor);
-    size_t rebase_count = source->idx - source_ancestor_idx;
+    size_t rebase_count = source->head - source_ancestor_idx;
 
     // calculate the commit count to be added, and then add them onto the dest.
     for (size_t i = source_ancestor_idx + 1; i < source->count; i++) {
@@ -140,8 +140,8 @@ rebase_branch(const repository_t* repository, const char* destination_branch_nam
 
     // checkout the most recent commits just added if it is the active branch.
     if (!strcmp(destination->name, repository->branches[repository->idx]->name))
-        checkout(destination, destination->commits[destination->idx + rebase_count]);
-    else destination->idx += rebase_count;
+        checkout_op(destination, destination->commits[destination->head + rebase_count]);
+    else destination->head += rebase_count;
 
     // write and log.
     write_branch(destination);

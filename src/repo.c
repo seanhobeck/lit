@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-29
+ * @date 2025-11-13
  *
  * @file repo.c
  *    the repository module in the version control system, it is responsible for handling branches,
@@ -279,7 +279,7 @@ create_branch_repository(repository_t* repository, const char* name) {
         // them as they are just 'cache'.
         add_commit_branch(commit, branch);
     }
-    branch->idx = current->idx;
+    branch->head = current->head;
 
     // write out the branch and repository.
     write_repository(repository);
@@ -395,16 +395,16 @@ switch_branch_repository(repository_t* repository, const char* name) {
         printf("warning; no ancestor commit was found (branch is unrelated).\n");
         if (current->count > 0) {
             // rollback to the first commit.
-            rollback(current, current->commits[0]);
+            rollback_op(current, current->commits[0]);
             if (current->count > 0)
-                apply_inverse_commit(current->commits[0]);
+                reverse_commit_op(current->commits[0]);
         }
 
         // checkout target branch to its head.
         if (target->count > 0) {
             // start from clean slate and apply all commits.
-            for (size_t i = 0; i <= target->idx && i < target->count; i++)
-                apply_forward_commit(target->commits[i]);
+            for (size_t i = 0; i <= target->head && i < target->count; i++)
+                forward_commit_op(target->commits[i]);
         }
     }
     else {
@@ -413,16 +413,16 @@ switch_branch_repository(repository_t* repository, const char* name) {
 
         // rollback to the ancestor commit...
         long ancestor_idx = find_index_commit(current, ancestor);
-        if (ancestor_idx >= 0 && ancestor_idx < current->idx)
-            for (size_t i = current->idx; i > ancestor_idx; i--)
-                apply_inverse_commit(current->commits[i]);
+        if (ancestor_idx >= 0 && ancestor_idx < current->head)
+            for (size_t i = current->head; i > ancestor_idx; i--)
+                reverse_commit_op(current->commits[i]);
 
         // checkout to the ancestor commit, then to the target head.
         long head_idx = find_index_commit(target, ancestor);
         if (head_idx >= 0) {
             // apply forward commits from the ancestor to the head.
-            for (long i = head_idx + 1; i <= (long) target->idx && i < (long) target->count; i++)
-                apply_forward_commit(target->commits[i]);
+            for (long i = head_idx + 1; i <= (long) target->head && i < (long) target->count; i++)
+                forward_commit_op(target->commits[i]);
         }
     }
 

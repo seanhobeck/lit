@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
+ * @date 2025-11-13
  *
  * @file cache.h
  *    the cache module, responsible for clearing any possible object
@@ -12,7 +12,7 @@
 /*! @uses repository_t */
 #include "repo.h"
 
-/// @note a enum to describe the results of scanning the caches.
+/// @note an enum to describe the results of scanning the caches.
 typedef enum {
     E_CACHE_RESULT_SUCCESS = 0x0, // we found some caches that could be removed.
     E_CACHE_RESULT_NO_CACHE = 0x1, // we did not find any caches to remove.

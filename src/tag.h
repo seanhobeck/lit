@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-26
+ * @date 2025-11-13
  *
  * @file tag.h
  *    the tag module, responsible for tagging any important rebases,
@@ -16,6 +16,7 @@
 #include "commit.h"
 
 /*! @uses sha1_t */
+#include "dyna.h"
 #include "hash.h"
 
 /// @note a data structure to represent the tagging of a commit.
@@ -44,29 +45,22 @@ create_tag(const branch_t* branch, const commit_t* commit, \
 void
 write_tag(const tag_t* tag);
 
-/// @note a data structure for a list of tags.
-typedef struct {
-    size_t count, capacity;
-    tag_t** tags;
-} tag_list_t;
-
 /**
  * @brief read tags from the folder '.lit/refs/tags/'
  *
- * @return a list of allocated tag structures as well as
- *  a count and capacity.
+ * @return a dynamic array of allocated tag structures.
  */
-tag_list_t*
+dyna_t*
 read_tags();
 
 /**
- * @brief filter tags based on the branch to a new list.
+ * @brief filter tags based on the branch to a new array.
  *
- * @param branch_hash the branch hash to filter for.
- * @param list the old list of tags to be filtered through.
- * @return a structure containing a dynamic list of allocated tags.
+ * @param branch_hash hash to filter for.
+ * @param array the old dynamic array of tags to be filtered through.
+ * @return a dynamic array of the tags within the repository.
  */
-tag_list_t*
+dyna_t*
 filter_tags(const sha1_t branch_hash, \
-    const tag_list_t* list);
+    const dyna_t* array);
 #endif //TAG_H

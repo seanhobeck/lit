@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-29
+ * @date 2025-11-13
  *
  * @file cli.h
  *    the cli module of lit, responsible for handling the arguments passed by the user and
@@ -36,7 +36,7 @@
 #include "ops.h"
 
 /*! @uses pvc_t*, pvc_inode_t*, pvc_collect. */
-#include "pvc.h"
+#include "inw.h"
 
 /*! @uses scan_object_cache */
 #include "cache.h"
@@ -100,16 +100,16 @@ int
 handle_status() {
     // pvc all files in .lit/objects/shelved/<branch_name> and
     //  create a commit with the diffs.
-    vector_t* vector = shelve_collect(branch->name);
+    dyna_t* array = collect_shelved(branch->name);
 
     // print out the active branch name and the number of diffs shelved.
     printf("current branch: \'%s\', %lu change(s) shelved, with %lu commit(s), %s.\n", \
-        branch->name, vector->count, branch->count,
+        branch->name, array->length, branch->count,
         repository->readonly ? "in read-only " : "in read-write");
 
     // iterate through each object.
     for (size_t i = 0; i < branch->count; i++) {
-        if (i == branch->idx) printf("\t->  ");
+        if (i == branch->head) printf("\t->  ");
         else printf("\t    ");
 
         // print the information about the commits.
@@ -120,13 +120,13 @@ handle_status() {
     }
 
     // print out all the tags (on this branch).
-    tag_list_t* tags = read_tags();
+    dyna_t* tags = read_tags();
     tags = filter_tags(branch->hash, tags);
-    if (tags->count > 0) {
+    if (tags->length > 0) {
         printf("\ntag(s):\n");
-        for (size_t i = 0; i < tags->count; i++) {
-            printf("\t    %s -> %s\n", tags->tags[i]->name, \
-                strsha1(tags->tags[i]->commit_hash));
+        for (size_t i = 0; i < tags->length; i++) {
+            tag_t* tag = dyna_get(tags, i);
+            printf("\t    %s -> %s\n", tag->name, strsha1(tag->commit_hash));
         }
     }
     return 0;
@@ -149,11 +149,11 @@ handle_commit(arg_t args) {
 
     // pvc all files in .lit/objects/shelved/<branch_name> and
     //  create a commit with the diffs.
-    vector_t* vector = shelve_collect(branch->name);
+    dyna_t* array = collect_shelved(branch->name);
 
     // create the commit.
     commit_t* commit = create_commit(args.argv[2], branch->name);
-    if (vector->nodes == 0x0) {
+    if (array->data == 0x0) {
         fprintf(stderr, "no diffs to commit; nothing stashed.\n");
         remove(commit->path);
         return -1;
@@ -161,18 +161,18 @@ handle_commit(arg_t args) {
 
     // iterate through each pvc_inode_t in the vector and read the diff from disk,
     size_t i = 0;
-    for (; i < vector->count; i++) {
-        vinode_t* inode = vector->nodes[i];
+    for (; i < array->length; i++) {
+        inode_t* inode = dyna_get(array, i);
         diff_t* read = read_diff(inode->path);
         add_diff_commit(commit, read);
         remove(inode->path);
     }
-    vector_free(vector);
+   dyna_free(array);
 
     // add the commit to the active branch history.
     add_commit_branch(commit, branch);
     write_commit(commit);
-    branch->idx = branch->count-1; // set the active commit index to the new commit.
+    branch->head = branch->count-1; // set the active commit index to the new commit.
     write_branch(branch);
 
     // remove the staging directory.
@@ -217,29 +217,29 @@ handle_cr_move(arg_t args) {
     }
     if (args.type == E_ARG_TYPE_ROLLBACK) {
         // if the commit is newer than the active commit, report the error and return.
-        if (i >= branch->idx) {
+        if (i >= branch->head) {
             fprintf(stderr, "cannot rollback to a commit that is newer than the active commit.\n");
             return -1;
         }
         // rollback to the commit by applying the diffs in reverse order.
-        rollback(branch, commit);
+        rollback_op(branch, commit);
         printf("rolled back to \'%s\' on branch \'%s\'\n", \
             strtrm(strsha1(commit->hash), 12), branch->name);
     }
     else {
         // if the commit is older than the active commit, report the error and return.
-        if (i <= branch->idx) {
+        if (i <= branch->head) {
             fprintf(stderr, "cannot checkout to a commit that is older than the active commit.\n");
             return -1;
         }
         // checkout to the commit by applying the diffs in order.
-        checkout(branch, commit);
+        checkout_op(branch, commit);
         printf("checked out \'%s\' on branch \'%s\'\n", \
             strtrm(strsha1(commit->hash), 12), branch->name);
     }
 
     // write and leave.
-    branch->idx = i;
+    branch->head = i;
     write_branch(branch);
 
     // if we are not on the latest commit, set the repository to read-only.
@@ -296,7 +296,7 @@ handle_add_delete_inode(arg_t args) {
     }
 
     // push to staging for the active branch.
-    shelve_changes(branch->name, diff);
+    write_to_shelved(branch->name, diff);
     return 0;
 };
 
@@ -333,8 +333,8 @@ handle_modified_inode(arg_t args) {
             }
 
             // write the changes to stashed.
-            shelve_changes(branch->name, new_folder);
-            shelve_changes(branch->name, old_folder);
+            write_to_shelved(branch->name, new_folder);
+            write_to_shelved(branch->name, old_folder);
 
             // print and rename the folder.
             printf("added changes for '%s' -> '%s' to stashed\n",
@@ -349,7 +349,7 @@ handle_modified_inode(arg_t args) {
     }
 
     // iterate to find the most recent commit on the active branch.
-    size_t index = branch->idx;
+    size_t index = branch->head;
     diff_t* recent_diff = 0x0;
 
     // we need to make the old file under a temp name, pass it through to
@@ -421,7 +421,7 @@ handle_modified_inode(arg_t args) {
 
     // clean up temp file and allocated lines
     remove(temp_path);
-    shelve_changes(branch->name, diff);
+    write_to_shelved(branch->name, diff);
     return 0;
 };
 
@@ -484,7 +484,7 @@ handle_switch_branch(arg_t args) {
 int
 handle_rebase_branch(arg_t args) {
     // rebase onto the branch provided.
-    return rebase_branch(repository, args.argv[2],\
+    return branch_rebase(repository, args.argv[2],\
         args.argv[3]) == E_REBASE_RESULT_SUCCESS ? 0 : 1;
 };
 
@@ -550,10 +550,11 @@ int
 handle_delete_tag(arg_t args) {
     // call read_tag on the file location, and if
     //  it is correct, then we can remove it.
-    tag_list_t* tags = read_tags();
+    dyna_t* array = read_tags();
     bool found = false;
-    for (size_t i = 0; i < tags->count; i++) {
-        if (!strcmp(tags->tags[i]->name, args.argv[2])) {
+    for (size_t i = 0; i < array->length; i++) {
+        tag_t* tag = dyna_get(array, i);
+        if (!strcmp(tag->name, args.argv[2])) {
             found = true;
             break;
         }
