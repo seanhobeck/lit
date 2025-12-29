@@ -39,9 +39,9 @@ is_conflicting_commits(const commit_t* first_commit, const commit_t* second_comm
     assert(second_commit != 0x0);
 
     /* iterate through each change in the first commit */
-    _foreach(first_commit->changes, const diff_t*, first_change, i)
+    _foreach_it(first_commit->changes, const diff_t*, first_change, i)
         /* iterate through each change in the second commit. */
-        _foreach(second_commit->changes, const diff_t*, second_change, j)
+        _foreach_it(second_commit->changes, const diff_t*, second_change, j)
             /* if the filenames match at all, there could be a conflict. */
             if (!strcmp(first_change->new_path, second_change->new_path)) {
                 fprintf(stderr, "found conflicting changes in %s/@%u vs %s/@%u\n", \

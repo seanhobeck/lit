@@ -62,7 +62,7 @@ internal bool all = false, no_recurse = false, hard = false, graph = false, \
     filter = false, max_count = false, verbose = false, quiet = false, from = false;
 
 /* logging with the internal argument flags given. */
-#define _log(level, format, ...) if (!quiet) log(level, format, ##__VA_ARGS__);
+#define _llog(level, format, ...) if (!quiet) llog(level, format, ##__VA_ARGS__);
 
 internal void
 setup(dyna_t* array) {
@@ -78,7 +78,7 @@ setup(dyna_t* array) {
     config = read_config();
 
     /* parse for flag arguments. */
-    _foreach(array, argument_t*, argument, i)
+    _foreach(array, argument_t*, argument)
         if (argument->type == E_FLAG_TO_ARGUMENT) {
             /* we then set the internal flags AS specified. */
             switch (argument->details.flag) {
@@ -128,10 +128,10 @@ internal int
 handle_init() {
     /* create the repository, unless it has already been made. */
     if (create_repository() == 0) {
-        log(E_LOGGER_LEVEL_ERROR, "repository already exists.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "repository already exists.\n");
         return -1;
     }
-    _log(E_LOGGER_LEVEL_INFO, "repository initialized successfully.\n");
+    _llog(E_LOGGER_LEVEL_INFO, "repository initialized successfully.\n");
     return 0;
 };
 
@@ -146,7 +146,7 @@ handle_log() {
         repository->readonly ? "in read-only " : "in read-write");
 
     /* iterate through each object. */
-    _foreach(active_branch->commits, const commit_t*, commit, i)
+    _foreach(active_branch->commits, const commit_t*, commit)
         if (i == active_branch->head) printf("\t    ->  ");
         else printf("\t\t");
 
@@ -162,7 +162,7 @@ handle_log() {
     tags = filter_tags(active_branch->hash, tags);
     if (tags->length > 0) {
         printf("\ntag(s):\n");
-        _foreach(tags, tag_t*, tag, i)
+        _foreach(tags, tag_t*, tag)
             printf("\t\t%s -> %s\n", tag->name, strsha1(tag->commit_hash));
         _endforeach;
     }
@@ -173,7 +173,7 @@ internal int
 handle_commit(dyna_t* argument_array) {
     /* if we are in read-only mode, we cannot commit or make changes */
     if (repository->readonly) {
-        log(E_LOGGER_LEVEL_ERROR, "cannot commit changes in read-only mode.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "cannot commit changes in read-only mode.\n");
         return -1;
     };
 
@@ -182,7 +182,7 @@ handle_commit(dyna_t* argument_array) {
 
     /* create the commit with a message. */
     char* message = ".";
-    _foreach(argument_array, const argument_t*, argument, i)
+    _foreach_it(argument_array, const argument_t*, argument, i)
         /* if we encounter a --message, whatever follows must be a message in quotes. */
         if (argument->type == E_FLAG_TO_ARGUMENT) {
             if (argument->details.flag == E_FLAG_ARG_TYPE_MESSAGE) {
@@ -198,13 +198,13 @@ handle_commit(dyna_t* argument_array) {
 
     /* if there are no changes|diffs made. */
     if (shelved_array->data == 0x0) {
-        log(E_LOGGER_LEVEL_ERROR, "no diffs to commit; nothing stashed.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "no diffs to commit; nothing stashed.\n");
         remove(commit->path);
         return -1;
     }
 
     /* iterate through each shelved item. */
-    _foreach(shelved_array, const inode_t*, inode, i);
+    _foreach(shelved_array, const inode_t*, inode);
         /* read and add to the commit. */
         diff_t* read = read_diff(inode->path);
         dyna_push(commit->changes, read);
@@ -226,7 +226,7 @@ handle_commit(dyna_t* argument_array) {
     remove(path);
 
     /* print out to the console. */
-    _log(E_LOGGER_LEVEL_INFO, "added commit '%s' to branch '%s' with %lu change(s).\n", \
+    _llog(E_LOGGER_LEVEL_INFO, "added commit '%s' to branch '%s' with %lu change(s).\n", \
         strtrm(commit->message, 32), active_branch->name, commit->changes->length);
     return 0;
 };
@@ -238,7 +238,7 @@ handle_cr_move(dyna_t* argument_array) {
 
     /* gather the hash or the tag. */
     sha1_t hash = {0};
-    _foreach(argument_array, const argument_t*, argument, i)
+    _foreach_it(argument_array, const argument_t*, argument, i)
         /* are we encountering a tag? */
         if (argument->type == E_FLAG_TO_ARGUMENT) {
             if (argument->details.flag == E_FLAG_ARG_TYPE_TAG) {
@@ -246,12 +246,12 @@ handle_cr_move(dyna_t* argument_array) {
 
                 /* check if there are any tags. */
                 if (tags->length == 0) {
-                    log(E_LOGGER_LEVEL_ERROR, "no tags exist in the repository.\n");
+                    llog(E_LOGGER_LEVEL_ERROR, "no tags exist in the repository.\n");
                     return -1;
                 }
 
                 /* get the tag that matches the value of the parameter. */
-                _foreach(tags, tag_t*, tag, j)
+                _foreach_it(tags, tag_t*, tag, j)
                     if (!strcmp(tag->name, next->value)) {
                         memcpy(hash, tag->commit_hash, 20);
                         break;
@@ -271,7 +271,7 @@ handle_cr_move(dyna_t* argument_array) {
     /* gather the specific commit ptr. */
     commit_t* target_commit = 0x0;
     size_t target_idx = 0;
-    _foreach(active_branch->commits, commit_t*, commit, i)
+    _foreach_it(active_branch->commits, commit_t*, commit, i)
         /* compare the hashes of the commit to see if they match. */
         if (!memcmp(commit->hash, hash, 20)) {
             target_commit = commit;
@@ -279,16 +279,16 @@ handle_cr_move(dyna_t* argument_array) {
             break;
         }
     _endforeach;
-    
+
     /* if the commit was not found, report the error and return. */
     if (target_commit == 0x0) {
-        log(E_LOGGER_LEVEL_ERROR, "commit '%s' not found.\n", strsha1(hash));
+        llog(E_LOGGER_LEVEL_ERROR, "commit '%s' not found.\n", strsha1(hash));
         return -1;
     }
 
     /* find the proper argument in the argument array, then perform the operation. */
     e_proper_arg_ty_t type = E_PROPER_ARG_TYPE_NONE;
-    _foreach(argument_array, const argument_t*, argument, i)
+    _foreach(argument_array, const argument_t*, argument)
         if (argument->type == E_PROPER_ARGUMENT) {
             type = argument->details.proper;
             break;
@@ -297,28 +297,28 @@ handle_cr_move(dyna_t* argument_array) {
     if (type == E_PROPER_ARG_TYPE_ROLLBACK) {
         /* if the commit is newer than the current commit, report the error and return. */
         if (target_idx >= active_branch->head) {
-            log(E_LOGGER_LEVEL_ERROR, "cannot rollback to a commit that is newer than the active commit.\n");
+            llog(E_LOGGER_LEVEL_ERROR, "cannot rollback to a commit that is newer than the active commit.\n");
             return -1;
         }
 
         /* rollback to the commit by applying the diffs in reverse order. */
         rollback_op(active_branch, target_commit);
         if (!quiet) {
-            log(E_LOGGER_LEVEL_INFO, "rolled back to \'%s\' on branch \'%s\'\n", \
+            llog(E_LOGGER_LEVEL_INFO, "rolled back to \'%s\' on branch \'%s\'\n", \
                 strtrm(strsha1(target_commit->hash), 12), active_branch->name);
         }
     }
     else {
         /* if the commit is older than the current commit, report the error and return. */
         if (target_idx <= active_branch->head) {
-            log(E_LOGGER_LEVEL_ERROR, "cannot checkout to a commit that is older than the active commit.\n");
+            llog(E_LOGGER_LEVEL_ERROR, "cannot checkout to a commit that is older than the active commit.\n");
             return -1;
         }
 
         /* checkout to the commit by applying the diffs in order. */
         checkout_op(active_branch, target_commit);
         if (!quiet) {
-            log(E_LOGGER_LEVEL_INFO, "checked out \'%s\' on branch \'%s\'\n", \
+            llog(E_LOGGER_LEVEL_INFO, "checked out \'%s\' on branch \'%s\'\n", \
                 strtrm(strsha1(target_commit->hash), 12), active_branch->name);
         }
     }
@@ -332,14 +332,14 @@ handle_cr_move(dyna_t* argument_array) {
     write_repository(repository);
 
     /* log a warning if verbose. */
-    _log(E_LOGGER_LEVEL_WARNING, "\e[0;33mwarning, treat rollbacks and checkouts as readonly.\n"
+    _llog(E_LOGGER_LEVEL_WARNING, "\e[0;33mwarning, treat rollbacks and checkouts as readonly.\n"
         "changing any files could damage your control tree.\n\e[0m");
 
     /* if the user specifies with --hard, delete all shelved items. */
     if (hard) {
         /* inode walk and collect all shelved files. */
         dyna_t* shelved_array = collect_shelved(active_branch->name);
-        _foreach(shelved_array, inode_t*, inode, i)
+        _foreach(shelved_array, inode_t*, inode)
             remove(inode->path);
         _endforeach;
         dyna_free(shelved_array);
@@ -369,7 +369,7 @@ add_delete_inode(const char* filename, e_proper_arg_ty_t type) {
 
     /* error checking. */
     if (diff->new_path == 0x0) {
-        log(E_LOGGER_LEVEL_ERROR, "failed to create diff for '%s'.\n", filename);
+        llog(E_LOGGER_LEVEL_ERROR, "failed to create diff for '%s'.\n", filename);
         return -1;
     }
 
@@ -382,9 +382,9 @@ internal diff_t*
 find_recent_commit(const char* filename) {
     /* iterate through all commits in this branch. */
     diff_t* recent_commit = 0x0;
-    _inv_foreach(active_branch->commits, const commit_t*, commit, i)
+    _inv_foreach_it(active_branch->commits, const commit_t*, commit, i)
         /* search for the file in the commit using its new_path first. */
-        _foreach(commit->changes, diff_t*, change, j)
+        _foreach_it(commit->changes, diff_t*, change, j)
             /* if the new_path on a diff is the original file we are looking for, then we need to re-construct it. */
             if (change->new_path && !strcmp(change->new_path, filename)) {
                 if (change->type == E_DIFF_FILE_MODIFIED || change->type == E_DIFF_FILE_NEW) {
@@ -416,7 +416,7 @@ modified_inode(const char* old_filename, const char* new_filename) {
             /* check if the folders exist. */
             struct stat osb;
             if (stat(old_folder->stored_path, &osb) != 0) {
-                log(E_LOGGER_LEVEL_ERROR, "stat failed; old folder not found.\n");
+                llog(E_LOGGER_LEVEL_ERROR, "stat failed; old folder not found.\n");
                 return -1;
             }
 
@@ -426,7 +426,7 @@ modified_inode(const char* old_filename, const char* new_filename) {
 
             /* log and rename the folder. */
             if (!quiet) {
-                log(E_LOGGER_LEVEL_INFO, "added changes for '%s' -> '%s' to stashed\n",
+                llog(E_LOGGER_LEVEL_INFO, "added changes for '%s' -> '%s' to stashed\n",
                        old_filename, new_filename);
             }
             rename(old_filename, new_filename);
@@ -434,7 +434,7 @@ modified_inode(const char* old_filename, const char* new_filename) {
         }
 
         /* print an error. */
-        log(E_LOGGER_LEVEL_ERROR, "cannot modify a folder to be a file, or write a .diff for a folder that hasn't been renamed.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "cannot modify a folder to be a file, or write a .diff for a folder that hasn't been renamed.\n");
         return -1;
     }
 
@@ -443,7 +443,7 @@ modified_inode(const char* old_filename, const char* new_filename) {
 
     /* did we find the most recent change that contains the file as new_path or stored_path? */
     if (!most_recent_change) {
-        log(E_LOGGER_LEVEL_ERROR, "file not found in previous commits on this branch.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "file not found in previous commits on this branch.\n");
         return -1;
     }
 
@@ -458,7 +458,7 @@ modified_inode(const char* old_filename, const char* new_filename) {
         char** original_lines = fcleanls((char**) most_recent_change->lines->data, \
             most_recent_change->lines->length, &line_count);
         if (!original_lines) {
-            log(E_LOGGER_LEVEL_ERROR, "failed to reconstruct original file content.\n");
+            llog(E_LOGGER_LEVEL_ERROR, "failed to reconstruct original file content.\n");
             return -1;
         }
 
@@ -469,7 +469,7 @@ modified_inode(const char* old_filename, const char* new_filename) {
         /* write original content to .tmp file. */
         FILE* f = fopen(temp_path, "w");
         if (!f) {
-            log(E_LOGGER_LEVEL_ERROR, "fopen failed; could not open temp file for writing.\n");
+            llog(E_LOGGER_LEVEL_ERROR, "fopen failed; could not open temp file for writing.\n");
             return -1;
         }
         fclose(f);
@@ -489,13 +489,13 @@ internal int
 handle_add(dyna_t* argument_array) {
     /* if we are in read-only mode we cannot commit or make changes. */
     if (repository->readonly) {
-        log(E_LOGGER_LEVEL_ERROR, "cannot commit changes in read-only mode.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "cannot commit changes in read-only mode.\n");
         return -1;
     };
 
     /* is there a recursive folder for us to look through? */
     if (all || no_recurse) {
-        _foreach(argument_array, const argument_t*, argument, i)
+        _foreach_it(argument_array, const argument_t*, argument, i)
             if (argument->type == E_FLAG_TO_ARGUMENT) {
                 /* get the following parameter argument. */
                 const argument_t* next = _get(argument_array, const argument_t*, i + 1);
@@ -504,7 +504,7 @@ handle_add(dyna_t* argument_array) {
                 dyna_t* inodes = inw_walk(next->value, all ? E_INW_TYPE_RECURSE : E_INW_TYPE_NO_RECURSE);
 
                 /* iterate through each inode and add it. */
-                _foreach(inodes, inode_t*, inode, j)
+                _foreach_it(inodes, inode_t*, inode, j)
                     /* we then need to check if there are any commits before that contain this inode at all. */
                     bool is_new_file = find_recent_commit(inode->name) != 0x0;
 
@@ -524,7 +524,7 @@ handle_add(dyna_t* argument_array) {
         /* otherwise we are adding a single file or folder. */
         e_proper_arg_ty_t type = E_PROPER_ARG_TYPE_NONE;
         char* filename;
-        _foreach(argument_array, const argument_t*, argument, i)
+        _foreach(argument_array, const argument_t*, argument)
             if (argument->type == E_PARAMETER_TO_ARGUMENT)
                 filename = strdup(argument->value);
             else if (argument->type == E_PROPER_ARGUMENT)
@@ -548,13 +548,13 @@ internal int
 handle_delete(dyna_t* argument_array) {
     /* if we are in read-only mode, we cannot commit or make changes. */
     if (repository->readonly) {
-        log(E_LOGGER_LEVEL_ERROR, "cannot commit changes in read-only mode.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "cannot commit changes in read-only mode.\n");
         return -1;
     };
 
     /* is there a recursive folder for us to look through? */
     if (all || no_recurse) {
-        _foreach(argument_array, const argument_t*, argument, i)
+        _foreach_it(argument_array, const argument_t*, argument, i)
             if (argument->type == E_FLAG_TO_ARGUMENT) {
                 /* get the following parameter argument. */
                 const argument_t* next = _get(argument_array, argument_t*, i + 1);
@@ -563,7 +563,7 @@ handle_delete(dyna_t* argument_array) {
                 dyna_t* inodes = inw_walk(next->value, all ? E_INW_TYPE_RECURSE : E_INW_TYPE_NO_RECURSE);
 
                 /* iterate through each inode and add it. */
-                _foreach(inodes, inode_t*, inode, j)
+                _foreach_it(inodes, inode_t*, inode, j)
                     /* we then add the deleted item. */
                     add_delete_inode(inode->path, E_PROPER_ARG_TYPE_DELETE_INODE);
                 _endforeach;
@@ -575,7 +575,7 @@ handle_delete(dyna_t* argument_array) {
     else {
         /* otherwise we are removing a single file or folder. */
         char* filename;
-        _foreach(argument_array, const argument_t*, argument, i)
+        _foreach(argument_array, const argument_t*, argument)
             if (argument->type == E_PARAMETER_TO_ARGUMENT)
                 filename = strdup(argument->value);
         _endforeach;
@@ -590,7 +590,7 @@ internal int
 handle_create_branch(dyna_t* argument_array) {
     /* find the name and the possible --from branch name. */
     char* branch_name = 0x0, *from_branch_name = 0x0;
-    _foreach(argument_array, const argument_t*, argument, i)
+    _foreach_it(argument_array, const argument_t*, argument, i)
         if (argument->type == E_FLAG_TO_ARGUMENT) {
             if (argument->details.flag == E_FLAG_ARG_TYPE_FROM) {
                 const argument_t* next = _get(argument_array, argument_t*, i + 1);
@@ -608,7 +608,7 @@ handle_create_branch(dyna_t* argument_array) {
     create_branch_repository(repository, branch_name, from_branch_name);
 
     /* print out to the console. */
-    _log(E_LOGGER_LEVEL_INFO, "created branch '%s' from '%s'.\n", branch_name, from_branch_name);
+    _llog(E_LOGGER_LEVEL_INFO, "created branch '%s' from '%s'.\n", branch_name, from_branch_name);
     return 0;
 };
 
@@ -616,7 +616,7 @@ internal int
 handle_delete_branch(dyna_t* argument_array) {
     /* find the name for the branch. */
     char* branch_name = 0x0;
-    _foreach(argument_array, argument_t*, argument, i)
+    _foreach(argument_array, argument_t*, argument)
         if (argument->type == E_PARAMETER_TO_ARGUMENT) {
             branch_name = strdup(argument->value);
             break;
@@ -627,9 +627,9 @@ handle_delete_branch(dyna_t* argument_array) {
     delete_branch_repository(repository, branch_name);
 
     /* switching back to the origin branch. */
-    _log(E_LOGGER_LEVEL_INFO, "deleted branch '%s'.\n", branch_name);
+    _llog(E_LOGGER_LEVEL_INFO, "deleted branch '%s'.\n", branch_name);
     if (!strcmp(active_branch->name, branch_name)) {
-        _log(E_LOGGER_LEVEL_INFO, "switching back to origin branch.\n");
+        _llog(E_LOGGER_LEVEL_INFO, "switching back to origin branch.\n");
         switch_branch_repository(repository, "origin");
     }
 
@@ -642,7 +642,7 @@ internal int
 handle_switch_branch(dyna_t* argument_array) {
     /* find the name for the branch. */
     char* branch_name = 0x0;
-    _foreach(argument_array, argument_t*, argument, i)
+    _foreach(argument_array, argument_t*, argument)
         if (argument->type == E_PARAMETER_TO_ARGUMENT) {
             branch_name = strdup(argument->value);
             break;
@@ -651,7 +651,7 @@ handle_switch_branch(dyna_t* argument_array) {
 
     /* run the operation. */
     switch_branch_repository(repository, branch_name);
-    _log(E_LOGGER_LEVEL_INFO, "switched to branch '%s'.\n", branch_name);
+    _llog(E_LOGGER_LEVEL_INFO, "switched to branch '%s'.\n", branch_name);
     return 0;
 };
 
@@ -659,7 +659,7 @@ internal int
 handle_rebase_branch(dyna_t* argument_array) {
     /* find the branch that we are going to rebase onto. */
     char* source_branch_name = 0x0, *destination_branch_name = 0x0;
-    _foreach(argument_array, argument_t*, argument, i)
+    _foreach(argument_array, argument_t*, argument)
         if (argument->type == E_PARAMETER_TO_ARGUMENT) {
             if (source_branch_name == 0x0) {
                 source_branch_name = strdup(argument->value);
@@ -671,7 +671,7 @@ handle_rebase_branch(dyna_t* argument_array) {
         }
     _endforeach;
     if (destination_branch_name == 0x0) {
-        fprintf(stderr, "destination branch not specified.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "destination branch not specified.\n");
         exit(-1);
     }
 
@@ -691,7 +691,7 @@ handle_add_tag(dyna_t* argument_array) {
     /* gather the user hash. */
     unsigned char* hash = 0x0;
     char* tag_name = 0x0;
-    _foreach(argument_array, const argument_t*, argument, i)
+    _foreach_it(argument_array, const argument_t*, argument, i)
         if (argument->type == E_PARAMETER_TO_ARGUMENT) {
             /* we expect the first parameter to be the hash, the second to be the tag name. */
             const argument_t* next = _get(argument_array, const argument_t*, i + 1);
@@ -703,7 +703,7 @@ handle_add_tag(dyna_t* argument_array) {
 
     /* iterate over the changes. */
     commit_t* commit = 0x0;
-    _foreach(active_branch->commits, commit_t*, _commit, i)
+    _foreach(active_branch->commits, commit_t*, _commit)
         /* memcmp the sha1 hashes. */
         if (memcmp(hash, _commit->hash, 20) == 0) {
             commit = _commit;
@@ -713,7 +713,7 @@ handle_add_tag(dyna_t* argument_array) {
 
     /* report the fatal error if a commit was not found. */
     if (!commit) {
-        log(E_LOGGER_LEVEL_ERROR, "did not find commit hash \'%s\' in active "
+        llog(E_LOGGER_LEVEL_ERROR, "did not find commit hash \'%s\' in active "
                         "branches history.\n", tag_name);
         return -1;
     }
@@ -721,7 +721,7 @@ handle_add_tag(dyna_t* argument_array) {
     /* create the tag given the hash and the name. */
     tag_t* tag = create_tag(active_branch, commit, tag_name);
     write_tag(tag);
-    _log(E_LOGGER_LEVEL_INFO, "added tag \'%s\' to the repository.\n", tag_name);
+    _llog(E_LOGGER_LEVEL_INFO, "added tag \'%s\' to the repository.\n", tag_name);
     return 0;
 }
 
@@ -732,7 +732,7 @@ handle_delete_tag(dyna_t* argument_array) {
 
     /* find the tag name */
     char* tag_name = 0x0;
-    _foreach(argument_array, const argument_t*, argument, i)
+    _foreach(argument_array, const argument_t*, argument)
         if (argument->type == E_PARAMETER_TO_ARGUMENT) {
             tag_name = strdup(argument->value);
         }
@@ -740,21 +740,20 @@ handle_delete_tag(dyna_t* argument_array) {
 
     /* if we did not find the tag name. */
     if (tag_name == 0x0) {
-        log(E_LOGGER_LEVEL_ERROR, "tag name not found.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "tag name not found.\n");
         return -1;
     }
 
     /* check if the tag exists. */
     bool found = false;
-    _foreach(tag_array, const tag_t*, tag, i)
-        if (!strcmp(tag->name, tag_name)) {
+    _foreach(tag_array, const tag_t*, tag)
+        if (!strcmp(tag->name, tag_name))
             found = true;
-        }
     _endforeach;
 
     /* if we did not find the tag. */
     if (!found) {
-        log(E_LOGGER_LEVEL_ERROR, "tag \'%s\' not found.\n", tag_name);
+        llog(E_LOGGER_LEVEL_ERROR, "tag \'%s\' not found.\n", tag_name);
         return -1;
     }
 
@@ -764,7 +763,7 @@ handle_delete_tag(dyna_t* argument_array) {
     remove(path);
 
     /* log and return. */
-    _log(E_LOGGER_LEVEL_INFO, "deleted tag \'%s\' from the repository.\n", tag_name);
+    _llog(E_LOGGER_LEVEL_INFO, "deleted tag \'%s\' from the repository.\n", tag_name);
     return 0;
 }
 
@@ -778,7 +777,7 @@ int
 cli_handle(dyna_t* argument_array) {
     /* iterate through each argument and handle it. */
     e_proper_arg_ty_t proper_type = E_PROPER_ARG_TYPE_NONE;
-    _foreach(argument_array, argument_t*, argument, i)
+    _foreach(argument_array, argument_t*, argument)
         /* if we encounter the proper argument, then we set the type. */
         if (argument->type == E_PROPER_ARGUMENT)
             proper_type = argument->details.proper;

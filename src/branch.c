@@ -83,7 +83,7 @@ write_branch(const branch_t* branch) {
         branch->name, strsha1(branch->hash), branch->head, branch->commits->length);
 
     /* write out each respective sha1 hash for every commit. */
-    _foreach(branch->commits, commit_t*, commit, i)
+    _foreach(branch->commits, commit_t*, commit)
         fprintf(f, "%s\n", strsha1(commit->hash));
     _endforeach;
     fclose(f);

@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-15
+ * @date 2025-12-29
  */
 #include "arg.h"
 
@@ -19,20 +19,23 @@
 /*! @uses internal. */
 #include "utl.h"
 
+/*! @uses llog, E_LOGGER_LEVEL_ERROR. */
+#include "log.h"
+
 /* program version macro. */
-#define VERSION "1.12.15"
+#define VERSION "1.12.29"
 
 /* if we are expecting a parameter_argument. */
 #define expected_parameter_argument(number_of_expected_args) \
     if (i + number_of_expected_args >= argc) { \
-        fprintf(stderr, "expected parameter argument(s) after '%s'\n", cli_arg); \
+        llog(E_LOGGER_LEVEL_ERROR, "expected parameter argument(s) after '%s'\n", cli_arg); \
         exit(EXIT_FAILURE); \
     }
 
 /* check if a proper argument has already been captured in the dynamic array (cannot have more than one). */
 #define check_if_proper_already_captured() \
     if (captured_proper) { \
-        fprintf(stderr, "only one proper argument can be specified per command line invocation.\n"); \
+        llog(E_LOGGER_LEVEL_ERROR, "only one proper argument can be specified per command line invocation.\n"); \
         exit(EXIT_FAILURE); \
     } else { \
         captured_proper = true; \
@@ -47,18 +50,22 @@
  */
 internal
 void help_args() {
-    printf("usage: lit [-v | --version] [-h | --help] [-i | init] [-c | commit <msg>]\n"
+    /* print out the usage.*/
+    llog(E_LOGGER_LEVEL_INFO,
+           "usage: lit [-v | --version] [-h | --help] [-i | init] [-c | commit]\n"
            "\t[-r | rollback <hash>] [-C | -checkout <hash>] [-l | log] [-sB | switch-branch <name>]\n"
            "\t[-dB | delete-branch <name>] [-aB | add-branch <name>] [-rB | rebase-branch <src> <dest>]\n"
            "\t[-a | add <path>] [-d <hash>| delete <path>] \n"
            "\t[-aT | add-tag <hash> <name> ] [-dT | delete-tag <name>] [-cc | clear-cache]\n\n");
 
     /* print out the options to the user. (disable warnings in ~/.lit/config with disable_warnings=1) */
-    printf("\t-v | version\t\t\tprint the version of the program.\n"
+    llog(E_LOGGER_LEVEL_INFO,
+           "\t-v | version\t\t\tprint the version of the program.\n"
            "\t-h | help\t\t\tprint this help message.\n"
            "\t-i | init\t\t\tinitialize a new repository.\n"
            "\t-a | add <path>\t\t\tadd a file or folder.\n"
-           "\t-d | delete <path>\t\tdelete a file or folder.\n\n"
+           "\t-d | delete <path>\t\tdelete a file or folder.\n"
+           "\t-c | commit\t\t\tcommit changes to the repository.\n\n"
            "\t-r | rollback <hash>\t\t*rollback to a previous commit.\n"
            "\t-C | checkout <hash>\t\t*checkout a newer commit.\n"
            "\t-l | log\t\t\tlog data from the repository.\n\n"
@@ -214,7 +221,7 @@ parse_arguments(int argc, char** argv) {
 
         /* flag arguments. */
         if (!captured_proper) {
-            fprintf(stderr, "a flag argument cannot be specified before a proper argument.\n");
+            llog(E_LOGGER_LEVEL_ERROR, "a flag argument cannot be specified before a proper argument.\n");
             exit(EXIT_FAILURE);
         }
         if (!strcmp(cli_arg, "--all")) {

@@ -28,6 +28,9 @@
 /*! @uses MKDIR_MOWNER. */
 #include "utl.h"
 
+/*! @uses llog, E_LOGGER_LEVEL_INFO. */
+#include "log.h"
+
 /*!~ @note this is a format for the main parts of data that are written at the start (header) of
  *  the file for a commit, stored within a branch, within the repository. */
 #define COMMIT_HEADER_FORMAT "message:%1024[^\n]\ntimestamp:%80[^\n]\nsha1:%40[^\n]\n"
@@ -96,13 +99,13 @@ write_commit(const commit_t* commit) {
     assert(commit != 0x0);
 
     /* gather all changes and write them to their respective files. */
-    _foreach(commit->changes, const diff_t*, change, i)
+    _foreach(commit->changes, const diff_t*, change)
         /* for our content-accessible storage we split the upper and lower into two ints. */
         char* path = calloc(1, 257), *hash = calloc(1, 129);
         snprintf(hash, 128, "%04u", change->crc);
         snprintf(path, 256, ".lit/objects/diffs/%.2s", hash);
 
-        // ensure that directory exists.
+        /* ensure that directory exists. */
         mkdir(path, MKDIR_MOWNER);
         snprintf(path, 256, ".lit/objects/diffs/%.2s/%s", hash, hash + 2);
         write_diff(change, path);
@@ -113,7 +116,7 @@ write_commit(const commit_t* commit) {
     /* now we write the commit information itself. */
     FILE* f = fopen(commit->path, "w");
     if (!f) {
-        fprintf(stderr,"fopen failed; could not open commit file for writing.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open commit file for writing.\n");
         fclose(f);
         exit(EXIT_FAILURE); /* exit on failure. */
     }
@@ -124,7 +127,7 @@ write_commit(const commit_t* commit) {
         commit->rawtime);
 
     /* for each diff in this commit, write out the respective crc32 hash. */
-    _foreach(commit->changes, const diff_t*, change, i)
+    _foreach(commit->changes, const diff_t*, change)
         fprintf(f, "%u\n", change->crc);
     _endforeach;
     fclose(f);
@@ -144,7 +147,7 @@ read_commit(const char* path) {
     /* open the file for reading. */
     FILE* f = fopen(path, "r");
     if (!f) {
-        fprintf(stderr,"fopen failed; could not open commit file for reading.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open commit file for reading.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -159,7 +162,7 @@ read_commit(const char* path) {
     int scanned = fscanf(f, COMMIT_HEADER_FORMAT
         "count:%lu\nrawtime:%lu\n",commit->message, commit->timestamp, hash, &count, &commit->rawtime);
     if (scanned != 5) {
-        fprintf(stderr,"fscanf failed; could not read commit header.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fscanf failed; could not read commit header.\n");
         exit(EXIT_FAILURE); /* exit on failure. */
     }
     commit->path = strdup(path);

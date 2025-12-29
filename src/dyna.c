@@ -165,7 +165,7 @@ dyna_upgradef(dyna_t* old_array, size_t new_size) {
     dyna_t* new_array = dyna_create(new_size);
 
     /* copy all data from the previous array to the newer array. */
-    _foreach(old_array, void*, item, i)
+    _foreach(old_array, void*, item)
         dyna_push(new_array, item);
     _endforeach;
 

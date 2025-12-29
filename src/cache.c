@@ -28,6 +28,9 @@
 /*! @uses rpwd. */
 #include "utl.h"
 
+/*! @uses llog. */
+#include "log.h"
+
 /**
  * @brief scan the .lit/objects folder for unrelated objects to any current branches,
  *  if any are found, remove them.
@@ -55,7 +58,7 @@ scan_object_cache(const repository_t* repository) {
     size_t count = 0;
 
     /* iterate... */
-    _foreach(objects, inode_t*, node, i)
+    _foreach_it(objects, inode_t*, node, i)
         /* if this is not a file, ignore it. */
         if (node->type != E_INODE_TYPE_FILE)
             continue;
@@ -64,8 +67,8 @@ scan_object_cache(const repository_t* repository) {
          * type of dirty bit to each of the branch files as they are modified, decreasing
          * complexity. */
         bool is_referenced = false;
-        _foreach(repository->branches, const branch_t*, branch, j)
-            _foreach(branch->commits, commit_t*, commit, k)
+        _foreach_it(repository->branches, const branch_t*, branch, j)
+            _foreach_it(branch->commits, commit_t*, commit, k)
                 /* if the paths are equal. */
                 if (!strcmp(commit->path, node->path)) {
                     is_referenced = true;
@@ -73,7 +76,7 @@ scan_object_cache(const repository_t* repository) {
                 }
 
                 /* iterate through diffs as well. */
-                _foreach(commit->changes, const diff_t*, change, l)
+                _foreach_it(commit->changes, const diff_t*, change, l)
                     /* construct the file location from the hash. */
                     char* filepath = calloc(1, 256), *hash = calloc(1, 128);
                     snprintf(hash, 128, "%04u", change->crc);
@@ -112,7 +115,8 @@ scan_object_cache(const repository_t* repository) {
 
     /* print results. */
     if (result == E_CACHE_RESULT_SUCCESS) 
-        printf("cache cleaned successfully, removed %lu unreferenced objects.\n", count);
+        llog(E_LOGGER_LEVEL_INFO, "cache cleaned successfully, removed %lu unreferenced objects"
+                                  ".\n", count);
 
     /* free and return the result. */
     dyna_free(objects);

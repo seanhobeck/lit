@@ -25,6 +25,9 @@
 /*! @uses internal. */
 #include "utl.h"
 
+/*! @uses llog, E_LOGGER_LEVEL_INFO. */
+#include "log.h"
+
 /*!~ @note this is a format for the main parts of data that are written at the start (header) of
  *  the file for a diff., stored within a commit, stored within a branch, within the repository. */
 #define DIFF_HEADER_FORMAT "type:%d\nstored:%127[^\n]\nnew:%127[^\n]\ncrc32:%u\n"
@@ -43,7 +46,7 @@ file_crc32(const char* path) {
     /* read the file in. */
     FILE* file = fopen(path, "rb");
     if (!file) {
-        fprintf(stderr,"fopen failed; could not open file for hashing");
+        llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open file for hashing");
         return 0;
     }
 
@@ -59,7 +62,7 @@ file_crc32(const char* path) {
     /* allocate buffer for file contents. */
     unsigned char* buffer = calloc(1, file_size);
     if (!buffer) {
-        fprintf(stderr,"calloc failed; could not allocate buffer for file.");
+        llog(E_LOGGER_LEVEL_ERROR,"calloc failed; could not allocate buffer for file.");
         fclose(file);
         return 0;
     }
@@ -68,7 +71,7 @@ file_crc32(const char* path) {
     size_t bytes_read = fread(buffer, 1, file_size, file);
     fclose(file);
     if (bytes_read != (size_t)file_size) {
-        fprintf(stderr, "fread; could not read entire file.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "fread; could not read entire file.\n");
         free(buffer);
         return 0;
     }
@@ -96,7 +99,7 @@ create_crc32(diff_t* diff) {
     FILE* ftmp = fopen(tmp, "w");
 
     /* iterate through each line. */
-    _foreach(diff->lines, char*, line, i)
+    _foreach(diff->lines, char*, line)
         fprintf(ftmp, "%s\n", line);
     _endforeach;
 
@@ -209,7 +212,7 @@ create_file_modified_diff(const char* old_path, const char* new_path) {
         /* close either file. */
         if (f_old) fclose(f_old);
         if (f_new) fclose(f_new);
-        fprintf(stderr,"fopen failed; could not open file(s) for reading.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open file(s) for reading.\n");
         return 0x0;
     }
 
@@ -232,7 +235,7 @@ create_file_modified_diff(const char* old_path, const char* new_path) {
     if (!old_data) {
         fclose(f_old);
         fclose(f_new);
-        fprintf(stderr,"failed to read stored changes.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"failed to read stored changes.\n");
         return diff;
     }
     size_t new_size = 0;
@@ -240,7 +243,7 @@ create_file_modified_diff(const char* old_path, const char* new_path) {
     if (!new_data) {
         fclose(f_old);
         fclose(f_new);
-        fprintf(stderr,"failed to read new file.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"failed to read new file.\n");
         return diff;
     }
 
@@ -286,7 +289,7 @@ create_file_diff(const char* path, e_diff_ty_t type) {
     /* copy the old information from the file before deleting it. */
     FILE* f = fopen(path, "r");
     if (!f) {
-        fprintf(stderr,"fopen failed; could not open file for diff. reading.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open file for diff. reading.\n");
         exit(EXIT_FAILURE); /* exit on failure. */
     }
 
@@ -346,7 +349,7 @@ write_diff(const diff_t* diff, const char* path) {
     /* open the file for writing. */
     FILE* f = fopen(path, "w");
     if (!f) {
-        fprintf(stderr,"fopen failed; could not open file for writing.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open file for writing.\n");
         exit(EXIT_FAILURE); /* exit on failure. */
     }
 
@@ -363,7 +366,7 @@ write_diff(const diff_t* diff, const char* path) {
     }
 
     /* then continuously write the lines. */
-    _foreach(diff->lines, char*, line, i)
+    _foreach(diff->lines, char*, line)
         fprintf(f, "%s\n", line);
     _endforeach;
     fclose(f);
@@ -386,7 +389,7 @@ read_diff(const char* path) {
     /* open the file for reading. */
     FILE* f = fopen(path, "r");
     if (!f) {
-        fprintf(stderr,"fopen failed; could not open file for reading.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open file for reading.\n");
         exit(EXIT_FAILURE); /* exit on failure. */
     }
 
@@ -399,14 +402,14 @@ read_diff(const char* path) {
 
     /* allocate memory for the names. */
     if (!diff->stored_path || !diff->new_path) {
-        fprintf(stderr,"calloc failed; could not allocate memory for diff header.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"calloc failed; could not allocate memory for diff header.\n");
         fclose(f);
         exit(EXIT_FAILURE); /* exit on failure. */
     }
     int scanned = fscanf(f, DIFF_HEADER_FORMAT, \
         &diff->type, diff->stored_path, diff->new_path, &diff->crc);
     if (scanned != 4) {
-        fprintf(stderr,"fscanf failed; could not read diff header.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fscanf failed; could not read diff header.\n");
         exit(EXIT_FAILURE); /* exit on failure. */
     }
 

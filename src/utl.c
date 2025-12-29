@@ -13,6 +13,9 @@
 /*! @uses mkdir. */
 #include <sys/stat.h>
 
+/*! @uses llog, E_LOGGER_LEVEL_ERROR. */
+#include "log.h"
+
 /**
  * @brief duplicate a string.
  *
@@ -27,7 +30,7 @@ strdup(const char* str) {
     /* allocate memory for the string. */
     char* new_str = calloc(1, strlen(str) + 1);
     if (!new_str) {
-        fprintf(stderr,"calloc failed; could not allocate memory for string.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"calloc failed; could not allocate memory for string.\n");
         return 0x0;
     }
 
@@ -83,14 +86,14 @@ strtoha(const char* str, size_t n) {
      *  into a unsigned byte, set the value in <hash> and continue. */
     unsigned char* hash = calloc(1, n);
     if (!hash) {
-        fprintf(stderr,"calloc failed; could not allocate memory for hash.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"calloc failed; could not allocate memory for hash.\n");
         exit(-1);
     }
     for (size_t i = 0; i < n; i++) {
         unsigned int byte = 0;
         if (sscanf(str + i * 2, "%2x", &byte) != 1) {
             free(hash);
-            fprintf(stderr,"sscanf failed; could not read hash.");  /* or handle the error */
+            llog(E_LOGGER_LEVEL_ERROR,"sscanf failed; could not read hash.");  /* or handle the error */
             exit(-1);
         }
         hash[i] = (unsigned char) byte;
@@ -112,7 +115,7 @@ fexistpd(const char* path) {
     /* string duplicate the path to avoid modifying the original. */
     char *dpath = strdup(path);
     if (!dpath) {
-        fprintf(stderr,"strdup failed; could not duplicate path.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"strdup failed; could not duplicate path.\n");
         exit(-1);
     }
 
@@ -148,14 +151,14 @@ fwritels(const char* path, char** lines, size_t n) {
 
     /* ensure that the parent directories exist on <path>. */
     if (fexistpd(path) == -1) {
-        fprintf(stderr,"fexistpd failed; could not create parent directories.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fexistpd failed; could not create parent directories.\n");
         exit(-1); /* exit on failure. */
     }
 
     /* open the file. */
     FILE* f = fopen(path, "w");
     if (!f) {
-        fprintf(stderr,"fopen failed; could not open file for writing.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open file for writing.\n");
         exit(-1);
     }
 
@@ -236,7 +239,7 @@ freadls(FILE* fptr, size_t* size) {
             /* realloc if required. */
             data = realloc(data, sizeof(char*) * (j + 1024ul));
             if (!data) {
-                fprintf(stderr,"realloc failed; could not allocate memory for file data.\n");
+                llog(E_LOGGER_LEVEL_ERROR,"realloc failed; could not allocate memory for file data.\n");
                 exit(-1);
             }
         };

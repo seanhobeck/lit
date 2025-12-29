@@ -65,5 +65,5 @@ read_tags();
  * @return a dynamic array of the tags within the repository.
  */
 dyna_t*
-filter_tags(const sha1_t branch_hash, const dyna_t* array);
+filter_tags(const sha1_t branch_hash, dyna_t* array);
 #endif /* TAG_H */

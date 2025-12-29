@@ -28,6 +28,9 @@
 /*! @uses MKDIR_MOWNER. */
 #include "utl.h"
 
+/*! @uses llog, E_LOGGER_LEVEL_ERROR. */
+#include "log.h"
+
 /**
  * @brief find a common commit ancestor using hashes and timestamps by going backwards.
  *
@@ -76,7 +79,7 @@ find_index_commit(branch_t* branch, commit_t* commit) {
     /* assert the branch and the commit. */
     assert(branch);
     assert(commit);
-    _foreach(branch->commits, const commit_t*, _commit, i)
+    _foreach_it(branch->commits, const commit_t*, _commit, i)
         if (memcmp(_commit->hash, commit->hash, 32) == 0) {
             return (long) i;
         }
@@ -94,19 +97,19 @@ create_repository() {
     /* get the cwd. */
     char cwd[256];
     if (getcwd(cwd, sizeof cwd) == 0x0) {
-        fprintf(stderr,"getcwd failed; could not get current working directory.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"getcwd failed; could not get current working directory.\n");
         exit(EXIT_FAILURE);
     }
 
     /* set the cwd. */
     if (chdir(cwd) != 0) {
-        fprintf(stderr,"chdir failed; could not change to current working directory.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"chdir failed; could not change to current working directory.\n");
         exit(EXIT_FAILURE);
     }
 
     /* create the '.lit' directory in the current working directory. */
     if (mkdir(".lit", MKDIR_MOWNER) == -1) {
-        fprintf(stderr, "mkdir failed; '.lit' directory already exists.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "mkdir failed; '.lit' directory already exists.\n");
         exit(EXIT_FAILURE);
     }
     /* content-addressable storage folders. */
@@ -144,7 +147,7 @@ write_repository(const repository_t* repo) {
     /* open the file '.lit/repository' for writing. */
     FILE* f = fopen(".lit/index", "w");
     if (!f) {
-        fprintf(stderr,"fopen failed; could not open index file for writing.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open index file for writing.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -152,7 +155,7 @@ write_repository(const repository_t* repo) {
     fprintf(f, "active:%lu\n", repo->idx);
     fprintf(f, "count:%lu\n", repo->branches->length);
     fprintf(f, "readonly:%d\n", repo->readonly ? 1 : 0);
-    _foreach(repo->branches, const branch_t*, branch, i)
+    _foreach_it(repo->branches, const branch_t*, branch, i)
         fprintf(f, "%lu:%s\n", i, branch->name);
     _endforeach;
     fclose(f);
@@ -171,7 +174,7 @@ read_repository() {
     /* open the file '.lit/index' for reading. */
     FILE* f = fopen(".lit/index", "r");
     if (!f) {
-        fprintf(stderr,"fopen failed; could not open repository file for reading.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open repository file for reading.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -180,7 +183,7 @@ read_repository() {
     int scanned = fscanf(f, "active:%lu\ncount:%lu\nreadonly:%d", &repo->idx, \
         &length, &repo->readonly);
     if (scanned != 3) {
-        fprintf(stderr,"fscanf failed; could not read current branch header.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"fscanf failed; could not read current branch header.\n");
         fclose(f);
         exit(EXIT_FAILURE);
     }
@@ -201,7 +204,7 @@ read_repository() {
         char* branch_name = calloc(1, 129);
         scanned = fscanf(f, "%lu:%128[^\n]\n", &i, branch_name);
         if (scanned != 2) {
-            fprintf(stderr,"fscanf failed; could not read branch name.\n");
+            llog(E_LOGGER_LEVEL_ERROR,"fscanf failed; could not read branch name.\n");
             fclose(f);
             free(repo->branches);
             return repo;
@@ -231,9 +234,9 @@ create_branch_repository(repository_t* repository, const char* name, const char*
     assert(name != 0x0);
 
     /* check if the branch exists. */
-    _foreach(repository->branches, const branch_t*, branch, i)
+    _foreach(repository->branches, const branch_t*, branch)
         if (!strcmp(branch->name, name)) {
-            fprintf(stderr,"strcmp; branch \'%s\' already exists.\n", name);
+            llog(E_LOGGER_LEVEL_ERROR,"strcmp; branch \'%s\' already exists.\n", name);
             exit(EXIT_FAILURE);
         }
     _endforeach;
@@ -241,7 +244,7 @@ create_branch_repository(repository_t* repository, const char* name, const char*
     /* create the branch. */
     branch_t* branch = create_branch(name);
     if (!branch) {
-        fprintf(stderr,"branch_create failed; could not create branch of name \'%s\'\n", name);
+        llog(E_LOGGER_LEVEL_ERROR,"branch_create failed; could not create branch of name \'%s\'\n", name);
         exit(EXIT_FAILURE);
     }
 
@@ -250,8 +253,8 @@ create_branch_repository(repository_t* repository, const char* name, const char*
 
     /* get the from the branch specified. */
     branch_t* from_branch = 0x0;
-    _foreach(repository->branches, branch_t*, _branch, i)
-        /* search by name; todo make this a function in repository. */
+    _foreach(repository->branches, branch_t*, _branch)
+        /* search by name. */
         if (!strcmp(_branch->name, from_name)) {
             from_branch = _branch;
             break;
@@ -260,12 +263,12 @@ create_branch_repository(repository_t* repository, const char* name, const char*
 
     /* check the from branch exists. */
     if (!from_branch) {
-        fprintf(stderr,"strcmp; branch \'%s\' does not exist.\n", from_name);
+        llog(E_LOGGER_LEVEL_ERROR,"strcmp; branch \'%s\' does not exist.\n", from_name);
         exit(EXIT_FAILURE);
     }
 
     /* copy all the commits over to the new branch. */
-    _foreach(from_branch->commits, commit_t*, commit, i)
+    _foreach(from_branch->commits, commit_t*, commit)
         commit_t* _commit = calloc(1, sizeof *_commit);
         memcpy(_commit, commit, sizeof *_commit);
 
@@ -295,20 +298,20 @@ delete_branch_repository(repository_t* repository, const char* name) {
 
     /* we cannot delete the original/ origin branch. */
     if (!strcmp(name, "origin")) {
-        fprintf(stderr,"strcmp; branch name cannot be 'origin'.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"strcmp; branch name cannot be 'origin'.\n");
         exit(EXIT_FAILURE);
     }
 
     /* check if the branch exists. */
     size_t i = (size_t) -1;
-    _foreach(repository->branches, branch_t*, branch, j)
+    _foreach_it(repository->branches, branch_t*, branch, j)
         if (!strcmp(branch->name, name)) {
             i = j;
             break;
         }
     _endforeach;
     if (i == (size_t) -1) {
-        fprintf(stderr,"strcmp; branch does not exist.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"strcmp; branch does not exist.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -335,14 +338,14 @@ get_branch_repository(const repository_t* repository, const char* branch_name) {
     assert(branch_name != 0x0);
 
     /* iterate through each branch in the repository. */
-    _foreach(repository->branches, branch_t*, branch, i)
+    _foreach_it(repository->branches, branch_t*, branch, i)
         if (!strcmp(branch->name, branch_name)) {
             return dyna_get(repository->branches, i);
         }
     _endforeach;
 
     /* if the target branch was not found. */
-    fprintf(stderr, "target branch \'%s\' not found.\n", branch_name);
+    llog(E_LOGGER_LEVEL_ERROR, "target branch \'%s\' not found.\n", branch_name);
     exit(EXIT_FAILURE);
 }
 
@@ -363,7 +366,7 @@ switch_branch_repository(repository_t* repository, const char* name) {
     size_t target_idx = 0;
 
     /* find the branch in the repositories branches. */
-    _foreach(repository->branches, branch_t*, branch, i)
+    _foreach_it(repository->branches, branch_t*, branch, i)
         if (!strcmp(branch->name, name)) {
             target = branch;
             target_idx = i;
@@ -373,7 +376,7 @@ switch_branch_repository(repository_t* repository, const char* name) {
 
     /* if we did not find the target branch, exit(-1). */
     if (!target) {
-        fprintf(stderr,"strcmp; branch does not exist.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"strcmp; branch does not exist.\n");
         exit(EXIT_FAILURE);
     }
 

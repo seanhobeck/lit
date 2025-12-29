@@ -18,7 +18,7 @@
  * @param ... the variable arguments to be written.
  */
 void
-log(e_logger_level_t level, const char* format, ...) {
+llog(e_logger_level_t level, const char* format, ...) {
     /* gather the variable argument to be written. */
     va_list args;
     va_start(args, format);

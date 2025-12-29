@@ -41,7 +41,7 @@ create_tag(const branch_t* branch, const commit_t* commit, \
     /* create our tag structure. */
     tag_t* tag = calloc(1, sizeof *tag);
     if (!tag) {
-        log(E_LOGGER_LEVEL_ERROR, "calloc failed; could not allocate memory for tag.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "calloc failed; could not allocate memory for tag.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -67,7 +67,7 @@ write_tag(const tag_t* tag) {
     snprintf(path, 256, ".lit/refs/tags/%s", tag->name);
     FILE* f = fopen(path, "w");
     if (!f) {
-        log(E_LOGGER_LEVEL_ERROR, "fopen failed; could not open file for tag writing.\n");
+        llog(E_LOGGER_LEVEL_ERROR, "fopen failed; could not open file for tag writing.\n");
         exit(EXIT_FAILURE);
     }
 
@@ -90,8 +90,8 @@ read_tags() {
     /* create our tag list. */
     dyna_t* new_array = dyna_create(sizeof(tag_t*));
 
-    // iterate through each inode.
-    _foreach(array, inode_t*, node, i)
+    /* iterate through each inode. */
+    _foreach_it(array, inode_t*, node, i)
         /* ignore everything that is not a file. */
         if (node->type != E_INODE_TYPE_FILE)
             continue;
@@ -99,12 +99,12 @@ read_tags() {
         /* allocate and open the file. */
         tag_t* tag = calloc(1, sizeof *tag);
         if (!tag) {
-            fprintf(stderr, "calloc failed; could not allocate memory for tag.\n");
+            llog(E_LOGGER_LEVEL_ERROR, "calloc failed; could not allocate memory for tag.\n");
             exit(EXIT_FAILURE);
         }
         FILE* f = fopen(node->path, "r");
         if (!f) {
-            fprintf(stderr, "fopen failed; could not open file for tag reading.\n");
+            llog(E_LOGGER_LEVEL_ERROR, "fopen failed; could not open file for tag reading.\n");
             exit(EXIT_FAILURE);
         }
 
@@ -114,7 +114,7 @@ read_tags() {
         int scanned = fscanf(f, "msg:%1024[^\n]\ncommit:%40[^\n]\nbranch:%40[^\n]\n", \
             tag->name, commit_hash, branch_hash);
         if (scanned != 3) {
-            fprintf(stderr, "fscanf failed; could not read tag file \'%s\'\n", node->path);
+            llog(E_LOGGER_LEVEL_ERROR, "fscanf failed; could not read tag file \'%s\'\n", node->path);
             exit(EXIT_FAILURE);
         }
 
@@ -148,7 +148,7 @@ read_tags() {
  * @return a dynamic array of the tags within the repository.
  */
 dyna_t*
-filter_tags(const sha1_t branch_hash, const dyna_t* array) {
+filter_tags(const sha1_t branch_hash, dyna_t* array) {
     /* assert on the tag array. */
     assert(array != 0x0);
 
@@ -156,7 +156,7 @@ filter_tags(const sha1_t branch_hash, const dyna_t* array) {
     dyna_t* new_array = dyna_create(sizeof(tag_t*));
 
     /* iterate through the old array and run memcmp. */
-    _foreach(array, tag_t*, tag, i)
+    _foreach(array, tag_t*, tag)
         if (!memcmp(tag->branch_hash, branch_hash, 20))
             dyna_push(new_array, tag);
     _endforeach;

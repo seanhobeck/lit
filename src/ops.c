@@ -25,6 +25,9 @@
 /*! @uses freels, finversels, ... */
 #include "utl.h"
 
+/*! @uses llog, E_LOGGER_LEVEL_ERROR. */
+#include "log.h"
+
 /**
  * @brief apply the commit forward to the files currently existing.
  *
@@ -36,7 +39,7 @@ forward_commit_op(const commit_t* commit) {
     assert(commit != 0x0);
 
     /* iterate for a 'delta apply'. */
-    _foreach(commit->changes, const diff_t*, diff, i)
+    _foreach(commit->changes, const diff_t*, diff)
         switch (diff->type) {
             case (E_DIFF_FILE_NEW): {
                 /* write this out to the file. */
@@ -87,7 +90,7 @@ reverse_commit_op(const commit_t* commit) {
     assert(commit != 0x0);
 
     /* iterate for a "delta apply". */
-    _foreach(commit->changes, const diff_t*, diff, i)
+    _foreach(commit->changes, const diff_t*, diff)
         switch (diff->type) {
             case (E_DIFF_FOLDER_NEW):
             case (E_DIFF_FILE_NEW): {
@@ -140,7 +143,7 @@ rollback_op(branch_t* branch, const commit_t* commit) {
 
     /* the first thing to do is to check that this commit is in <branch> history. */
     size_t target_idx = (size_t) -1;
-    _foreach(branch->commits, commit_t*, _commit, i)
+    _foreach_it(branch->commits, commit_t*, _commit, i)
         /* we compare by hashes, not by pointers. */
         if (!memcmp(_commit->hash, commit->hash, 20u)) {
             target_idx = i;
@@ -150,7 +153,7 @@ rollback_op(branch_t* branch, const commit_t* commit) {
 
     /* if the commit is not in the history, report the error and return. */
     if (target_idx == (size_t)-1) {
-        fprintf(stderr,"index == -1; commit not found in branch history.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"index == -1; commit not found in branch history.\n");
         return;
     }
 
@@ -176,7 +179,7 @@ checkout_op(branch_t* branch, const commit_t* commit) {
 
     /* first thing to do is to check that this commit is in <branch> history. */
     size_t target_idx = -1;
-    _foreach(branch->commits, commit_t*, _commit, i)
+    _foreach_it(branch->commits, commit_t*, _commit, i)
         /* we compare by hashes, not by pointers. */
         if (!memcmp(_commit->hash, commit->hash, 20u)) {
             target_idx = i;
@@ -186,7 +189,7 @@ checkout_op(branch_t* branch, const commit_t* commit) {
 
     /* if the commit is not in the history, report the error and return. */
     if (target_idx == (size_t) -1) {
-        fprintf(stderr,"index == -1; commit not found in branch history.\n");
+        llog(E_LOGGER_LEVEL_ERROR,"index == -1; commit not found in branch history.\n");
         exit(EXIT_FAILURE);
     }
 

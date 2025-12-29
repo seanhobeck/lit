@@ -38,7 +38,7 @@ write_to_shelved(const char* branch_name, const diff_t* diff) {
     char path[256];
     snprintf(path, 256, ".lit/objects/shelved/%s", branch_name);
     if (fexistpd(path) == -1) {
-        log(E_LOGGER_LEVEL_ERROR, "'.lit/objects/shelved' does not exist; possible branch corruption.");
+        llog(E_LOGGER_LEVEL_ERROR, "'.lit/objects/shelved' does not exist; possible branch corruption.");
         exit(EXIT_FAILURE);
     }
     mkdir(path, MKDIR_MOWNER);
@@ -49,7 +49,7 @@ write_to_shelved(const char* branch_name, const diff_t* diff) {
 
     /* write the diff and log. */
     write_diff(diff, shelved_path);
-    log(E_LOGGER_LEVEL_INFO, "shelved changes on branch \'%s\'.\n", branch_name);
+    llog(E_LOGGER_LEVEL_INFO, "shelved changes on branch \'%s\'.\n", branch_name);
 };
 
 /**

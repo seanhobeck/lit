@@ -95,14 +95,27 @@ dyna_upgradef(dyna_t* old_array, size_t new_size);
 #define _get(array, type, index) ((type) dyna_get(array, index))
 
 /* starting an iteration. */
-#define _foreach(array, type, var, iter) \
+#define _foreach_it(array, type, var, iter) \
     for (size_t iter = 0; iter < (array)->length; iter++) { \
         type var = _get(array, type, iter);
 
+/* starting an iteration. */
+#define _foreach(array, type, var) \
+    for (size_t i = 0; i < (array)->length; i++) { \
+        type var = _get(array, type, i);
+
 /* starting an iteration, backwards. */
-#define _inv_foreach(array, type, var, iter) \
+#define _inv_foreach(array, type, var) \
+    for (size_t i = (array)->length; i != 0; i--) { \
+        type var = _get(array, type, i - 1);
+
+/* starting an iteration, backwards. */
+#define _inv_foreach_it(array, type, var, iter) \
     for (size_t iter = (array)->length; iter != 0; iter--) { \
         type var = _get(array, type, iter - 1);
+
+/* ending an iteration. */
+#define _endforeach }
 
 /* ending an iteration. */
 #define _endforeach }

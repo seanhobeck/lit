@@ -23,5 +23,5 @@ typedef enum {
  * @param ... the variable arguments to be written.
  */
 void
-log(e_logger_level_t level, const char* format, ...);
+llog(e_logger_level_t level, const char* format, ...);
 #endif /* LOG_H */
