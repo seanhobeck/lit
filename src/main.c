@@ -1,18 +1,14 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-13
- *
- * @file main.c
- *    entry point for the program.
+ * @date 2025-12-15
  */
 #include "cli.h"
 
 /** @brief entry point libc. */
 int main(int argc, char **argv) {
-    // parse our commandline arguments.
-    arg_t args;
-    parse_args(argc, argv, &args);
+    /* parse our commandline arguments. */
+    dyna_t* argument_array = parse_arguments(argc, argv);
 
-    // we let the command-line interface handle this.
-    return cli_handle(args);
+    /* we let the command-line interface handle everything. */
+    return cli_handle(argument_array);
 };

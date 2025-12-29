@@ -1,10 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-29
- *
- * @file cli.h
- *    the cli module of lit, responsible for handling the arguments passed by the user and
- *    doing certain actions (diff, commit, branch, repository).
+ * @date 2025-12-14
  */
 #ifndef CLI_H
 #define CLI_H
@@ -15,9 +11,9 @@
 /**
  * @brief handle the arguments passed by the user as a cli (command-line interface) tool.
  *
- * @param args the arg_t structure created when parsing argc & argv.
- * @return the return code if needed.
+ * @param argument_array the dynamic array of arguments passed by the user.
+ * @return the return code if needed (0 if not required).
  */
 int
-cli_handle(arg_t args);
-#endif //CLI_H
+cli_handle(dyna_t* argument_array);
+#endif /* CLI_H */

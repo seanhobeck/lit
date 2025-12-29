@@ -1,16 +1,9 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
- *
- * @file commit.h
- *    the commit module in the version control system, it is responsible for handling
- *    diffs and commits, as well as writing them to disk.
+ * @date 2025-12-29
  */
 #ifndef COMMIT_H
 #define COMMIT_H
-
-/*! @uses diff_t. */
-#include "diff.h"
 
 /*! @uses sha1_t, sha1, strsha1. */
 #include "hash.h"
@@ -18,16 +11,25 @@
 /*! @uses time_t */
 #include <time.h>
 
-/// @note a data structure to hold a commit, this will contain
-///     a message, a sha1 hash, and a timestamp.
+/*! @uses dyna_t, dyna_push, _foreach, ...*/
+#include "dyna.h"
+
+/*! @uses bool, true, false. */
+#include <stdbool.h>
+
+/**
+ * a data structure containing information on a commit, think a list of changes made on disk that
+ *  can be tracked to a specific unique identifier; all changes being tracked in one singular
+ *  motion. these commits contain a timestamp as well as a path, message, and hash. the entire
+ *  basis of a version control system like this is based on these lists of changes/ commits.
+ */
 typedef struct {
-    size_t count, capacity; // number of diffs in the commit.
-    diff_t** changes; // array of diffs in the commit.
-    char* timestamp; // commit timestamp.
-    time_t rawtime; // the raw time as a unsigned long.
-    char* path; // path to the commit directory.
-    char* message; // commit message.
-    sha1_t hash; // sha1 hash of the commit.
+    dyna_t* changes; /* array of diffs in the commit. */
+    char* timestamp; /* commit timestamp. */
+    time_t rawtime; /* raw time representation as an integer. */
+    char* path; /* path to the commit directory. */
+    char* message; /* commit message. */
+    sha1_t hash; /* sha1 hash of the commit. */
 } commit_t;
 
 /**
@@ -42,19 +44,9 @@ commit_t*
 create_commit(const char* message, const char* branch_name);
 
 /**
- * @brief add a diff to the commit, this will be used to store
- *  information about changes made to files or directories.
- *
- * @param commit the commit_t structure to which the diff will be added.
- * @param diff the diff_t structure containing the differences to be added.
- */
-void
-add_diff_commit(commit_t* commit, diff_t* diff);
-
-/**
  * @brief write the commit to a file in our '.lit' directory under our current branch.
  *
- * @param commit the commit_t structure to to be written to a file.
+ * @param commit the commit_t structure to be written to a file.
  */
 void
 write_commit(const commit_t* commit);
@@ -67,4 +59,4 @@ write_commit(const commit_t* commit);
  */
 commit_t*
 read_commit(const char* path);
-#endif //COMMIT_H
+#endif /* COMMIT_H */

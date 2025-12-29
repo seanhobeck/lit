@@ -1,10 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
- *
- * @file diff.h
- *    the diff module, responsible for creating comparisons between files and folders,
- *    while also maintaining a history of changes in '.diff' files.
+ * @date 2025-12-28
  */
 #ifndef DIFF_H
 #define DIFF_H
@@ -12,31 +8,34 @@
 /*! @uses ucrc32_t, crc32. */
 #include "hash.h"
 
-/// @note a enum to differentiate types of diffs.
+/*! @uses dyna_t, dyna_push, etc... */
+#include "dyna.h"
+
+/**
+ * enum to differentiate types of diffs/ changes; the difference between deleting,
+ *  creating, and modifying both files and folders. each holds different applications for when
+ *  operations are applied to commits containing diffs/ changes with these respective types.
+ */
 typedef enum {
-    E_DIFF_TYPE_NONE = 0,           // no differences made.
-
-    /*! file diffs. */
-    E_DIFF_FILE_NEW = 0x1,          // a new file was created.
-    E_DIFF_FILE_DELETED = 0x2,      // a file was deleted.
-    E_DIFF_FILE_MODIFIED = 0x3,     // a file was modified.
-
-    /*! folder diffs. */
-    E_DIFF_FOLDER_NEW = 0x4,        // a new folder was created.
-    E_DIFF_FOLDER_DELETED = 0x5,    // a folder was deleted.
-    E_DIFF_FOLDER_MODIFIED = 0x6,   // a folder was modified.
+    E_DIFF_TYPE_NONE = 0, /* no differences made. */
+    E_DIFF_FILE_NEW = 0x1, /* a new file was created. */
+    E_DIFF_FILE_DELETED = 0x2, /* a file was deleted. */
+    E_DIFF_FILE_MODIFIED = 0x3, /* a file was modified. */
+    E_DIFF_FOLDER_NEW = 0x4, /* a new folder was created. */
+    E_DIFF_FOLDER_DELETED = 0x5, /* a folder was deleted. */
+    E_DIFF_FOLDER_MODIFIED = 0x6, /* a folder was modified. */
 } e_diff_ty_t;
 
-/*! @uses size_t */
-#include "utl.h"
-
-/// @note a data structure to hold difference (diff.) information.
+/**
+ * a data structure to hold diff. (file difference) information. the information stored often has
+ *  to do with the changing of a crc32 hash as a unique identifier, paths, lines, as well as a
+ *  dynamic array for the changes made to the file specified.
+ */
 typedef struct {
-    e_diff_ty_t type; // type of diff.
-    char* stored_path, *new_path; // stored and new filepath.
-    size_t count, capacity; // size of the change in bytes.
-    char** lines; // our change in lines.
-    ucrc32_t crc; // hash of the diff.
+    e_diff_ty_t type; /* type of diff. */
+    char* stored_path, *new_path; /* stored and new filepath. */
+    dyna_t* lines; /* change in lines. */
+    ucrc32_t crc; /* hash of the diff. */
 } diff_t;
 
 /**
@@ -57,7 +56,7 @@ create_file_modified_diff(const char* old_path, const char* new_path);
  * @return a diff_t structure containing the new differences made.
  */
 diff_t*
-create_file_diff(const char* path, const e_diff_ty_t type);
+create_file_diff(const char* path, e_diff_ty_t type);
 
 /**
  * @brief create a folder diff containing the type of diff.
@@ -67,17 +66,7 @@ create_file_diff(const char* path, const e_diff_ty_t type);
  * @returns a diff_t structure containing the diff information.
  */
 diff_t*
-create_folder_diff(const char* path, const e_diff_ty_t type);
-
-/**
- * @brief append a line to the diff structure.
- *
- * @param diff the diff_t structure to append to.
- * @param fmt the format string for the line.
- * @param ... the arguments for the format string.
- */
-void
-append_to_diff(diff_t* diff, const char* fmt, ...);
+create_folder_diff(const char* path, e_diff_ty_t type);
 
 /**
  * @brief write a .diff file to disk given the diff structure and path.
@@ -96,4 +85,4 @@ write_diff(const diff_t* diff, const char* path);
  */
 diff_t*
 read_diff(const char* path);
-#endif //DIFF_H
+#endif /* DIFF_H */

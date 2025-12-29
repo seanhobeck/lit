@@ -1,19 +1,20 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-29
- *
- * @file conf.h
- *    the conf module of lit, responsible for handling configuration options.
+ * @date 2025-12-27
  */
 #ifndef CONF_H
 #define CONF_H
 
-/*! @uses bool, true, false */
+/*! @uses bool, true, false. */
 #include <stdbool.h>
 
-/// @note a data structure to hold configuration options read for lit.
+/**
+ * a data structure for the configuration file that is loaded for the version control system.
+ *  this contains all the information that the user would specify, note most of these commands
+ *  can override any command specified in the cli (command-line-interface).
+ */
 typedef struct {
-    bool debug;     /** whether to print debug output. */
+    bool debug; /* whether to print debug output. */
 } config_t;
 
 /**
@@ -23,4 +24,4 @@ typedef struct {
  */
 config_t*
 read_config();
-#endif //CONF_H
+#endif /* CONF_H */

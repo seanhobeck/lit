@@ -1,21 +1,17 @@
 /**
  * @author Sean Hobeck
- * @date 2025-09-01
- *
- * @file hash.h
- *    the hash module, responsible for generating sha1, sha256, and crc32 hashes
- *    for commits, diffs, and other files if required by the user and or vcs.
+ * @date 2025-12-28
  */
 #ifndef HASH_H
 #define HASH_H
 
-/// @note type definition for a sha1 hash, 20 bytes long.
+/* type definition for a sha1 hash, 20 bytes long. */
 typedef unsigned char sha1_t[20ul];
 
-/// @note type definition for a sha256 hash, 32 bytes long.
+/* type definition for a sha256 hash, 32 bytes long. */
 typedef unsigned char sha256_t[32ul];
 
-/// @note type definition for a crc32 hash, 10 bytes long.
+/* type definition for a crc32 hash, 10 bytes long. */
 typedef unsigned int ucrc32_t;
 
 /**
@@ -38,25 +34,6 @@ char*
 strsha1(const sha1_t hash);
 
 /**
- * @brief generate a sha256 hash from the given data.
- *
- * @param data pointer to the data to hash.
- * @param size size of the data in bytes.
- * @param hash sha256_t structure to store the hash.
- */
-__attribute__((deprecated)) void
-sha256(const unsigned char* data, unsigned long size, sha256_t hash);
-
-/**
- * @brief convert a sha256 hash to a string representation.
- *
- * @param hash the sha256 hash to be converted.
- * @return a string representation of the sha256 hash.
- */
-__attribute__((deprecated)) char*
-strsha256(const sha256_t hash);
-
-/**
  * @brief generate a crc32 hash from the given data.
  *
  * @param data pointer to the data to hash.
@@ -74,4 +51,4 @@ crc32(const unsigned char* data, unsigned long size);
  */
 char*
 strcrc32(const ucrc32_t hash);
-#endif //HASH_H
+#endif /* HASH_H */

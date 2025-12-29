@@ -1,10 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-29
- *
- * @file repo.h
- *    the repository module in the version control system, it is responsible for handling branches,
- *    and their locations, as well as the overall state of the repository.
+ * @date 2025-12-28
  */
 #ifndef REPO_H
 #define REPO_H
@@ -15,12 +11,16 @@
 /*! @uses branch_t. */
 #include "branch.h"
 
-/// @note a data structure to hold a repository, containing a main branch and a list of branches
-///     if chosen to be used.
+/*! @uses commit_t. */
+#include "commit.h"
+
+/**
+ * a data structure ...
+ */
 typedef struct {
-    bool readonly; // whether the repository is in read-only mode.
-    size_t count, capacity, idx; // number of branches in the repository.
-    branch_t** branches; // array of branches in the repository.
+    bool readonly; /* whether the repository is in read-only mode. */
+    size_t idx; /* head branch in the repository. */
+    dyna_t* branches; /* array of branches in the repository. */
 } repository_t;
 
 /**
@@ -52,9 +52,10 @@ read_repository();
  *
  * @param repository the repository provided.
  * @param name the name of the new branch.
+ * @param from_name the name of the branch to copy the head from.
  */
 void
-create_branch_repository(repository_t* repository, const char* name);
+create_branch_repository(repository_t* repository, const char* name, const char* from_name);
 
 /**
  * @brief delete a branch from the repository.
@@ -103,4 +104,4 @@ find_common_ancestor(branch_t* branch1, branch_t* branch2);
  */
 long
 find_index_commit(branch_t* branch, commit_t* commit);
-#endif //REPO_H
+#endif /* REPO_H */

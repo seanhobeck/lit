@@ -1,26 +1,30 @@
 /**
  * @author Sean Hobeck
- * @date 2025-11-13
- *
- * @file tag.h
- *    the tag module, responsible for tagging any important rebases,
- *    merges and commits that the user deems to be important.
+ * @date 2025-12-26
  */
 #ifndef TAG_H
 #define TAG_H
 
-/*! @uses branch_t */
+/*! @uses branch_t. */
 #include "branch.h"
 
-/*! @uses commit_t */
+/*! @uses commit_t. */
 #include "commit.h"
 
-/*! @uses sha1_t */
+/*! @uses dyna_t. */
 #include "dyna.h"
+
+/*! @uses sha1_t. */
 #include "hash.h"
 
-/// @note a data structure to represent the tagging of a commit.
+/**
+ * a data structure representing a tag used within the version control system; a marker on a certain
+ *  commit for the users to use within the command line. for example, if there is a specific
+ *  commit that a user wishes to pin or not have to look for the hash (which can be very tedeous),
+ *  it can be tagged within the repository.
+ */
 typedef struct {
+    /* parent branch, commit hash, and name. */
     sha1_t commit_hash, branch_hash;
     char* name;
 } tag_t;
@@ -61,6 +65,5 @@ read_tags();
  * @return a dynamic array of the tags within the repository.
  */
 dyna_t*
-filter_tags(const sha1_t branch_hash, \
-    const dyna_t* array);
-#endif //TAG_H
+filter_tags(const sha1_t branch_hash, const dyna_t* array);
+#endif /* TAG_H */

@@ -1,10 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-09-01
- *
- * @file hash.c
- *    the hash module, responsible for generating sha1, sha256, and crc32 hashes
- *    for commits, diffs, and other files if required by the user and or vcs.
+ * @date 2025-12-28
  */
 #include "hash.h"
 
@@ -20,16 +16,16 @@
 /*! @uses assert */
 #include <assert.h>
 
-/// @note macro for rotating bits to the left in a 32-bit integer.
+/* macro for rotating bits to the left in a 32-bit integer. */
 #define rotl32(x, n) (((x) << (n)) | ((x) >> (32 - (n))))
 
-/// @note macro for rotating bits to the right in a 32-bit integer.
+/* macro for rotating bits to the right in a 32-bit integer. */
 #define rotr32(x, n) (((x) >> (n)) | ((x) << (32 - (n))))
 
-/// @note macro for shifting bits to the right in a 32-bit integer.
+/* macro for shifting bits to the right in a 32-bit integer. */
 #define shr32(x, n) ((x) >> (n))
 
-/*! @brief logical functions from fips-180-2 standard. */
+/* macro for logical functions from fips-180-2 standard. */
 #define ch(x, y, z) (((x) & (y)) ^ (~(x) & (z)))
 #define maj(x, y, z) (((x) & (y)) ^ ((x) & (z)) ^ ((y) & (z)))
 
@@ -72,41 +68,41 @@ static const unsigned int k256[64u] = {
  */
 void
 sha1(const unsigned char* data, unsigned long size, sha1_t hash) {
-    // assert on the parameters.
+    /* assert on the parameters. */
     assert(data != 0x0);
     assert(size > 0);
 
-    // initial hash values (sha1 standard)
+    /* initial hash values (sha1 standard). */
     unsigned int h0 = 0x67452301, h1 = 0xEFCDAB89, h2 = 0x98BADCFE,
         h3 = 0x10325476, h4 = 0xC3D2E1F0;
 
-    // compute padded msg len (mod 64)
+    /* compute padded msg len (mod 64). */
     unsigned long padded_len = ((size + 9u + 63) / 64) * 64;
-    // allocate memory for the buffer, and copy the data into it (append '1' bit)
+    /* allocate memory for the buffer, and copy the data into it (append '1' bit). */
     unsigned char* msg = calloc(padded_len, 1);
     memcpy(msg, data, size);
     msg[size] = 0x80;
 
-    // append original message length in bits as big endian
+    /* append original message length in bits as big endian. */
     unsigned long bit_len = size * 8;
     for (unsigned long i = 0; i < 8; i++)
         msg[padded_len - 1 - i] = (unsigned char) (bit_len >> (i * 8));
 
-    // process the message in 512-bit chunks (64 bytes)
+    /* process the message in 512-bit chunks (64 bytes). */
     for (unsigned long offset = 0; offset < padded_len; offset += 64) {
         unsigned words[80];
 
-        // 16 big-endian 32-bit words
+        /* 16 big-endian 32-bit words. */
         for (unsigned long i = 0; i < 16; i++)
             words[i] = (msg[offset + 4 * i] << 24) | (msg[offset + 4 * i + 1] << 16) | \
                 (msg[offset + 4 * i + 2] << 8) | (msg[offset + 4 * i + 3]);
 
-        // extend to our 80 words
+        /* extend to our 80 words. */
         for (unsigned long i = 16; i < 80; i++)
             words[i] = rotl32(words[i - 3] ^ words[i - 8] ^ \
                 words[i - 14] ^ words[i - 16], 1);
 
-        // main compression loop
+        /* main compression loop. */
         unsigned int a = h0, b = h1, c = h2, d = h3, e = h4;
         for (unsigned long i = 0; i < 80; i++) {
             unsigned int f, k;
@@ -127,12 +123,12 @@ sha1(const unsigned char* data, unsigned long size, sha1_t hash) {
             e = d; d = c; c = rotl32(b, 30); b = a; a = j;
         }
 
-        // add compressed chunk to our current hash values.
+        /* add compressed chunk to our current hash values. */
         h0 += a; h1 += b; h2 += c; h3 += d; h4 += e;
     }
     free(msg);
 
-    // produce the final hash but now in big-endian.
+    /* produce the final hash but now in big-endian. */
     unsigned int arr[] = { h0, h1, h2, h3, h4 };
     for (unsigned long i = 0; i < 5; i++)
         for (unsigned long j = 0; j < 4; j++)
@@ -147,102 +143,14 @@ sha1(const unsigned char* data, unsigned long size, sha1_t hash) {
  */
 char*
 strsha1(const sha1_t hash) {
-    // assert on the hash.
+    /* assert on the hash. */
     assert(hash != 0x0);
 
-    // convert the sha1 hash to a string representation.
-    char* str = malloc(41); // 40 hex chars + null terminator
+    /* convert the sha1 hash to a string representation. */
+    char* str = malloc(41); /* 40 hex chars + null terminator. */
     for (unsigned long i = 0u; i < 20; i++)
         sprintf(str + i * 2, "%02x", hash[i]);
-    str[40] = '\0'; // null-terminate the string
-    return str;
-};
-
-/**
- * @brief generate a sha256 hash from the given data.
- *
- * @param data pointer to the data to hash.
- * @param size size of the data in bytes.
- * @param hash sha256_t structure to store the hash.
- */
-__attribute__((deprecated)) void
-sha256(const unsigned char* data, unsigned long size, sha256_t hash) {
-    // assert on the parameters.
-    assert(data != 0x0);
-    assert(size > 0);
-
-    // initial hash values (first 32 bits of the square roots of the first 64 primes)
-    unsigned int hashes[8] = {
-        0x6a09e667, 0xbb67ae85, 0x3c6ef372, 0xa54ff53a,
-        0x510e527f, 0x9b05688c, 0x1f83d9ab, 0x5be0cd19
-    };
-
-    // compute padded msg len (mod 64)
-    unsigned long padded_len = ((size + 9 + 63) / 64) * 64;
-    unsigned char* msg = calloc(padded_len, 1);
-    memcpy(msg, data, size);
-    msg[size] = 0x80;
-
-    // append original bit length (little endian).
-    unsigned long bit_len = size * 8;
-    for (int i = 0; i < 8; i++)
-        msg[padded_len - 1 - i] = (unsigned char)(bit_len >> (i * 8));  // big-endian
-
-    // process the message in 512-bit chunks (64 bytes)
-    for (unsigned long offset = 0; offset < padded_len; offset += 64) {
-        unsigned int words[64];
-
-        // first 16 big-endian 32-bit words
-        for (unsigned long i = 0; i < 16; i++)
-            words[i] = ((unsigned int) msg[offset + 4 * i] << 24) | \
-                ((unsigned int) msg[offset + 4 * i + 1] << 16) | \
-                ((unsigned int) msg[offset + 4 * i + 2] << 8) | \
-                ((unsigned int) msg[offset + 4 * i + 3]);
-
-        // extend to our 64 words using sha256's specific schedule
-        for (unsigned long i = 16; i < 64; i++)
-            words[i] = theta1(words[i - 2]) + words[i - 7] + \
-                theta0(words[i - 15]) + words[i - 16];
-
-        // main compression loop
-        unsigned int a = hashes[0], b = hashes[1], c = hashes[2], \
-            d = hashes[3], e = hashes[4], f = hashes[5], g = hashes[6], \
-            h = hashes[7];
-        for (unsigned long i = 0; i < 64; i++) {
-            unsigned int t1 = h + sigma1(e) + ch(e, f, g) + k256[i] + words[i], \
-                t2 = sigma0(a) + maj(a, b, c);
-            h = g; g = f; f = e; e = d + t1;
-            d = c; c = b; b = a; a = t1 + t2;
-        }
-
-        // add compressed chunk to our current hash values.
-        hashes[0] += a; hashes[1] += b; hashes[2] += c; hashes[3] += d;
-        hashes[4] += e; hashes[5] += f; hashes[6] += g; hashes[7] += h;
-    }
-    free(msg);
-
-    // produce the final hash but now in big-endian.
-    for (unsigned long i = 0; i < 8; i++)
-        for (unsigned long j = 0; j < 4; j++)
-            hash[i * 4 + j] = (unsigned char) (hashes[i] >> (24 - j * 8));
-};
-
-/**
- * @brief convert a sha256 hash to a string representation.
- *
- * @param hash the sha256 hash to be converted.
- * @return a string representation of the sha1 hash.
- */
-__attribute__((deprecated)) char*
-strsha256(const sha256_t hash) {
-    // assert on the hash.
-    assert(hash != 0x0);
-
-    // convert the sha1 hash to a string representation.
-    char* str = malloc(65); // 64 hex chars + null terminator
-    for (unsigned long i = 0; i < 32; i++)
-        sprintf(str + i * 2, "%02x", hash[i]);
-    str[64] = '\0'; // null-terminate the string
+    str[40] = '\0'; /* null-terminate the string. */
     return str;
 };
 
@@ -255,11 +163,11 @@ strsha256(const sha256_t hash) {
  */
 ucrc32_t
 crc32(const unsigned char* data, unsigned long size) {
-    // assert on the data.
+    /* assert on the data. */
     assert(data != 0x0);
     assert(size > 0);
 
-    // according to ieee 802.3, @link[https://docs.amd.com/v/u/en-US/xapp209]
+    /* according to ieee 802.3, @link[https://docs.amd.com/v/u/en-US/xapp209]. */
     ucrc32_t crc = ~0u;
     for (unsigned long i = 0; i < size; i++) {
         crc ^= data[i];
@@ -278,9 +186,9 @@ crc32(const unsigned char* data, unsigned long size) {
  */
 char*
 strcrc32(const ucrc32_t hash) {
-    // assert on the hash.
+    /* assert on the hash. */
     assert(hash != 0x0);
-    char* string = calloc(1, 11); // 10 hex chars + null terminator
+    char* string = calloc(1, 11); /* 10 hex chars + null terminator. */
     sprintf(string, "%d", hash);
     return string;
 };

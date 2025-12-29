@@ -1,20 +1,25 @@
 /**
-*	@author Sean Hobeck
- *	@date 2025-11-12
+ *	@author Sean Hobeck
+ *	@date 2025-12-28
  */
 #ifndef DYNA_H
 #define DYNA_H
 
-/*! @uses size_t */
+/*! @uses size_t. */
 #include <stddef.h>
 
-/// @note a structure for a dynamic array.
+/**
+ * a data structure for a dynamically allocated array, it can hold only a set item size, as well
+ *  as anything less. although it can hold items less than it, meaning if you have a struct a and b
+ *  where sizeof(a) >= sizeof(b), if the item size = sizeof(a), then you can technically hold
+ *  struct b within the list, it is ideal if you stick with a constant item size, and create a new
+ *  dynamically allocated list (dyna) with a new size, and copy all data over (or refer to
+ *  dyna_upgradef).
+ */
 typedef struct {
-    // array of data.
-    void** data;
-    // length (count) and capacity of the dynamic array.
-    size_t length, capacity, isize;
-    // element size; sizeof the data in the array.
+    void** data; /* array of data. */
+    /* length (count) and capacity of the dynamic array. */
+    size_t length, capacity, isize; /* element size; sizeof the data in the array. */
 } dyna_t;
 
 /**
@@ -74,4 +79,31 @@ dyna_get(dyna_t* array, size_t index);
  */
 void
 dyna_shrink(dyna_t* array);
-#endif //DYNA_H
+
+/**
+ * @brief upgrade the item size of a dynamically allocated array and then also
+ *  free the provided array.
+ *
+ * @param old_array the dynamically allocated array to be upgraded (then freed).
+ * @param new_size the new size of a dynamically allocated array to be upgraded.
+ * @return a new dynamically allocated array containing a larger item size.
+ */
+dyna_t*
+dyna_upgradef(dyna_t* old_array, size_t new_size);
+
+/* a get operation. */
+#define _get(array, type, index) ((type) dyna_get(array, index))
+
+/* starting an iteration. */
+#define _foreach(array, type, var, iter) \
+    for (size_t iter = 0; iter < (array)->length; iter++) { \
+        type var = _get(array, type, iter);
+
+/* starting an iteration, backwards. */
+#define _inv_foreach(array, type, var, iter) \
+    for (size_t iter = (array)->length; iter != 0; iter--) { \
+        type var = _get(array, type, iter - 1);
+
+/* ending an iteration. */
+#define _endforeach }
+#endif /* DYNA_H */

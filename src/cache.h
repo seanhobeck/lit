@@ -1,22 +1,18 @@
 /**
  * @author Sean Hobeck
- * @date 2025-11-13
- *
- * @file cache.h
- *    the cache module, responsible for clearing any possible object
- *    caches that are not related to any commits.
+ * @date 2025-12-27
  */
 #ifndef CACHE_H
 #define CACHE_H
 
-/*! @uses repository_t */
+/*! @uses repository_t. */
 #include "repo.h"
 
-/// @note an enum to describe the results of scanning the caches.
+/** enum for all possible cache results; some of the explanations provided below. */
 typedef enum {
-    E_CACHE_RESULT_SUCCESS = 0x0, // we found some caches that could be removed.
-    E_CACHE_RESULT_NO_CACHE = 0x1, // we did not find any caches to remove.
-    E_CACHE_RESULT_ERROR = 0x2, // we encountered an error while scanning caches.
+    E_CACHE_RESULT_SUCCESS = 0x0, /* if we found some caches that could be removed. */
+    E_CACHE_RESULT_NO_CACHE = 0x1, /* if we did not find any caches to remove. */
+    E_CACHE_RESULT_ERROR = 0x2, /* if we encountered an error while scanning caches. */
 } e_cache_result_t;
 
 /**
@@ -28,4 +24,4 @@ typedef enum {
  */
 e_cache_result_t
 scan_object_cache(const repository_t* repository);
-#endif
+#endif /* CACHE_H */

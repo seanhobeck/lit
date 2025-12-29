@@ -1,10 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-11-12
- *
- * @file ops.c
- *    the operations module, it is responsible for handling
- *    commits and applying operations between branches.
+ * @date 2025-12-28
  */
 #include "ops.h"
 
@@ -20,6 +16,15 @@
 /*! @uses mkdir */
 #include <sys/stat.h>
 
+/*! @uses assert. */
+#include <assert.h>
+
+/*! @uses diff_t. */
+#include "diff.h"
+
+/*! @uses freels, finversels, ... */
+#include "utl.h"
+
 /**
  * @brief apply the commit forward to the files currently existing.
  *
@@ -27,49 +32,48 @@
  */
 void
 forward_commit_op(const commit_t* commit) {
-    // assert on the commit.
+    /* assert on the commit. */
     assert(commit != 0x0);
 
-    // iterate for a "delta apply".
-    for (size_t i = 0; i < commit->count; i++) {
-        diff_t* diff = commit->changes[i];
+    /* iterate for a 'delta apply'. */
+    _foreach(commit->changes, const diff_t*, diff, i)
         switch (diff->type) {
             case (E_DIFF_FILE_NEW): {
-                // write this out to the file.
+                /* write this out to the file. */
                 size_t n = 0;
-                char** lines = fforwardls(diff->lines, diff->count, &n);
+                char** lines = fforwardls((char**)diff->lines->data, diff->lines->length, &n);
                 fwritels(diff->new_path, lines, n);
                 ffreels(lines, n);
                 break;
             }
             case (E_DIFF_FILE_MODIFIED): {
                 if (strcmp(diff->new_path, diff->stored_path) != 0) {
-                    // if the file was renamed, we need to remove the old file.
+                    /* if the file was renamed, we need to remove the old file. */
                     remove(diff->stored_path);
                 }
 
-                // write this out to the new file.
+                /* write this out to the new file. */
                 size_t n = 0;
-                char** lines = fforwardls(diff->lines, diff->count, &n);
+                char** lines = fforwardls((char**)diff->lines->data, diff->lines->length, &n);
                 fwritels(diff->new_path, lines, n);
                 ffreels(lines, n);
                 break;
             }
             case (E_DIFF_FOLDER_NEW): {
-                // make a new folder.
+                /* make a new folder. */
                 mkdir(diff->stored_path, 0755);
                 break;
             }
-                // if a folder was deleted
+            /* if a folder was deleted */
             case (E_DIFF_FILE_DELETED):
             case (E_DIFF_FOLDER_DELETED): {
-                // then we 'unlink' this folder.
+                /* then we 'unlink' this folder. */
                 remove(diff->stored_path);
                 break;
             }
-            default: ; /// ?
+            default: ; /* ? */
         }
-    }
+    _endforeach;
 };
 
 /**
@@ -79,48 +83,47 @@ forward_commit_op(const commit_t* commit) {
  */
 void
 reverse_commit_op(const commit_t* commit) {
-    // assert on the commit.
+    /* assert on the commit. */
     assert(commit != 0x0);
 
-    // iterate for a "delta apply".
-    for (size_t i = 0; i < commit->count; i++) {
-        diff_t* diff = commit->changes[i];
+    /* iterate for a "delta apply". */
+    _foreach(commit->changes, const diff_t*, diff, i)
         switch (diff->type) {
             case (E_DIFF_FOLDER_NEW):
             case (E_DIFF_FILE_NEW): {
-                // file / folder was created so delete it.
+                /* file / folder was created so delete it. */
                 remove(diff->stored_path);
                 break;
             }
             case (E_DIFF_FILE_MODIFIED): {
                 if (strcmp(diff->new_path, diff->stored_path) != 0) {
-                    // if the file was renamed, we need to remove the old file.
+                    /* if the file was renamed, we need to remove the old file. */
                     remove(diff->new_path);
                 }
 
-                // write this out to the new file.
+                /* write this out to the new file. */
                 size_t n = 0;
-                char** lines = finversels(diff->lines, diff->count, &n);
+                char** lines = finversels((char**)diff->lines->data, diff->lines->length, &n);
                 fwritels(diff->stored_path, lines, n);
                 ffreels(lines, n);
                 break;
             }
             case (E_DIFF_FOLDER_DELETED): {
-                // make a new folder.
+                /* make a new folder. */
                 mkdir(diff->stored_path, 0755);
                 break;
             }
             case (E_DIFF_FILE_DELETED): {
-                // write this out to the file.
+                /* write this out to the file. */
                 size_t n = 0;
-                char** lines = finversels(diff->lines, diff->count, &n);
+                char** lines = finversels((char**)diff->lines->data, diff->lines->length, &n);
                 fwritels(diff->stored_path, lines, n);
                 ffreels(lines, n);
                 break;
             }
-            default: ; /// ?
+            default: ; /* ? */
         }
-    }
+    _endforeach;
 };
 
 /**
@@ -131,30 +134,30 @@ reverse_commit_op(const commit_t* commit) {
  */
 void
 rollback_op(branch_t* branch, const commit_t* commit) {
-    // assert on the branch and commit.
+    /* assert on the branch and commit. */
     assert(branch != 0x0);
     assert(commit != 0x0);
 
-    // first thing to do is to check that this commit is in <branch> history.
+    /* the first thing to do is to check that this commit is in <branch> history. */
     size_t target_idx = (size_t) -1;
-    for (size_t i = 0; i < branch->count; i++) {
-        // we compare by hashes, not by pointers.
-        if (!strcmp(branch->commits[i]->hash, commit->hash)) {
+    _foreach(branch->commits, commit_t*, _commit, i)
+        /* we compare by hashes, not by pointers. */
+        if (!memcmp(_commit->hash, commit->hash, 20u)) {
             target_idx = i;
             break;
         }
-    }
+    _endforeach;
 
-    // if the commit is not in the history, report the error and return.
-    if (target_idx == -1) {
+    /* if the commit is not in the history, report the error and return. */
+    if (target_idx == (size_t)-1) {
         fprintf(stderr,"index == -1; commit not found in branch history.\n");
         return;
     }
 
-    // apply inverse of commits from current back to target
-    //      go backwards from current position to target
+    /* apply inverse of commits from current back to target
+     *  go backwards from current position to target */
     for (size_t i = branch->head; i > target_idx; i--) {
-        reverse_commit_op(branch->commits[i]);
+        reverse_commit_op(dyna_get(branch->commits, i));
     }
     branch->head = target_idx;
 };
@@ -167,30 +170,28 @@ rollback_op(branch_t* branch, const commit_t* commit) {
  */
 void
 checkout_op(branch_t* branch, const commit_t* commit) {
-    // assert on the branch and the commit.
+    /* assert on the branch and the commit. */
     assert(branch != 0x0);
     assert(commit != 0x0);
 
-    // first thing to do is to check that this commit is in <branch> history.
+    /* first thing to do is to check that this commit is in <branch> history. */
     size_t target_idx = -1;
-    for (size_t i = 0; i < branch->count; i++) {
-        // we compare by hashes, not by pointers.
-        if (!strcmp(branch->commits[i]->hash, commit->hash)) {
+    _foreach(branch->commits, commit_t*, _commit, i)
+        /* we compare by hashes, not by pointers. */
+        if (!memcmp(_commit->hash, commit->hash, 20u)) {
             target_idx = i;
             break;
         }
-    }
+    _endforeach;
 
-    // if the commit is not in the history, report the error and return.
-    if (target_idx == -1) {
+    /* if the commit is not in the history, report the error and return. */
+    if (target_idx == (size_t) -1) {
         fprintf(stderr,"index == -1; commit not found in branch history.\n");
         exit(EXIT_FAILURE);
     }
 
-    // apply commits from current forward to target,
-    //      go forwards from current position to target
-    for (size_t i = branch->head + 1; i <= target_idx; i++) {
-        forward_commit_op(branch->commits[i]);
-    }
+    /* apply commits from current forward to target, go forwards from current position to target */
+    for (size_t i = branch->head + 1; i <= target_idx; i++)
+        forward_commit_op(dyna_get(branch->commits, i));
     branch->head = target_idx;
 };

@@ -1,12 +1,11 @@
 /**
  * @author Sean Hobeck
- * @date 2025-11-13
- *
- * @file repo.c
- *    the repository module in the version control system, it is responsible for handling branches,
- *    and their locations, as well as the overall state of the repository.
+ * @date 2025-12-28
  */
 #include "repo.h"
+
+/*! @uses assert. */
+#include <assert.h>
 
 /*! @uses mkdir, getcwd. */
 #include <sys/stat.h>
@@ -26,6 +25,9 @@
 /*! @uses apply_inverse_commit, apply_forward_commit */
 #include "ops.h"
 
+/*! @uses MKDIR_MOWNER. */
+#include "utl.h"
+
 /**
  * @brief find a common commit ancestor using hashes and timestamps by going backwards.
  *
@@ -35,27 +37,27 @@
  */
 commit_t*
 find_common_ancestor(branch_t* branch1, branch_t* branch2) {
-    // is there any issues with the commits provided?
+    /* is there any issues with the commits provided? */
     assert(branch1 != 0x0);
     assert(branch2 != 0x0);
-    if (branch1->count == 0 || branch2->count == 0)
+    if (branch1->commits->length == 0 || branch2->commits->length == 0)
         return 0x0;
 
-    // start from the most recent comits and work backwards
-    long i = (long) branch1->count - 1;
-    long j = (long) branch2->count - 1;
+    /* start from the most recent comits and work backwards */
+    long i = (long) branch1->commits->length - 1;
+    long j = (long) branch2->commits->length - 1;
     commit_t* ancestor = 0x0;
 
-    // work backwards through both branches simultaneously
+    /* work backwards through both branches simultaneously */
     while (i >= 0 && j >= 0) {
-        commit_t* c1 = branch1->commits[i], *c2 = branch2->commits[j];
+        commit_t* c1 = dyna_get(branch1->commits, i), *c2 = dyna_get(branch2->commits, j);
 
-        // if hashes match, this a common commit.
+        /* if hashes match, this a common commit. */
         if (memcmp(c1->hash, c2->hash, 32) == 0) {
             ancestor = c1;
             break;
         }
-        // move the pointer with the more recent timestamp backwards.
+        /* move the pointer with the more recent timestamp backwards. */
         if (c1->timestamp > c2->timestamp) i--;
         else j--;
     }
@@ -71,38 +73,16 @@ find_common_ancestor(branch_t* branch1, branch_t* branch2) {
  */
 long
 find_index_commit(branch_t* branch, commit_t* commit) {
-    // assert the branch and the commit.
+    /* assert the branch and the commit. */
     assert(branch);
     assert(commit);
-    for (size_t i = 0; i < branch->count; i++) {
-        if (memcmp(branch->commits[i]->hash, commit->hash, 32) == 0) {
+    _foreach(branch->commits, const commit_t*, _commit, i)
+        if (memcmp(_commit->hash, commit->hash, 32) == 0) {
             return (long) i;
         }
-    }
+    _endforeach;
     return -1;
 };
-
-/**
- * @brief dynamic list append the branch to the repository.
- *
- * @param branch the branch to be added to <repository>.
- * @param repository the repository where <branch> should be added.
- */
-void
-add_branch_to_repository(const branch_t* branch, repository_t* repository) {
-    // assert the repository.
-    assert(repository != 0x0);
-    if (repository->count >= repository->capacity) {
-        repository->capacity = repository->capacity ? repository->capacity * 2 : 1; // increment the branch count.
-        branch_t** branches = realloc(repository->branches, sizeof(branch_t*) * repository->capacity);
-        if (!branches) {
-            fprintf(stderr,"realloc failed; could not reallocate memory for branches.\n");
-            exit(EXIT_FAILURE);
-        }
-        repository->branches = branches;
-    }
-    repository->branches[repository->count++] = (branch_t*) branch;
-}
 
 /**
  * @brief create a new repository with the given main branch name.
@@ -111,41 +91,42 @@ add_branch_to_repository(const branch_t* branch, repository_t* repository) {
  */
 repository_t*
 create_repository() {
-    // get the cwd.
+    /* get the cwd. */
     char cwd[256];
     if (getcwd(cwd, sizeof cwd) == 0x0) {
         fprintf(stderr,"getcwd failed; could not get current working directory.\n");
         exit(EXIT_FAILURE);
     }
 
-    // set the cwd.
+    /* set the cwd. */
     if (chdir(cwd) != 0) {
         fprintf(stderr,"chdir failed; could not change to current working directory.\n");
         exit(EXIT_FAILURE);
     }
 
-    // create the '.lit' directory in the current working directory.
+    /* create the '.lit' directory in the current working directory. */
     if (mkdir(".lit", MKDIR_MOWNER) == -1) {
         fprintf(stderr, "mkdir failed; '.lit' directory already exists.\n");
         exit(EXIT_FAILURE);
     }
-    // content-addressable storage folders.
+    /* content-addressable storage folders. */
     mkdir(".lit/objects", MKDIR_MOWNER);
     mkdir(".lit/objects/commits", MKDIR_MOWNER);
     mkdir(".lit/objects/diffs", MKDIR_MOWNER);
 
-    // references (branches, tags).
+    /* references (branches, tags). */
     mkdir(".lit/refs", MKDIR_MOWNER);
     mkdir(".lit/refs/heads/", MKDIR_MOWNER);
     mkdir(".lit/refs/tags/", MKDIR_MOWNER);
 
-    // create a new repository structure.
+    /* create a new repository structure. */
     repository_t* repo = calloc(1, sizeof(*repo));
-    add_branch_to_repository(create_branch("origin"), repo);
+    repo->branches = dyna_create(sizeof(branch_t*));
+    dyna_push(repo->branches, create_branch("origin"));
     repo->readonly = false;
 
-    // write the repository and branch to disk.
-    write_branch(repo->branches[0]);
+    /* write the repository and branch to disk. */
+    write_branch(dyna_get(repo->branches, 0));
     write_repository(repo);
     return repo;
 };
@@ -157,22 +138,23 @@ create_repository() {
  */
 void
 write_repository(const repository_t* repo) {
-    // assert the repository.
+    /* assert the repository. */
     assert(repo != 0x0);
 
-    // open the file '.lit/repository' for writing.
+    /* open the file '.lit/repository' for writing. */
     FILE* f = fopen(".lit/index", "w");
     if (!f) {
         fprintf(stderr,"fopen failed; could not open index file for writing.\n");
         exit(EXIT_FAILURE);
     }
 
-    // write the main branch information.
+    /* write the main branch information. */
     fprintf(f, "active:%lu\n", repo->idx);
-    fprintf(f, "count:%lu\n", repo->count);
+    fprintf(f, "count:%lu\n", repo->branches->length);
     fprintf(f, "readonly:%d\n", repo->readonly ? 1 : 0);
-    for (size_t i = 0u; i < repo->count; i++)
-        fprintf(f, "%lu:%s\n", i, repo->branches[i]->name);
+    _foreach(repo->branches, const branch_t*, branch, i)
+        fprintf(f, "%lu:%s\n", i, branch->name);
+    _endforeach;
     fclose(f);
 };
 
@@ -183,42 +165,39 @@ write_repository(const repository_t* repo) {
  */
 repository_t*
 read_repository() {
-    // create a temporary repository structure.
+    /* create a temporary repository structure. */
     repository_t* repo = calloc(1, sizeof *repo);
 
-    // open the file '.lit/index' for reading.
+    /* open the file '.lit/index' for reading. */
     FILE* f = fopen(".lit/index", "r");
     if (!f) {
         fprintf(stderr,"fopen failed; could not open repository file for reading.\n");
         exit(EXIT_FAILURE);
     }
 
-    // read the current branch index.
-    int scanned = fscanf(f, "active:%lu\ncount:%lu\nreadonly:%d", &repo->idx, &repo->count, &repo->readonly);
+    /* read the current branch index. */
+    size_t length = 0;
+    int scanned = fscanf(f, "active:%lu\ncount:%lu\nreadonly:%d", &repo->idx, \
+        &length, &repo->readonly);
     if (scanned != 3) {
         fprintf(stderr,"fscanf failed; could not read current branch header.\n");
         fclose(f);
         exit(EXIT_FAILURE);
     }
 
-    // if there are no branches, return the repository.
-    if (repo->count == 0) {
+    /* if there are no branches, return the repository. */
+    if (length == 0u) {
         repo->branches = 0x0;
         fclose(f);
         return repo;
     }
 
-    // write the branches to the repository structure.
-    repo->branches = calloc(1, sizeof(branch_t*) * repo->count);
-    if (!repo->branches) {
-        fprintf(stderr,"malloc failed; could not allocate memory for branches.\n");
-        fclose(f);
-        exit(EXIT_FAILURE);
-    }
+    /* create the dynamic array. */
+    repo->branches = dyna_create(sizeof(branch_t*));
 
-    // iterate through the count.
-    for (size_t i = 0; i < repo->count; i++) {
-        // allocate and read.
+    /* iterate through the count. */
+    for (size_t i = 0; i < length; i++) {
+        /* allocate and read. */
         char* branch_name = calloc(1, 129);
         scanned = fscanf(f, "%lu:%128[^\n]\n", &i, branch_name);
         if (scanned != 2) {
@@ -228,10 +207,10 @@ read_repository() {
             return repo;
         }
 
-        /// read the branch from refs/heads/
+        /* read the branch from refs/heads/ */
         char *path = calloc(1, 257);
         snprintf(path, 256, ".lit/refs/heads/%s", branch_name);
-        repo->branches[i] = read_branch(branch_name);
+        dyna_push(repo->branches, read_branch(branch_name));
         free(path);
         free(branch_name);
     };
@@ -243,45 +222,61 @@ read_repository() {
  *
  * @param repository the repository provided.
  * @param name the name of the new branch.
+ * @param from_name the name of the branch to copy the head from.
  */
 void
-create_branch_repository(repository_t* repository, const char* name) {
-    // assert the repository and the name.
+create_branch_repository(repository_t* repository, const char* name, const char* from_name) {
+    /* assert the repository and the name. */
     assert(repository != 0x0);
     assert(name != 0x0);
 
-    // check if the branch exists.
-    for (size_t i = 0; i < repository->count; i++) {
-        if (!strcmp(repository->branches[i]->name, name)) {
+    /* check if the branch exists. */
+    _foreach(repository->branches, const branch_t*, branch, i)
+        if (!strcmp(branch->name, name)) {
             fprintf(stderr,"strcmp; branch \'%s\' already exists.\n", name);
             exit(EXIT_FAILURE);
         }
-    }
+    _endforeach;
 
-    // create the branch,
+    /* create the branch. */
     branch_t* branch = create_branch(name);
     if (!branch) {
         fprintf(stderr,"branch_create failed; could not create branch of name \'%s\'\n", name);
         exit(EXIT_FAILURE);
     }
 
-    // add the branch to this repository.
-    add_branch_to_repository(branch, repository);
+    /* add the branch to this repository. */
+    dyna_push(repository->branches, branch);
 
-    // get the current branch, and copy all of the commits from the top to the branch.
-    branch_t* current = repository->branches[repository->idx];
-    for (size_t i = 0; i < current->count; i++) {
-        commit_t* commit = calloc(1, sizeof *commit);
-        memcpy(commit, current->commits[i], sizeof *commit);
+    /* get the from the branch specified. */
+    branch_t* from_branch = 0x0;
+    _foreach(repository->branches, branch_t*, _branch, i)
+        /* search by name; todo make this a function in repository. */
+        if (!strcmp(_branch->name, from_name)) {
+            from_branch = _branch;
+            break;
+        }
+    _endforeach;
 
-        // keep the sha1 hash on the commit, if we delete a branch
-        // and the changes aren't kept then we simply just removed
-        // them as they are just 'cache'.
-        add_commit_branch(commit, branch);
+    /* check the from branch exists. */
+    if (!from_branch) {
+        fprintf(stderr,"strcmp; branch \'%s\' does not exist.\n", from_name);
+        exit(EXIT_FAILURE);
     }
-    branch->head = current->head;
 
-    // write out the branch and repository.
+    /* copy all the commits over to the new branch. */
+    _foreach(from_branch->commits, commit_t*, commit, i)
+        commit_t* _commit = calloc(1, sizeof *_commit);
+        memcpy(_commit, commit, sizeof *_commit);
+
+        /* keep the sha1 hash on the commit, if we delete a branch
+         *  and the changes aren't kept then we simply just removed
+         *  them as they are just 'cache'. */
+        dyna_push(branch->commits, commit);
+    _endforeach;
+    branch->head = from_branch->head;
+
+    /* write out the branch and repository. */
     write_repository(repository);
     write_branch(branch);
 };
@@ -294,34 +289,36 @@ create_branch_repository(repository_t* repository, const char* name) {
  */
 void
 delete_branch_repository(repository_t* repository, const char* name) {
-    // assert the repository and the name.
+    /* assert the repository and the name. */
     assert(repository != 0x0);
     assert(name != 0x0);
 
-    // check if the branch exists.
-    size_t i = 0;
-    for (; i < repository->count; i++) {
-        if (!strcmp(repository->branches[i]->name, name))
-            break;
-    }
+    /* we cannot delete the original/ origin branch. */
     if (!strcmp(name, "origin")) {
         fprintf(stderr,"strcmp; branch name cannot be 'origin'.\n");
         exit(EXIT_FAILURE);
     }
-    if (i == repository->count) {
+
+    /* check if the branch exists. */
+    size_t i = (size_t) -1;
+    _foreach(repository->branches, branch_t*, branch, j)
+        if (!strcmp(branch->name, name)) {
+            i = j;
+            break;
+        }
+    _endforeach;
+    if (i == (size_t) -1) {
         fprintf(stderr,"strcmp; branch does not exist.\n");
         exit(EXIT_FAILURE);
     }
 
-    // remove the branch directory.
+    /* remove the branch directory. */
     char path[256];
     snprintf(path, 256, ".lit/refs/heads/%s", name);
     remove(path);
 
-    // move the branches down (if there are any)
-    for (size_t j = i; j < repository->count - 1; j++)
-        repository->branches[j] = repository->branches[j + 1];
-    repository->count--;
+    /* pop and move the branches down (if there are any). */
+    dyna_pop(repository->branches, i);
 };
 
 /**
@@ -333,17 +330,18 @@ delete_branch_repository(repository_t* repository, const char* name) {
  */
 branch_t*
 get_branch_repository(const repository_t* repository, const char* branch_name) {
-    // assert the repository and the branch name.
+    /* assert the repository and the branch name. */
     assert(repository != 0x0);
     assert(branch_name != 0x0);
 
-    // iterate through each branch in the repository.
-    for (size_t i = 0; i < repository->count; i++) {
-        if (!strcmp(repository->branches[i]->name, branch_name)) {
-            return repository->branches[i];
+    /* iterate through each branch in the repository. */
+    _foreach(repository->branches, branch_t*, branch, i)
+        if (!strcmp(branch->name, branch_name)) {
+            return dyna_get(repository->branches, i);
         }
-    }
-    // if the target branch was not found.
+    _endforeach;
+
+    /* if the target branch was not found. */
     fprintf(stderr, "target branch \'%s\' not found.\n", branch_name);
     exit(EXIT_FAILURE);
 }
@@ -356,77 +354,78 @@ get_branch_repository(const repository_t* repository, const char* branch_name) {
  */
 void
 switch_branch_repository(repository_t* repository, const char* name) {
-    // assert the repository and the new branch name.
+    /* assert the repository and the new branch name. */
     assert(repository != 0x0);
     assert(name != 0x0);
 
-    // find which branch we are going to switch to.
+    /* find which branch we are going to switch to. */
     branch_t* target = 0x0;
     size_t target_idx = 0;
 
-    // find the branch in the repositories branches.
-    for (size_t i = 0; i < repository->count; i++) {
-        if (!strcmp(repository->branches[i]->name, name)) {
-            target = repository->branches[i];
+    /* find the branch in the repositories branches. */
+    _foreach(repository->branches, branch_t*, branch, i)
+        if (!strcmp(branch->name, name)) {
+            target = branch;
             target_idx = i;
             break;
         }
-    }
+    _endforeach;
 
-    // if we did not find the target branch, exit(-1).
+    /* if we did not find the target branch, exit(-1). */
     if (!target) {
         fprintf(stderr,"strcmp; branch does not exist.\n");
         exit(EXIT_FAILURE);
     }
 
-    // if we are already on the branch, do nothing.
+    /* if we are already on the branch, do nothing. */
     if (repository->idx == target_idx) {
         printf("already on branch \'%s\'.\n", name);
         exit(0);
     }
 
-    // find the common ancestor of the branch via timestamp, then
-    //  do a checkout or rollback based on the direction that we are
-    //  heading with this commit.
-    branch_t* current = repository->branches[repository->idx];
+    /* find the common ancestor of the branch via timestamp, then
+     *  do a checkout or rollback based on the direction that we are
+     *  heading with this commit. */
+    branch_t* current = dyna_get(repository->branches, repository->idx);
     commit_t* ancestor = find_common_ancestor(current , target);
     if (!ancestor) {
-        // this should NOT happen, warn the user.
+        /* this should NOT happen, warn the user. */
         printf("warning; no ancestor commit was found (branch is unrelated).\n");
-        if (current->count > 0) {
-            // rollback to the first commit.
-            rollback_op(current, current->commits[0]);
-            if (current->count > 0)
-                reverse_commit_op(current->commits[0]);
+        if (current->commits->length > 0) {
+            /* rollback to the first commit. */
+            rollback_op(current, dyna_get(current->commits, 0));
+            if (current->commits->length > 0)
+                reverse_commit_op(dyna_get(current->commits, 0));
         }
 
-        // checkout target branch to its head.
-        if (target->count > 0) {
-            // start from clean slate and apply all commits.
-            for (size_t i = 0; i <= target->head && i < target->count; i++)
-                forward_commit_op(target->commits[i]);
+        /* checkout target branch to its head. */
+        if (target->commits->length > 0) {
+            /* start from clean slate and apply all commits. */
+            for (size_t i = 0; i <= target->head && i < target->commits->length; i++)
+                forward_commit_op(dyna_get(target->commits, i));
         }
     }
     else {
-        // do a switch, rollback to the ancestor, and then checkout the target commit.
+        /* do a switch, rollback to the ancestor, and then checkout the target commit. */
         printf("ancestor commit found; %s\n", strtrm(strsha1(ancestor->hash), 15));
 
-        // rollback to the ancestor commit...
+        /* rollback to the ancestor commit... */
         long ancestor_idx = find_index_commit(current, ancestor);
         if (ancestor_idx >= 0 && ancestor_idx < current->head)
             for (size_t i = current->head; i > ancestor_idx; i--)
-                reverse_commit_op(current->commits[i]);
+                reverse_commit_op(dyna_get(current->commits, i));
 
-        // checkout to the ancestor commit, then to the target head.
+        /* checkout to the ancestor commit, then to the target head. */
         long head_idx = find_index_commit(target, ancestor);
         if (head_idx >= 0) {
-            // apply forward commits from the ancestor to the head.
-            for (long i = head_idx + 1; i <= (long) target->head && i < (long) target->count; i++)
-                forward_commit_op(target->commits[i]);
+            /* apply forward commits from the ancestor to the head. */
+            for (long i = head_idx + 1; i <= (long) target->head && i < (long)
+                target->commits->length; i++)
+                forward_commit_op(dyna_get(target->commits, i));
         }
     }
 
-    // update the repository.
+    /* update the repository. */
     repository->idx = target_idx;
     write_repository(repository);
 };

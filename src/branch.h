@@ -1,27 +1,28 @@
 /**
  * @author Sean Hobeck
- * @date 2025-08-12
- *
- * @file branch.h
- *    the branch module in the version control system, it is responsible for handling
- *    commits and locating diffs and changes between branches.
+ * @date 2025-12-27
  */
 #ifndef BRANCH_H
 #define BRANCH_H
 
-/*! @uses commit_t. */
-#include "commit.h"
-
 /*! @uses sha1_t, sha1, sha256_t, sha256. */
 #include "hash.h"
 
-/// @note a data structure to hold a branch, containing commits and our current commit.
+/*! @uses dyna_t, dyna_push, _foreach... */
+#include "dyna.h"
+
+/**
+ * a data structure representing a branch within the version control system. a branch is a
+ *  specific partition of the repository containing specified changes by the user, which can be
+ *  back traced to the very first commit. it includes, a name, a path, a hash, a pointer to the
+ *  head (current commit), and an array of the commits itself.
+ */
 typedef struct {
-    char* name; // branch name.
-    char* path; // path to the branch directory.
-    sha1_t hash; // sha1 hash of the branch.
-    size_t count, head, capacity; // number of commits in the branch.
-    commit_t** commits; // array of commits hashes for this branch.
+    char* name; /* branch name. */
+    char* path; /* path to the branch directory. */
+    sha1_t hash; /* hash of the branch. */
+    size_t head; /* index to the head commit. */
+    dyna_t* commits; /* array of commits hashes for this branch. */
 } branch_t;
 
 /**
@@ -34,21 +35,12 @@ branch_t*
 create_branch(const char* name);
 
 /**
- * @brief create a folder to hold all of the branch's commits and diffs.
+ * @brief create a folder to hold all the branch's commits and diffs.
  *
  * @param branch the branch_t structure to be written to a file.
  */
 void
 write_branch(const branch_t* branch);
-
-/**
- * @brief add a commit to the branch history.
- *
- * @param commit the commit_t structure to be added to the branch history.
- * @param branch the history_t structure to which the commit will be added.
- */
-void
-add_commit_branch(commit_t* commit, branch_t* branch);
 
 /**
  * @brief read a branch from a file in our '.lit' directory.
@@ -58,4 +50,4 @@ add_commit_branch(commit_t* commit, branch_t* branch);
  */
 branch_t*
 read_branch(const char* name);
-#endif //BRANCH_H
+#endif /* BRANCH_H */

@@ -1,21 +1,21 @@
 /**
  * @author Sean Hobeck
- * @date 2025-11-12
- *
- * @file utl.h
- *    the utilities module, responsible for miscellaneous utility functions.
+ * @date 2025-12-28
  */
 #ifndef UTL_H
 #define UTL_H
 
-// @note starting size to calculate for is 8192 lines of 256 chars per line.
+/* the starting size to calculate for is 8192 lines of 256 chars per line. */
 #define MAX_LINES 8192ul
 
-// @note at the most 256 characters can be stored in a line.
+/* at the most 256 characters can be stored in a line. */
 #define MAX_LINE_LEN 256ul
 
-// @note owner(user) only read/write permissions on a folder.
+/* owner(user) only read/write permissions on a folder. */
 #define MKDIR_MOWNER 0755
+
+/* if a function is specifically used internally, it can be marked with the following for naming conventions. */
+#define internal static
 
 /*!
  *  @details ^^^
@@ -153,4 +153,4 @@ fforwardls(char** lines, size_t n, size_t* k);
  */
 char*
 rpwd(const char* path);
-#endif //UTL_H
+#endif /* UTL_H */

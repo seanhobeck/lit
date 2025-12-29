@@ -1,10 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-11-12
- *
- * @file rebase.h
- *    the rebase module, responsible for rebasing and checking collisions
- *    between the rebasing of branches.
+ * @date 2025-12-28
  */
 #ifndef REBASE_H
 #define REBASE_H
@@ -12,7 +8,10 @@
 /*! @uses repository_t, find_common_ancestor, find_index_commit. */
 #include "repo.h"
 
-/// @note an enum to describe the results of calling rebase on a branch.
+/**
+ * enum to describe the possible results of calling the rebase operation on two branches. these
+ * are only used as a return for the function 'branch_rebase'.
+ */
 typedef enum {
     E_REBASE_RESULT_SUCCESS = 0x0,
     E_REBASE_RESULT_CONFLICT = 0x1,
@@ -30,4 +29,4 @@ typedef enum {
 e_rebase_result_t
 branch_rebase(const repository_t* repository, const char* destination_branch_name, \
     const char* source_branch_name);
-#endif //REBASE_H
+#endif /* REBASE_H */

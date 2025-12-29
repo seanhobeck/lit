@@ -1,19 +1,16 @@
 /**
  * @author Sean Hobeck
- * @date 2025-11-12
- *
- * @file utl.c
- *    the utilities module, responsible for miscellaneous utility functions.
+ * @date 2025-12-28
  */
 #include "utl.h"
 
-/*! @uses errno */
+/*! @uses errno. */
 #include <errno.h>
 
-/*! @uses; assert */
+/*! @uses; assert. */
 #include <assert.h>
 
-/*! @uses mkdir */
+/*! @uses mkdir. */
 #include <sys/stat.h>
 
 /**
@@ -24,17 +21,17 @@
  */
 char*
 strdup(const char* str) {
-    // assert check if the string is none.
+    /* assert check if the string is none. */
     assert(str != 0x0);
 
-    // allocate memory for the string.
+    /* allocate memory for the string. */
     char* new_str = calloc(1, strlen(str) + 1);
     if (!new_str) {
         fprintf(stderr,"calloc failed; could not allocate memory for string.\n");
         return 0x0;
     }
 
-    // copy the string into the new memory.
+    /* copy the string into the new memory. */
     strcpy(new_str, str);
     return new_str;
 };
@@ -48,17 +45,17 @@ strdup(const char* str) {
  */
 char*
 strtrm(const char* str, size_t n) {
-    // assert the string value.
+    /* assert the string value. */
     assert(str != 0x0);
 
-    // duplicate the string and compare length.
+    /* duplicate the string and compare length. */
     char* dup = strdup(str);
     unsigned long len = strlen(dup);
     if (len <= n || len < 3 || n <= 0)
         return dup;
 
-    // if less, allocate a new string and trim it
-    //  to a length of n, ending in '...'
+    /* if less, allocate a new string and trim it
+     *  to a length of n, ending in '...' */
     char* new = calloc(1, n+1u);
     strncpy(new, dup, n);
     free(dup);
@@ -78,12 +75,12 @@ strtrm(const char* str, size_t n) {
  */
 unsigned char*
 strtoha(const char* str, size_t n) {
-    // assert the string value.
+    /* assert the string value. */
     assert(str != 0x0);
     if (n == 0) return 0x0;
 
-    // iterate over n, then read each two characters from <string>
-    //  into a unsigned byte, set the value in <hash> and continue.
+    /* iterate over n, then read each two characters from <string>
+     *  into a unsigned byte, set the value in <hash> and continue. */
     unsigned char* hash = calloc(1, n);
     if (!hash) {
         fprintf(stderr,"calloc failed; could not allocate memory for hash.\n");
@@ -93,7 +90,7 @@ strtoha(const char* str, size_t n) {
         unsigned int byte = 0;
         if (sscanf(str + i * 2, "%2x", &byte) != 1) {
             free(hash);
-            fprintf(stderr,"sscanf failed; could not read hash.");  // or handle the error
+            fprintf(stderr,"sscanf failed; could not read hash.");  /* or handle the error */
             exit(-1);
         }
         hash[i] = (unsigned char) byte;
@@ -109,22 +106,22 @@ strtoha(const char* str, size_t n) {
  */
 int
 fexistpd(const char* path) {
-    // assert the string value.
+    /* assert the string value. */
     assert(path != 0x0);
 
-    // string duplicate the path to avoid modifying the original.
+    /* string duplicate the path to avoid modifying the original. */
     char *dpath = strdup(path);
     if (!dpath) {
         fprintf(stderr,"strdup failed; could not duplicate path.\n");
         exit(-1);
     }
 
-    // iterate through each character in the path.
+    /* iterate through each character in the path. */
     for (char *p = dpath + 1; *p; p++) {
         if (*p == '/') {
             *p = '\0';
 
-            // check if the directory exists, if not return -1.
+            /* check if the directory exists, if not return -1. */
             if (mkdir(dpath, MKDIR_MOWNER) != 0 && errno != EEXIST) {
                 free(dpath);
                 return -1;
@@ -145,26 +142,26 @@ fexistpd(const char* path) {
  */
 void
 fwritels(const char* path, char** lines, size_t n) {
-    // assert the path and the lines.
+    /* assert the path and the lines. */
     assert(path != 0x0);
     assert(lines != 0x0);
 
-    // ensure that the parent directories exist on <path>.
+    /* ensure that the parent directories exist on <path>. */
     if (fexistpd(path) == -1) {
         fprintf(stderr,"fexistpd failed; could not create parent directories.\n");
-        exit(-1); // exit on failure.
+        exit(-1); /* exit on failure. */
     }
 
-    // open the file.
+    /* open the file. */
     FILE* f = fopen(path, "w");
     if (!f) {
-        fprintf(stderr,"fopen failed; could not open file for rollback writing.\n");
+        fprintf(stderr,"fopen failed; could not open file for writing.\n");
         exit(-1);
     }
 
-    // iterate over the lines and use fprintf();
+    /* iterate over the lines and use fprintf(); */
     for (size_t i = 0; i < n; i++) {
-        // sanity assert on each line.
+        /* sanity assert on each line. */
         assert(lines[i] != 0x0);
         fprintf(f, "%s\n", lines[i]);
     }
@@ -182,19 +179,19 @@ fwritels(const char* path, char** lines, size_t n) {
  */
 char**
 fcleanls(char** lines, size_t n, size_t* k) {
-    // assert on the value of lines.
+    /* assert on the value of lines. */
     assert(lines != 0x0);
 
-    // allocate the cleaned lines
+    /* allocate the cleaned lines */
     char** clines = calloc(1, n * sizeof(char*));
 
-    // iterate...
+    /* iterate... */
     size_t m = 0;
     for (size_t i = 0; i < n; i++) {
-        // sanity assert on each line.
+        /* sanity assert on each line. */
         char* line = lines[i];
 
-        // if there is a space, there isn't a two char prefix.
+        /* if there is a space, there isn't a two char prefix. */
         if (line[0] == ' ') clines[m++] = strdup(line + 1);
         else if (line[0] == '+') clines[m++] = strdup(line + 2);
         else if (line[0] != '-') clines[m++] = strdup(line);
@@ -212,31 +209,31 @@ fcleanls(char** lines, size_t n, size_t* k) {
  */
 char**
 freadls(FILE* fptr, size_t* size) {
-    // assert on fptr.
+    /* assert on fptr. */
     assert(fptr != 0x0);
 
-    // make a maximum line buffer, and allocate the data of the file.
+    /* make a maximum line buffer, and allocate the data of the file. */
     char buffer[MAX_LINE_LEN];
     char** data = calloc(1, sizeof(char*) * MAX_LINES);
     size_t j = MAX_LINES;
 
-    // iterate through each line in <fptr>.
+    /* iterate through each line in <fptr>. */
     size_t i = 0;
     while (fgets(buffer, sizeof(buffer), fptr)) {
-        // calculate line string length.
+        /* calculate line string length. */
         size_t len = strlen(buffer);
 
-        // if line is too long and doesn't end in '\n', flush the rest.
+        /* if line is too long and doesn't end in '\n', flush the rest. */
         if (len == MAX_LINE_LEN - 1 && buffer[len - 1] != '\n') {
             int ch;
             while ((ch = fgetc(fptr)) != '\n' && ch != EOF);
         }
-        // strip newline.
+        /* strip newline. */
         if (len > 0 && buffer[len - 1] == '\n') {
             buffer[len - 1] = '\0';
         }
         if (i >= j) {
-            // realloc if required.
+            /* realloc if required. */
             data = realloc(data, sizeof(char*) * (j + 1024ul));
             if (!data) {
                 fprintf(stderr,"realloc failed; could not allocate memory for file data.\n");
@@ -244,13 +241,13 @@ freadls(FILE* fptr, size_t* size) {
             }
         };
 
-        // append to our data.
+        /* append to our data. */
         data[i] = calloc(1, len);
         strncpy(data[i], buffer, len);
         i++;
     }
 
-    // set our size reference, and return our data.
+    /* set our size reference, and return our data. */
     *size = i;
     return data;
 };
@@ -263,7 +260,7 @@ freadls(FILE* fptr, size_t* size) {
  */
 void
 ffreels(char** lines, size_t n) {
-    // assert on lines.
+    /* assert on lines. */
     assert(lines != 0x0);
     assert(n > 0);
     for (size_t i = 0; i < n; i++)
@@ -282,24 +279,24 @@ ffreels(char** lines, size_t n) {
  */
 char**
 finversels(char** lines, size_t n, size_t* k) {
-    // assert on the parameters.
+    /* assert on the parameters. */
     assert(lines != 0x0);
     assert(k != 0x0);
     assert(n > 0);
 
-    // allocate the cleaned lines
+    /* allocate the cleaned lines */
     char** clines = calloc(1, n * sizeof(char*));
 
-    // iterate...
+    /* iterate... */
     size_t m = 0;
     for (size_t i = 0; i < n; i++) {
         char* line = lines[i];
 
-        // keep unchanged lines and removed lines (for restore)
+        /* keep unchanged lines and removed lines (for restore) */
         if (line[0] == ' ') clines[m++] = strdup(line + 1);
         else if (line[0] == '-') clines[m++] = strdup(line + 2);
         else if (line[0] != '+') clines[m++] = strdup(line);
-        // ignore '+' lines (these were additions we want to remove)
+        /* ignore '+' lines (these were additions we want to remove) */
     }
     *k = m;
     return clines;
@@ -316,24 +313,24 @@ finversels(char** lines, size_t n, size_t* k) {
  */
 char**
 fforwardls(char** lines, size_t n, size_t* k) {
-    // assert on the parameters.
+    /* assert on the parameters. */
     assert(lines != 0x0);
     assert(k != 0x0);
     assert(n > 0);
 
-    // allocate the cleaned lines
+    /* allocate the cleaned lines */
     char** clines = calloc(1, n * sizeof(char*));
 
-    // iterate...
+    /* iterate... */
     size_t m = 0;
     for (size_t i = 0; i < n; i++) {
         char* line = lines[i];
 
-        // keep unchanged lines and removed lines (for restore)
+        /* keep unchanged lines and removed lines (for restore) */
         if (line[0] == ' ') clines[m++] = strdup(line + 1);
         else if (line[0] == '+') clines[m++] = strdup(line + 2);
         else if (line[0] != '-') clines[m++] = strdup(line);
-        // ignore '-' lines (these were additions we want to remove)
+        /* ignore '-' lines (these were additions we want to remove) */
     }
     *k = m;
     return clines;
@@ -347,11 +344,11 @@ fforwardls(char** lines, size_t n, size_t* k) {
  */
 char*
 rpwd(const char* path) {
-    // given some empty path, return 0x0.
+    /* given some empty path, return 0x0. */
     if (!path) return 0x0;
 
-    // find the last slash ptr in <copy>, make sure it is not
-    //   the end of <copy>, and then return the duped string.
+    /* find the last slash ptr in <copy>, make sure it is not
+     *  the end of <copy>, and then return the duped string. */
     char* copy = strdup(path);
     char* last_slash_ptr = strrchr(copy, '/');
     if (last_slash_ptr && last_slash_ptr != copy) {

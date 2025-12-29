@@ -1,10 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-11-12
- *
- * @file ops.h
- *    the operations module, it is responsible for handling
- *    commits and applying changes between branches.
+ * @date 2025-12-28
  */
 #ifndef OPS_H
 #define OPS_H
@@ -48,4 +44,4 @@ rollback_op(branch_t* branch, const commit_t* commit);
  */
 void
 checkout_op(branch_t* branch, const commit_t* commit);
-#endif //OPS_H
+#endif /* OPS_H */

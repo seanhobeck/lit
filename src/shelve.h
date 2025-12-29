@@ -1,12 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-11-12
- *
- * @file shelve.h
- *    the shelving module, responsible for being able to shelve
- *    changes between branches without committing them to the history;
- *    perforce-style shelving (per branch shelved changes that can be applied
- *    to that branch only).
+ * @date 2025-12-16
  */
 #ifndef SHELVE_H
 #define SHELVE_H
@@ -34,4 +28,4 @@ write_to_shelved(const char* branch_name, const diff_t* diff);
  */
 dyna_t*
 collect_shelved(const char* branch_name);
-#endif //SHELVE_H
+#endif /* SHELVE_H */

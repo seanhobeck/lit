@@ -1,10 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-09-01
- *
- * @file arg.h
- *      the argument module, responsible for parsing command line arguments
- *      from <argc> and <argv> and returning a struct containing the parsed arguments.
+ * @date 2025-12-15
  */
 #include "arg.h"
 
@@ -17,218 +13,283 @@
 /*! @uses exit, malloc */
 #include <stdlib.h>
 
-/// @note a macro to define the version of the program.
-#define VERSION "1.5.11"
+/*! @uses bool, true, false */
+#include <stdbool.h>
+
+/*! @uses internal. */
+#include "utl.h"
+
+/* program version macro. */
+#define VERSION "1.12.15"
+
+/* if we are expecting a parameter_argument. */
+#define expected_parameter_argument(number_of_expected_args) \
+    if (i + number_of_expected_args >= argc) { \
+        fprintf(stderr, "expected parameter argument(s) after '%s'\n", cli_arg); \
+        exit(EXIT_FAILURE); \
+    }
+
+/* check if a proper argument has already been captured in the dynamic array (cannot have more than one). */
+#define check_if_proper_already_captured() \
+    if (captured_proper) { \
+        fprintf(stderr, "only one proper argument can be specified per command line invocation.\n"); \
+        exit(EXIT_FAILURE); \
+    } else { \
+        captured_proper = true; \
+    }
+
+/* add the value to the parsed argument. */
+#define add_value_to_parsed_argument() \
+    parsed_arg->value = strdup(cli_arg);
 
 /**
  * @brief print the help message for the command line arguments.
  */
-void
-help_args() {
+internal
+void help_args() {
     printf("usage: lit [-v | --version] [-h | --help] [-i | init] [-c | commit <msg>]\n"
-           "\t[-r | rollback <hash>] [-C | -checkout <hash>] [-s | status] [-sB | switch-branch <name>]\n"
+           "\t[-r | rollback <hash>] [-C | -checkout <hash>] [-l | log] [-sB | switch-branch <name>]\n"
            "\t[-dB | delete-branch <name>] [-aB | add-branch <name>] [-rB | rebase-branch <src> <dest>]\n"
-           "\t[-a | add <path>] [-d <hash>| delete <path>] [-m | modified <path> :<new_path>] \n"
+           "\t[-a | add <path>] [-d <hash>| delete <path>] \n"
            "\t[-aT | add-tag <hash> <name> ] [-dT | delete-tag <name>] [-cc | clear-cache]\n\n");
 
-    // print out the options to the user. (disable warnings in ~/.lit/config with disable_warnings=1)
-    printf("options:\n"
-           "\t-v | --version\t\t\tprint the current version of the program.\n"
-           "\t-h | --help\t\t\tprint this help message.\n"
-           "\t-i | init\t\t\tinitialize a new repository in the current working directory.\n"
-           "\t-a | add <path>\t\tadd a file or folder to the branch.\n"
-           "\t-m | modified <path> :(optional) <new_path>\tstate that a file has been changed.\n"
-           "\t-d | delete <path>\t\tdelete a file or folder from the branch.\n\n"
+    /* print out the options to the user. (disable warnings in ~/.lit/config with disable_warnings=1) */
+    printf("\t-v | version\t\t\tprint the version of the program.\n"
+           "\t-h | help\t\t\tprint this help message.\n"
+           "\t-i | init\t\t\tinitialize a new repository.\n"
+           "\t-a | add <path>\t\t\tadd a file or folder.\n"
+           "\t-d | delete <path>\t\tdelete a file or folder.\n\n"
            "\t-r | rollback <hash>\t\t*rollback to a previous commit.\n"
-           "\t-C | checkout <hash>\t\t*checkout a commit.\n"
-           "\t-s | status\t\t\tprint the status of the repository on the active branch.\n\n"
-           "\t-aB | add-branch <name>\t\tcreate a new branch to the repository.\n"
-           "\t-sB | switch-branch <name>\t\tswitch to a branch.\n"
-           "\t-rB | rebase-branch <src> <dest>\trebase a branch onto another.\n"
-           "\t-dB | delete-branch <name>\t\tdelete a branch from the repository.\n\n"
-           "\t-aT | add-tag <hash> <name>\t\tadd a tag to a commit on the active branch.\n"
-           "\t-dT | delete-tag <name>\t\tdelete a tag from the repository.\n\n\n"
-           "\t-cc | clear-cache\t\t\tclear any cache leftover from deleting a branch."
+           "\t-C | checkout <hash>\t\t*checkout a newer commit.\n"
+           "\t-l | log\t\t\tlog data from the repository.\n\n"
+           "\t-aB | add-branch <name>\t\tcreate a new branch.\n"
+           "\t-sB | switch-branch <name>\tswitch to a branch.\n"
+           "\t-rB | rebase-branch <src> <dst> rebase a branch onto another.\n"
+           "\t-dB | delete-branch <name>\tdelete a branch.\n\n"
+           "\t-aT | add-tag <hash> <name>\tadd a tag to a commit.\n"
+           "\t-dT | delete-tag <name>\t\tdelete a tag.\n\n"
+           "\t-cc | clear-cache\tclear any cache leftover from previous operations.\n\n"
            "any option with an asterisk (*) can produce a warning in stdout, to remove\n"
-           " set disable_warnings=1 in configuration file at, \'~/.lit/config\'\n");
+           " set disable_warnings=1 in configuration file at, \'~/.lit/config\'\n"
+           " note that all flag arguments (-verbose, -quiet, etc.) override your  config.\n");
 };
 
 /**
- * @brief parse command line arguments and return a struct containing the parsed arguments.
+ * @brief parse command line arguments and return a dynamic array of all parsed arguments.
  *
- * @param argc the argument count.
- * @param argv the argument vector.
- * @param cmd the command structure to be filled.
+ * @param argc the count of raw command line arguments.
+ * @param argv the vector of raw command line arguments.
+ * @return a dynamic array of all parsed arguments.
  */
-void
-parse_args(int argc, char** argv, arg_t* cmd) {
-    // initialize our command structure to be empty.
-    cmd->type = E_ARG_TYPE_NONE;
-    cmd->argv = argv;
-    cmd->argc = argc;
+dyna_t*
+parse_arguments(int argc, char** argv) {
+    /* create a dynamic array, then traverse the vector of cli args. */
+    dyna_t* array = dyna_create(sizeof(argument_t*));
+    bool captured_proper = false;
+    for (size_t i = 1; i < argc; i++) {
+        char* cli_arg = argv[i];
 
-    // if there are no arguments, print the help message.
-    if (argc < 2) {
-        help_args();
-        return;
-    }
+        /* create a parsed argument and parse. */
+        argument_t* parsed_arg = calloc(1, sizeof(argument_t));
 
-    // string compare the first argv and then the second if it is required.
-    // --help or -h to print out the help message.
-    if (!strcmp(argv[1], "-h") || !strcmp(argv[1], "--help")) {
-        cmd->type = E_ARG_TYPE_HELP;
-        help_args();
-        return;
-    }
-    // --version or -v to print out the current version of the program.
-    if (!strcmp(argv[1], "-v") || !strcmp(argv[1], "--version")) {
-        cmd->type = E_ARG_TYPE_VERSION;
-        fprintf(stdout,"lit version %s\n", VERSION);
-        return;
-    }
-    // init or -i to initialize a new repository.
-    if (!strcmp(argv[1], "-i") || !strcmp(argv[1], "init")) {
-        cmd->type = E_ARG_TYPE_INIT;
-        return;
-    }
-    // commit or -c to commit changes to the repository.
-    if (!strcmp(argv[1], "-c") || !strcmp(argv[1], "commit")) {
-        cmd->type = E_ARG_TYPE_COMMIT;
-        // if there is no extra_cmd argument, print the help message.
-        if (argc < 3) {
-            fprintf(stderr,"argc < 3; missing commit message.\n");
-            exit(EXIT_FAILURE);
+        /* proper arguments. */
+        if (!strcmp(cli_arg, "-v") || !strcmp(cli_arg, "version")) {
+            check_if_proper_already_captured();
+            printf("lit version: %s\n", VERSION);
+            exit(EXIT_SUCCESS);
         }
-        return;
-    }
-    // rollback or -r to rollback to a previous commit.
-    if (!strcmp(argv[1], "-r") || !strcmp(argv[1], "rollback")) {
-        cmd->type = E_ARG_TYPE_ROLLBACK;
-        // if there is no extra_cmd argument, print the help message.
-        if (argc < 3) {
-            fprintf(stderr,"argc < 3; missing commit hash / name.\n");
-            exit(EXIT_FAILURE);
+        if (!strcmp(cli_arg, "-h") || !strcmp(cli_arg, "help")) {
+            check_if_proper_already_captured();
+            help_args();
+            exit(EXIT_SUCCESS);
         }
-        return;
-    }
-    // checkout or -C to checkout a commit.
-    if (!strcmp(argv[1], "-C") || !strcmp(argv[1], "checkout")) {
-        cmd->type = E_ARG_TYPE_CHECKOUT;
-        // if there is no extra_cmd argument, print the help message.
-        if (argc < 3) {
-            fprintf(stderr,"argc < 3; missing commit hash / name.\n");
-            exit(EXIT_FAILURE);
+        if (!strcmp(cli_arg, "-i") || !strcmp(cli_arg, "init")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_INIT;
+            add_value_to_parsed_argument();
+            goto _push;
         }
-        return;
-    }
-    // status or -s to show the status of the repository.
-    if (!strcmp(argv[1], "-s") || !strcmp(argv[1], "status")) {
-        cmd->type = E_ARG_TYPE_STATUS;
-        return;
-    }
-    // add or -a to add a file or folder to the branch.
-    if (!strcmp(argv[1], "-a") || !strcmp(argv[1], "add")) {
-        cmd->type = E_ARG_TYPE_ADD_INODE;
-        // if there is no extra_cmd argument, print the help message.
-        if (argc < 3) {
-            fprintf(stderr,"argc < 3; missing file or folder path.\n");
-            exit(EXIT_FAILURE);
+        if (!strcmp(cli_arg, "-c") || !strcmp(cli_arg, "commit")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_COMMIT;
+            add_value_to_parsed_argument();
+            goto _push;
         }
-        return;
-    }
-    // delete or -d to delete a file or folder from the branch.
-    if (!strcmp(argv[1], "-d") || !strcmp(argv[1], "delete")) {
-        cmd->type = E_ARG_TYPE_DELETE_INODE;
-        // if there is no extra_cmd argument, print the help message.
-        if (argc < 3) {
-            fprintf(stderr,"argc < 3; missing file or folder path.\n");
-            exit(EXIT_FAILURE);
+        if (!strcmp(cli_arg, "-r") || !strcmp(cli_arg, "rollback")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_ROLLBACK;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
         }
-        return;
-    }
-    // modified or -m to state that a file has been changed.
-    if (!strcmp(argv[1], "-m") || !strcmp(argv[1], "modified")) {
-        cmd->type = E_ARG_TYPE_MODIFIED_INODE;
-        // if there is no extra_cmd argument, print the help message.
-        if (argc < 3) {
-            fprintf(stderr,"argc < 3; missing file or folder path.\n");
-            exit(EXIT_FAILURE);
+        if (!strcmp(cli_arg, "-C") || !strcmp(cli_arg, "checkout")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_CHECKOUT;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
         }
-        return;
-    }
-    // -aB or add-branch
-    if (!strcmp(argv[1], "-aB") || !strcmp(argv[1], "add-branch")) {
-        cmd->type = E_ARG_TYPE_CREATE_BRANCH;
+        if (!strcmp(cli_arg, "-l") || !strcmp(cli_arg, "log")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_LOG;
+            add_value_to_parsed_argument();
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "-a") || !strcmp(cli_arg, "add")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_ADD_INODE;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "-d") || !strcmp(cli_arg, "delete")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_DELETE_INODE;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "-aB") || !strcmp(cli_arg, "add-branch")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_CREATE_BRANCH;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "-sB") || !strcmp(cli_arg, "switch-branch")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_SWITCH_BRANCH;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "-rB") || !strcmp(cli_arg, "rebase-branch")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_REBASE_BRANCH;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(2);
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "-dB") || !strcmp(cli_arg, "delete-branch")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_DELETE_BRANCH;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "-cc") || !strcmp(cli_arg, "clear-cache")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_CLEAR_CACHE;
+            add_value_to_parsed_argument();
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "-aT") || !strcmp(cli_arg, "add-tag")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_ADD_TAG;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(2);
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "-dT") || !strcmp(cli_arg, "delete-tag")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_TYPE_DELETE_TAG;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
+        }
 
-        // if there is no argv[2], print the help message.
-        if (argc < 3) {
-            fprintf(stderr, "argc < 3; missing branch name.\n");
+        /* flag arguments. */
+        if (!captured_proper) {
+            fprintf(stderr, "a flag argument cannot be specified before a proper argument.\n");
             exit(EXIT_FAILURE);
         }
-        return;
-    }
-    // -dB or delete-branch
-    if (!strcmp(argv[1], "-dB") || !strcmp(argv[1], "delete-branch")) {
-        cmd->type = E_ARG_TYPE_DELETE_BRANCH;
-        // if there is no extra_cmd argument, print the help message.
-        if (argc < 3) {
-            fprintf(stderr, "argc < 3; missing branch name.\n");
-            exit(EXIT_FAILURE);
+        if (!strcmp(cli_arg, "--all")) {
+            parsed_arg->type = E_FLAG_TO_ARGUMENT;
+            parsed_arg->details.flag = E_FLAG_ARG_TYPE_ALL;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
         }
-        return;
-    }
-    // -sB or switch-branch
-    if (!strcmp(argv[1], "-sB") || !strcmp(argv[1], "switch-branch")) {
-        cmd->type = E_ARG_TYPE_SWITCH_BRANCH;
+        if (!strcmp(cli_arg, "--no-recurse")) {
+            parsed_arg->type = E_FLAG_TO_ARGUMENT;
+            parsed_arg->details.flag = E_FLAG_ARG_TYPE_NO_RECURSE;
+            add_value_to_parsed_argument();
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "--hard")) {
+            parsed_arg->type = E_FLAG_TO_ARGUMENT;
+            parsed_arg->details.flag = E_FLAG_ARG_TYPE_HARD;
+            add_value_to_parsed_argument();
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "--graph")) {
+            parsed_arg->type = E_FLAG_TO_ARGUMENT;
+            parsed_arg->details.flag = E_FLAG_ARG_TYPE_GRAPH;
+            add_value_to_parsed_argument();
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "--filter")) {
+            parsed_arg->type = E_FLAG_TO_ARGUMENT;
+            parsed_arg->details.flag = E_FLAG_ARG_TYPE_FILTER;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "--max-count")) {
+            parsed_arg->type = E_FLAG_TO_ARGUMENT;
+            parsed_arg->details.flag = E_FLAG_ARG_TYPE_MAX_COUNT;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "--verbose")) {
+            parsed_arg->type = E_FLAG_TO_ARGUMENT;
+            parsed_arg->details.flag = E_FLAG_ARG_TYPE_VERBOSE;
+            add_value_to_parsed_argument();
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "--quiet")) {
+            parsed_arg->type = E_FLAG_TO_ARGUMENT;
+            parsed_arg->details.flag = E_FLAG_ARG_TYPE_QUIET;
+            add_value_to_parsed_argument();
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "--from")) {
+            parsed_arg->type = E_FLAG_TO_ARGUMENT;
+            parsed_arg->details.flag = E_FLAG_ARG_TYPE_FROM;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "--message") || !strcmp(cli_arg, "--m")) {
+            parsed_arg->type = E_FLAG_TO_ARGUMENT;
+            parsed_arg->details.flag = E_FLAG_ARG_TYPE_MESSAGE;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
+        }
 
-        // if there is no argv[2], print the help message.
-        if (argc < 3) {
-            fprintf(stderr, "argc < 3; missing branch name.\n");
-            exit(EXIT_FAILURE);
-        }
-        return;
-    }
-    // -rB or rebase-branch
-    if (!strcmp(argv[1], "-rB") || !strcmp(argv[1], "rebase-branch")) {
-        cmd->type = E_ARG_TYPE_REBASE_BRANCH;
+        /* otherwise we assume it is a parameter argument. */
+        parsed_arg->type = E_PARAMETER_TO_ARGUMENT;
+        add_value_to_parsed_argument();
 
-        // if there is no argv[2], print the help message.
-        if (argc < 4) {
-            fprintf(stderr, "argc < 4; missing branch names.\n");
-            exit(EXIT_FAILURE);
-        }
-        return;
+        /* push the parsed argument to the array. */
+        _push:
+        dyna_push(array, parsed_arg);
     }
-    // -cc or clear-cache
-    if (!strcmp(argv[1], "-cc") || !strcmp(argv[1], "clear-cache")) {
-        cmd->type = E_ARG_TYPE_CLEAR_CACHE;
-        return;
-    }
-    // -aT or add-tag
-    if (!strcmp(argv[1], "-aT") || !strcmp(argv[1], "add-tag")) {
-        cmd->type = E_ARG_TYPE_ADD_TAG;
-
-        // if the argument count does not match, fail.
-        if (argc < 4) {
-            fprintf(stderr, "argc < 4; missing tag name, and hash. \n");
-            exit(EXIT_FAILURE);
-        }
-        return;
-    }
-    // -dT or delete-tag
-    if (!strcmp(argv[1], "-dT") || !strcmp(argv[1], "delete-tag")) {
-        cmd->type = E_ARG_TYPE_DELETE_TAG;
-
-        // if the argument count does not match, fail.
-        if (argc < 3) {
-            fprintf(stderr, "argc < 3; missing tag name.\n");
-            exit(EXIT_FAILURE);
-        }
-        return;
-    }
-
-    // unrecognized argument/command, exit(EXIT_FAILURE).
-    printf("unrecognized argument: %s\n", argv[1]);
-    printf("use -h or --help to see the list of available commands.\n");
-    exit(EXIT_FAILURE);
+    return array;
 };
