@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-29
+ * @date 2026-01-06
  */
 #include "arg.h"
 
@@ -23,7 +23,7 @@
 #include "log.h"
 
 /* program version macro. */
-#define VERSION "1.12.29"
+#define VERSION "1.16.06"
 
 /* if we are expecting a parameter_argument. */
 #define expected_parameter_argument(number_of_expected_args) \
