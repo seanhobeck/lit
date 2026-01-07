@@ -57,7 +57,7 @@ create_commit(const char* message, const char* branch_name) {
     strcpy(commit->message, message);
 
     /* create the dynamic list. */
-    commit->changes = dyna_create(sizeof(diff_t*));
+    commit->changes = dyna_create();
 
     /* grab the timestamp as well. */
     time(&commit->rawtime);
@@ -152,7 +152,7 @@ read_commit(const char* path) {
     }
 
     /* create the dynamic array. */
-    commit->changes = dyna_create(sizeof(diff_t*));
+    commit->changes = dyna_create();
 
     /* read the commit information from the file. */
     char* hash = calloc(1, 41);

@@ -46,7 +46,7 @@ create_branch(const char* name) {
     strncpy(branch->name, name, strlen(name) + 1);
 
     /* create the dynamic array. */
-    branch->commits = dyna_create(sizeof(commit_t*));
+    branch->commits = dyna_create();
 
     /* create the branch path based on the cwd. */
     branch->path = calloc(1, 256);
@@ -104,7 +104,7 @@ read_branch(const char* name) {
     branch_t* branch = calloc(1, sizeof *branch);
 
     /* create the dynamic array as well. */
-    branch->commits = dyna_create(sizeof(commit_t*));
+    branch->commits = dyna_create();
 
     /* create the branch path based on the cwd. */
     branch->path = calloc(1, 256);

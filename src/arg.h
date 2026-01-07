@@ -49,7 +49,7 @@ typedef enum {
     E_FLAG_ARG_TYPE_VERBOSE = 0x6, /* --verbose flag for log. */
     E_FLAG_ARG_TYPE_QUIET = 0x7, /* --quiet flag for log. */
     E_FLAG_ARG_TYPE_FROM = 0x8, /* --from flag for creation of a branch. */
-    E_FLAG_ARG_TYPE_MESSAGE = 0x9, /* --m | --message flag for creation of a commit. */
+    E_FLAG_ARG_TYPE_MESSAGE = 0x9, /* --m | ch--message flag for creation of a commit. */
     E_FLAG_ARG_TYPE_TAG = 0xa, /* --tag flag for rollback/checkout. */
 } e_flag_arg_ty_t;
 

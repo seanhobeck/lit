@@ -124,7 +124,7 @@ create_repository() {
 
     /* create a new repository structure. */
     repository_t* repo = calloc(1, sizeof(*repo));
-    repo->branches = dyna_create(sizeof(branch_t*));
+    repo->branches = dyna_create();
     dyna_push(repo->branches, create_branch("origin"));
     repo->readonly = false;
 
@@ -196,7 +196,7 @@ read_repository() {
     }
 
     /* create the dynamic array. */
-    repo->branches = dyna_create(sizeof(branch_t*));
+    repo->branches = dyna_create();
 
     /* iterate through the count. */
     for (size_t i = 0; i < length; i++) {

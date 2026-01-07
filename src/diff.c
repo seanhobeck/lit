@@ -221,7 +221,7 @@ create_file_modified_diff(const char* old_path, const char* new_path) {
     diff->type = E_DIFF_FILE_MODIFIED;
 
     /* creating the dynamic array. */
-    diff->lines = dyna_create(sizeof(char*));
+    diff->lines = dyna_create();
 
     /* copy over the names of the new and old path. */
     diff->stored_path = calloc(1, strlen(old_path) + 1);
@@ -284,7 +284,7 @@ create_file_diff(const char* path, e_diff_ty_t type) {
     diff->new_path = strdup(path);
 
     /* creating the dynamic array. */
-    diff->lines = dyna_create(sizeof(char*));
+    diff->lines = dyna_create();
 
     /* copy the old information from the file before deleting it. */
     FILE* f = fopen(path, "r");
@@ -323,7 +323,7 @@ create_folder_diff(const char* path, const e_diff_ty_t type) {
     diff->type = type;
 
     /* creating the dynamic array. */
-    diff->lines = dyna_create(sizeof(char*));
+    diff->lines = dyna_create();
 
     /* write the new and stored path to be the same. */
     diff->new_path = calloc(1, strlen(path) + 1);
@@ -398,7 +398,7 @@ read_diff(const char* path) {
     diff->new_path = calloc(1, 128);
 
     /* create the dynamically allocated list. */
-    diff->lines = dyna_create(sizeof(char*));
+    diff->lines = dyna_create();
 
     /* allocate memory for the names. */
     if (!diff->stored_path || !diff->new_path) {

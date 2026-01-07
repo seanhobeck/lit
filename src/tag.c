@@ -88,7 +88,7 @@ read_tags() {
     dyna_t* array = inw_walk(".lit/refs/tags", E_INW_TYPE_NO_RECURSE);
 
     /* create our tag list. */
-    dyna_t* new_array = dyna_create(sizeof(tag_t*));
+    dyna_t* new_array = dyna_create();
 
     /* iterate through each inode. */
     _foreach_it(array, inode_t*, node, i)
@@ -153,7 +153,7 @@ filter_tags(const sha1_t branch_hash, dyna_t* array) {
     assert(array != 0x0);
 
     /* allocate our new array. */
-    dyna_t* new_array = dyna_create(sizeof(tag_t*));
+    dyna_t* new_array = dyna_create();
 
     /* iterate through the old array and run memcmp. */
     _foreach(array, tag_t*, tag)

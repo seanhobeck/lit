@@ -1,6 +1,6 @@
 /**
- *	@author Sean Hobeck
- *	@date 2025-12-28
+ * @author Sean Hobeck
+ * @date 2026-01-06
  */
 #include "dyna.h"
 
@@ -13,26 +13,18 @@
 /*! @uses assert. */
 #include <assert.h>
 
-/*! @uses memcpy. */
-#include <string.h>
-
 /**
  * @brief create a dyna_t structure with a set item size.
  *
- * @param isize item size.
  * @return an allocated dynamic array.
  */
 dyna_t*
-dyna_create(const size_t isize) {
-    /* assert if the isize == 0. */
-    assert(isize != 0);
-
+dyna_create() {
     /* allocate the array and set all data to be 0, except for isize. */
     dyna_t* array = calloc(1, sizeof *array);
     array->data = 0x0;
     array->length = 0;
     array->capacity = 0;
-    array->isize = isize;
     return array;
 };
 
@@ -46,9 +38,8 @@ dyna_free(dyna_t* array) {
     /* assert if the array is 0x0. */
     assert(array != 0x0);
 
-    /* iterate and free. */
-    for (size_t i = 0; i < array->length; i++)
-        free(array->data[i]);
+    /* free. */
+    free(array->data);
     free(array);
 };
 
@@ -66,7 +57,7 @@ dyna_push(dyna_t* array, void* data) {
     /* compare length and capacity. */
     if (array->length == array->capacity) {
         size_t _capacity = array->capacity == 0 ? 16 : array->capacity * 2;
-        void** _data = realloc(array->data, array->isize * _capacity);
+        void** _data = realloc(array->data, sizeof(void*) * _capacity);
         if (!_data) {
             fprintf(stderr, "realloc failed; could not allocate memory for push.");
             exit(EXIT_FAILURE); /* exit on failure. */
@@ -85,7 +76,7 @@ dyna_push(dyna_t* array, void* data) {
  *
  * @param array pointer to a dynamically allocated array.
  * @param index index at which to pop the item.
- * @return data at a specified index, popped off the array.
+ * @return data at the specified index, popped off the array.
  */
 void*
 dyna_pop(dyna_t* array, size_t index) {
@@ -95,9 +86,7 @@ dyna_pop(dyna_t* array, size_t index) {
         return 0x0;
 
     /* capture the element */
-    void* item = calloc(1u, array->isize);
-    memcpy(item, array->data[index], array->isize);
-    free(array->data[index]);
+    void* item = array->data[index];
 
     /* free, shift down and then decrement length. */
     for (size_t i = index + 1; i < array->length; i++)
@@ -136,40 +125,11 @@ dyna_shrink(dyna_t* array) {
     assert(array != 0x0);
 
     /* do a realloc down where capacity = length. */
-    void** _data = realloc(array->data, array->isize * array->length);
+    void** _data = realloc(array->data, sizeof(void*) * array->length);
     if (!_data) {
         fprintf(stderr, "realloc failed; could not allocate memory for shrink.");
         exit(EXIT_FAILURE); /* exit on failure. */
     }
     array->data = _data;
-};
-
-/**
- * @brief upgrade the item size of a dynamically allocated array and then also
- *  free the provided array.
- *
- * @param old_array the dynamically allocated array to be upgraded (then freed).
- * @param new_size the new size of a dynamically allocated array to be upgraded.
- * @return a new dynamically allocated array containing a larger item size.
- */
-dyna_t*
-dyna_upgradef(dyna_t* old_array, size_t new_size) {
-    /* assert if the array == 0x0. */
-    assert(old_array != 0x0);
-    if (new_size <= old_array->isize) {
-        fprintf(stderr, "dyna_upgradef failed; new size must be larger than the old size.");
-        exit(EXIT_FAILURE); /* exit on failure. */
-    }
-
-    /* create a newer array with the set new_size. */
-    dyna_t* new_array = dyna_create(new_size);
-
-    /* copy all data from the previous array to the newer array. */
-    _foreach(old_array, void*, item)
-        dyna_push(new_array, item);
-    _endforeach;
-
-    /* free the older array and return. */
-    dyna_free(old_array);
-    return new_array;
+    array->capacity = array->length;
 };

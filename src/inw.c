@@ -42,7 +42,7 @@ typedef struct dirent* pdir_ent_t;
 dyna_t*
 inw_walk(const char* path, const e_inode_walk_ty_t type) {
     /* create a new pvc_t structure to hold the files. */
-    dyna_t* array = dyna_create(sizeof(inode_t*));
+    dyna_t* array = dyna_create();
 
     /* we can open the directory and read its contents. */
     pdir_t d = opendir(path);

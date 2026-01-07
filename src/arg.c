@@ -91,7 +91,7 @@ void help_args() {
 dyna_t*
 parse_arguments(int argc, char** argv) {
     /* create a dynamic array, then traverse the vector of cli args. */
-    dyna_t* array = dyna_create(sizeof(argument_t*));
+    dyna_t* array = dyna_create();
     bool captured_proper = false;
     for (size_t i = 1; i < argc; i++) {
         char* cli_arg = argv[i];
