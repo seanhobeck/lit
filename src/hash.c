@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #include "hash.h"
 
@@ -77,7 +77,7 @@ sha1(const unsigned char* data, unsigned long size, sha1_t hash) {
         h3 = 0x10325476, h4 = 0xC3D2E1F0;
 
     /* compute padded msg len (mod 64). */
-    unsigned long padded_len = ((size + 9u + 63) / 64) * 64;
+    unsigned long padded_len = (size + 9u + 63) / 64 * 64;
     /* allocate memory for the buffer, and copy the data into it (append '1' bit). */
     unsigned char* msg = calloc(padded_len, 1);
     memcpy(msg, data, size);
@@ -129,11 +129,11 @@ sha1(const unsigned char* data, unsigned long size, sha1_t hash) {
     free(msg);
 
     /* produce the final hash but now in big-endian. */
-    unsigned int arr[] = { h0, h1, h2, h3, h4 };
+    const unsigned int arr[] = { h0, h1, h2, h3, h4 };
     for (unsigned long i = 0; i < 5; i++)
         for (unsigned long j = 0; j < 4; j++)
             hash[i * 4 + j] = (unsigned char) (arr[i] >> (24 - j * 8));
-};
+}
 
 /**
  * @brief convert a sha1 hash to a string representation.
@@ -152,7 +152,7 @@ strsha1(const sha1_t hash) {
         sprintf(str + i * 2, "%02x", hash[i]);
     str[40] = '\0'; /* null-terminate the string. */
     return str;
-};
+}
 
 /**
  * @brief generate a crc32 hash from the given data.
@@ -176,7 +176,7 @@ crc32(const unsigned char* data, unsigned long size) {
         }
     }
     return ~crc;
-};
+}
 
 /**
  * @brief convert a crc32 hash to a string representation.
@@ -191,4 +191,4 @@ strcrc32(const ucrc32_t hash) {
     char* string = calloc(1, 11); /* 10 hex chars + null terminator. */
     sprintf(string, "%d", hash);
     return string;
-};
+}

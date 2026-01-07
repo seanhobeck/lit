@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #include "tag.h"
 
@@ -50,7 +50,7 @@ create_tag(const branch_t* branch, const commit_t* commit, \
     memcpy(tag->commit_hash, commit->hash, 20u);
     memcpy(tag->branch_hash, branch->hash, 20u);
     return tag;
-};
+}
 
 /**
  * @brief write a tag to '.lit/refs/tags/'.
@@ -75,7 +75,7 @@ write_tag(const tag_t* tag) {
     fprintf(f, "msg:%s\ncommit:%s\nbranch:%s\n", \
         tag->name, strsha1(tag->commit_hash), strsha1(tag->branch_hash));
     fclose(f);
-};
+}
 
 /**
  * @brief read tags from the folder '.lit/refs/tags/'
@@ -138,7 +138,7 @@ read_tags() {
     /* free and return. */
     dyna_free(array);
     return new_array;
-};
+}
 
 /**
  * @brief filter tags based on the branch to a new array.
@@ -161,4 +161,4 @@ filter_tags(const sha1_t branch_hash, dyna_t* array) {
             dyna_push(new_array, tag);
     _endforeach;
     return new_array;
-};
+}

@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-15
+ * @date 2026-01-06
  */
 #include "log.h"
 
@@ -32,4 +32,4 @@ llog(e_logger_level_t level, const char* format, ...) {
     /* print and end. */
     vfprintf(stream, format, args);
     va_end(args);
-};
+}

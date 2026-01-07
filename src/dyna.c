@@ -26,7 +26,7 @@ dyna_create() {
     array->length = 0;
     array->capacity = 0;
     return array;
-};
+}
 
 /**
  * @brief destroying / freeing a dynamically allocated array.
@@ -41,7 +41,7 @@ dyna_free(dyna_t* array) {
     /* free. */
     free(array->data);
     free(array);
-};
+}
 
 /**
  * @brief push new item/data onto a dynamically allocated array.
@@ -66,7 +66,7 @@ dyna_push(dyna_t* array, void* data) {
         array->capacity = _capacity;
     }
     array->data[array->length++] = data;
-};
+}
 
 /**
  * @brief pop data out of a dynamically allocated array,
@@ -93,7 +93,7 @@ dyna_pop(dyna_t* array, size_t index) {
         array->data[i - 1] = array->data[i];
     array->length--;
     return item;
-};
+}
 
 /**
  * @brief get the data at the index specified from a dynamically
@@ -112,7 +112,7 @@ dyna_get(dyna_t* array, size_t index) {
     if (index >= array->length)
         return 0x0;
     return array->data[index];
-};
+}
 
 /**
  * @brief shrinks the array to the length via realloc.
@@ -132,4 +132,4 @@ dyna_shrink(dyna_t* array) {
     }
     array->data = _data;
     array->capacity = array->length;
-};
+}

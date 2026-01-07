@@ -27,7 +27,7 @@
 
 /* if we are expecting a parameter_argument. */
 #define expected_parameter_argument(number_of_expected_args) \
-    if (i + number_of_expected_args >= argc) { \
+    if (i + number_of_expected_args >= (size_t)argc) { \
         llog(E_LOGGER_LEVEL_ERROR, "expected parameter argument(s) after '%s'\n", cli_arg); \
         exit(EXIT_FAILURE); \
     }
@@ -79,7 +79,7 @@ void help_args() {
            "any option with an asterisk (*) can produce a warning in stdout, to remove\n"
            " set disable_warnings=1 in configuration file at, \'~/.lit/config\'\n"
            " note that all flag arguments (-verbose, -quiet, etc.) override your  config.\n");
-};
+}
 
 /**
  * @brief parse command line arguments and return a dynamic array of all parsed arguments.
@@ -93,7 +93,7 @@ parse_arguments(int argc, char** argv) {
     /* create a dynamic array, then traverse the vector of cli args. */
     dyna_t* array = dyna_create();
     bool captured_proper = false;
-    for (size_t i = 1; i < argc; i++) {
+    for (size_t i = 1; i < (size_t)argc; i++) {
         char* cli_arg = argv[i];
 
         /* create a parsed argument and parse. */
@@ -299,4 +299,4 @@ parse_arguments(int argc, char** argv) {
         dyna_push(array, parsed_arg);
     }
     return array;
-};
+}

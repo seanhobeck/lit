@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-27
+ * @date 2026-01-06
  */
 #include "conf.h"
 
@@ -55,4 +55,4 @@ read_config() {
 
     /* return the configuration read. */
     return config;
-};
+}

@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #include "ops.h"
 
@@ -77,7 +77,7 @@ forward_commit_op(const commit_t* commit) {
             default: ; /* ? */
         }
     _endforeach;
-};
+}
 
 /**
  * @brief apply the commit backwards (inverse) to the files currently existing.
@@ -127,7 +127,7 @@ reverse_commit_op(const commit_t* commit) {
             default: ; /* ? */
         }
     _endforeach;
-};
+}
 
 /**
  * @brief rollback to an older commit.
@@ -163,7 +163,7 @@ rollback_op(branch_t* branch, const commit_t* commit) {
         reverse_commit_op(dyna_get(branch->commits, i));
     }
     branch->head = target_idx;
-};
+}
 
 /**
  * @brief checkout to a newer commit.
@@ -197,4 +197,4 @@ checkout_op(branch_t* branch, const commit_t* commit) {
     for (size_t i = branch->head + 1; i <= target_idx; i++)
         forward_commit_op(dyna_get(branch->commits, i));
     branch->head = target_idx;
-};
+}

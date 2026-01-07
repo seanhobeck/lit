@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #include "commit.h"
 
@@ -33,7 +33,7 @@
 
 /*!~ @note this is a format for the main parts of data that are written at the start (header) of
  *  the file for a commit, stored within a branch, within the repository. */
-#define COMMIT_HEADER_FORMAT "message:%1024[^\n]\ntimestamp:%80[^\n]\nsha1:%40[^\n]\n"
+#define COMMIT_HEADER_FORMAT "message:%1024[^\n]\ntimestamp:%80[^\n]\nsha1:%40[^\n]\ncount:%lu\nrawtime:%lu\n"
 
 /**
  * @brief create a new commit with the given message, snapshotting the current state
@@ -86,7 +86,7 @@ create_commit(const char* message, const char* branch_name) {
 
     /* return our new commit. */
     return commit;
-};
+}
 
 /**
  * @brief write the commit to a file in our '.lit' directory under our current branch.
@@ -131,7 +131,7 @@ write_commit(const commit_t* commit) {
         fprintf(f, "%u\n", change->crc);
     _endforeach;
     fclose(f);
-};
+}
 
 /**
  * @brief read a commit from a file in our '.lit' directory under our current branch.
@@ -159,8 +159,8 @@ read_commit(const char* path) {
     commit->message = calloc(1, 1025);
     commit->timestamp = calloc(1, 81);
     size_t count = 0;
-    int scanned = fscanf(f, COMMIT_HEADER_FORMAT
-        "count:%lu\nrawtime:%lu\n",commit->message, commit->timestamp, hash, &count, &commit->rawtime);
+    int scanned = fscanf(f, COMMIT_HEADER_FORMAT, \
+        commit->message, commit->timestamp, hash, &count, &commit->rawtime);
     if (scanned != 5) {
         llog(E_LOGGER_LEVEL_ERROR,"fscanf failed; could not read commit header.\n");
         exit(EXIT_FAILURE); /* exit on failure. */
@@ -177,8 +177,11 @@ read_commit(const char* path) {
      *  the first two chars of the crc32 as the folder and then the
      *  for the file name in .lit/objects/diffs/xx/xxxx...  */
     for (size_t i = 0; i < count; i++) {
-        ucrc32_t crc = 0;
-        fscanf(f, "%u\n", &crc);
+        /* changed to strtoul for clang-tidy purposes. */
+        char* line = calloc(1, 129);
+        fscanf(f, "%128[^\n]\n", line);
+        ucrc32_t crc = strtoul(line, 0x0, 10);
+        free(line);
 
         /* construct the file location from the hash. */
         char* filepath = calloc(1, 257), *new_hash = calloc(1, 129);
@@ -195,4 +198,4 @@ read_commit(const char* path) {
     /* close the file and return. */
     fclose(f);
     return commit;
-};
+}

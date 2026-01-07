@@ -1,15 +1,12 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #ifndef HASH_H
 #define HASH_H
 
 /* type definition for a sha1 hash, 20 bytes long. */
 typedef unsigned char sha1_t[20ul];
-
-/* type definition for a sha256 hash, 32 bytes long. */
-typedef unsigned char sha256_t[32ul];
 
 /* type definition for a crc32 hash, 10 bytes long. */
 typedef unsigned int ucrc32_t;

@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #include "rebase.h"
 
@@ -109,7 +109,7 @@ is_rebase_possible(const repository_t* repository, const char* destination_branc
             conflict_found = true;
     }
     return !conflict_found;
-};
+}
 
 /**
  * @brief rebase the current/active branch onto the source branch.
@@ -161,4 +161,4 @@ branch_rebase(const repository_t* repository, const char* destination_branch_nam
     printf("successfully rebased \'%s\' onto \'%s\' with %lu commit(s).\n", \
         source_branch_name, destination->name, rebase_count);
     return E_REBASE_RESULT_SUCCESS;
-};
+}

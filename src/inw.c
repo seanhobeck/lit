@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #include "inw.h"
 
@@ -92,4 +92,4 @@ inw_walk(const char* path, const e_inode_walk_ty_t type) {
     /* cleanup. */
     closedir(d);
     return array;
-};
+}

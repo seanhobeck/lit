@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #include "branch.h"
 
@@ -59,7 +59,7 @@ create_branch(const char* name) {
     sha1(random, 256, branch->hash);
     free(random);
     return branch;
-};
+}
 
 /**
  * @brief create a folder to hold all the branch's commits and diffs.
@@ -87,7 +87,7 @@ write_branch(const branch_t* branch) {
         fprintf(f, "%s\n", strsha1(commit->hash));
     _endforeach;
     fclose(f);
-};
+}
 
 /**
  * @brief read a branch from a file in our '.lit' directory.
@@ -154,4 +154,4 @@ read_branch(const char* name) {
 
     /* return the branch we have read. */
     return branch;
-};
+}

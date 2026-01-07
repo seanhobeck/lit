@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #include "diff.h"
 
@@ -133,7 +133,7 @@ append_to_diff(diff_t* diff, const char* fmt, ...) {
 
     /* dup it over. */
     dyna_push(diff->lines, strdup(buffer));
-};
+}
 
 /**
  * @brief calculate the longest common subsequence (lcs) between two strings.
@@ -189,7 +189,7 @@ lcs(char** a, const int m, char** b, const int n, diff_t* diff) {
     for (int k = 0; k <= m; k++)
         free(dp[k]);
     free(dp);
-};
+}
 
 
 /**
@@ -254,16 +254,16 @@ create_file_modified_diff(const char* old_path, const char* new_path) {
     create_crc32(diff);
 
     /* cleanup and return the diff. */
-    for (int i = 0; i < old_size; i++)
+    for (size_t i = 0; i < old_size; i++)
         if (old_data[i]) free(old_data[i]);
     free(old_data);
     fclose(f_old);
-    for (int i = 0; i < new_size; i++)
+    for (size_t i = 0; i < new_size; i++)
         if (new_data[i]) free(new_data[i]);
     free(new_data);
     fclose(f_new);
     return diff;
-};
+}
 
 /**
  * @brief create a file diff for a new/deleted file.
@@ -304,7 +304,7 @@ create_file_diff(const char* path, e_diff_ty_t type) {
     /* write out to a temp file and read the hash, then close and remove it. */
     create_crc32(diff);
     return diff;
-};
+}
 
 /**
  * @brief create a folder diff containing the type of diff.
@@ -332,7 +332,7 @@ create_folder_diff(const char* path, const e_diff_ty_t type) {
     strcpy(diff->stored_path, path);
     diff->crc = crc32((unsigned char*) diff->new_path, strlen(path) + 1);
     return diff;
-};
+}
 
 /**
  * @brief write a .diff file to disk given the diff structure and path.
@@ -370,7 +370,7 @@ write_diff(const diff_t* diff, const char* path) {
         fprintf(f, "%s\n", line);
     _endforeach;
     fclose(f);
-};
+}
 
 /**
  * @brief read a diff file from disk and return a diff structure.
@@ -436,4 +436,4 @@ read_diff(const char* path) {
     /* return the diff structure. */
     fclose(f);
     return diff;
-};
+}

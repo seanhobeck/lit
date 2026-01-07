@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #include "shelve.h"
 
@@ -50,7 +50,7 @@ write_to_shelved(const char* branch_name, const diff_t* diff) {
     /* write the diff and log. */
     write_diff(diff, shelved_path);
     llog(E_LOGGER_LEVEL_INFO, "shelved changes on branch \'%s\'.\n", branch_name);
-};
+}
 
 /**
  * @brief collect shelved changes for a branch.
@@ -67,4 +67,4 @@ collect_shelved(const char* branch_name) {
     char path[256];
     snprintf(path, 256, ".lit/objects/shelved/%s", branch_name);
     return inw_walk(path, E_INW_TYPE_NO_RECURSE);
-};
+}

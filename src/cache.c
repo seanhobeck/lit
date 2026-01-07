@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #include "cache.h"
 
@@ -121,4 +121,4 @@ scan_object_cache(const repository_t* repository) {
     /* free and return the result. */
     dyna_free(objects);
     return result;
-};
+}

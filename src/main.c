@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-15
+ * @date 2026-01-06
  */
 #include "cli.h"
 
@@ -11,4 +11,4 @@ int main(int argc, char **argv) {
 
     /* we let the command-line interface handle everything. */
     return cli_handle(argument_array);
-};
+}

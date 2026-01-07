@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #include "repo.h"
 
@@ -85,7 +85,7 @@ find_index_commit(branch_t* branch, commit_t* commit) {
         }
     _endforeach;
     return -1;
-};
+}
 
 /**
  * @brief create a new repository with the given main branch name.
@@ -132,7 +132,7 @@ create_repository() {
     write_branch(dyna_get(repo->branches, 0));
     write_repository(repo);
     return repo;
-};
+}
 
 /**
  * @brief write the repository to disk in our '.lit' directory.
@@ -159,7 +159,7 @@ write_repository(const repository_t* repo) {
         fprintf(f, "%lu:%s\n", i, branch->name);
     _endforeach;
     fclose(f);
-};
+}
 
 /**
  * @brief read the repository in our cwd.
@@ -180,7 +180,7 @@ read_repository() {
 
     /* read the current branch index. */
     size_t length = 0;
-    int scanned = fscanf(f, "active:%lu\ncount:%lu\nreadonly:%d", &repo->idx, \
+    int scanned = fscanf(f, "active:%lu\ncount:%lu\nreadonly:%b", &repo->idx, \
         &length, &repo->readonly);
     if (scanned != 3) {
         llog(E_LOGGER_LEVEL_ERROR,"fscanf failed; could not read current branch header.\n");
@@ -218,7 +218,7 @@ read_repository() {
         free(branch_name);
     };
     return repo;
-};
+}
 
 /**
  * @brief create a new branch from the current branches HEAD commit.
@@ -282,7 +282,7 @@ create_branch_repository(repository_t* repository, const char* name, const char*
     /* write out the branch and repository. */
     write_repository(repository);
     write_branch(branch);
-};
+}
 
 /**
  * @brief delete a branch from the repository.
@@ -322,7 +322,7 @@ delete_branch_repository(repository_t* repository, const char* name) {
 
     /* pop and move the branches down (if there are any). */
     dyna_pop(repository->branches, i);
-};
+}
 
 /**
  * @brief get the branch from the repository with error checking.
@@ -414,8 +414,8 @@ switch_branch_repository(repository_t* repository, const char* name) {
 
         /* rollback to the ancestor commit... */
         long ancestor_idx = find_index_commit(current, ancestor);
-        if (ancestor_idx >= 0 && ancestor_idx < current->head)
-            for (size_t i = current->head; i > ancestor_idx; i--)
+        if (ancestor_idx >= 0 && ancestor_idx < (long) current->head)
+            for (size_t i = current->head; i > (size_t)ancestor_idx; i--)
                 reverse_commit_op(dyna_get(current->commits, i));
 
         /* checkout to the ancestor commit, then to the target head. */
@@ -431,4 +431,4 @@ switch_branch_repository(repository_t* repository, const char* name) {
     /* update the repository. */
     repository->idx = target_idx;
     write_repository(repository);
-};
+}

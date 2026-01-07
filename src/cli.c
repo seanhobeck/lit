@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-29
+ * @date 2026-01-06
  */
 #include "cli.h"
 
@@ -118,11 +118,11 @@ setup(dyna_t* array) {
                     from = true;
                     break;
                 }
-                default: {};
+                default: {}
             }
         }
     _endforeach
-};
+}
 
 internal int
 handle_init() {
@@ -133,7 +133,7 @@ handle_init() {
     }
     _llog(E_LOGGER_LEVEL_INFO, "repository initialized successfully.\n");
     return 0;
-};
+}
 
 internal int
 handle_log() {
@@ -167,7 +167,7 @@ handle_log() {
         _endforeach;
     }
     return 0;
-};
+}
 
 internal int
 handle_commit(dyna_t* argument_array) {
@@ -175,7 +175,7 @@ handle_commit(dyna_t* argument_array) {
     if (repository->readonly) {
         llog(E_LOGGER_LEVEL_ERROR, "cannot commit changes in read-only mode.\n");
         return -1;
-    };
+    }
 
     /* inode walk and collect all shelved files. */
     dyna_t* shelved_array = collect_shelved(active_branch->name);
@@ -229,7 +229,7 @@ handle_commit(dyna_t* argument_array) {
     _llog(E_LOGGER_LEVEL_INFO, "added commit '%s' to branch '%s' with %lu change(s).\n", \
         strtrm(commit->message, 32), active_branch->name, commit->changes->length);
     return 0;
-};
+}
 
 internal int
 handle_cr_move(dyna_t* argument_array) {
@@ -328,7 +328,7 @@ handle_cr_move(dyna_t* argument_array) {
     write_branch(active_branch);
 
     /* if we are not on the latest commit, set the repository to read-only. */
-    repository->readonly = (target_idx != active_branch->commits->length - 1);
+    repository->readonly = target_idx != active_branch->commits->length - 1;
     write_repository(repository);
 
     /* log a warning if verbose. */
@@ -345,7 +345,7 @@ handle_cr_move(dyna_t* argument_array) {
         dyna_free(shelved_array);
     }
     return 0;
-};
+}
 
 internal int
 add_delete_inode(const char* filename, e_proper_arg_ty_t type) {
@@ -376,7 +376,7 @@ add_delete_inode(const char* filename, e_proper_arg_ty_t type) {
     /* push to the shelf for the active branch. */
     write_to_shelved(active_branch->name, diff);
     return 0;
-};
+}
 
 internal diff_t*
 find_recent_commit(const char* filename) {
@@ -483,15 +483,15 @@ modified_inode(const char* old_filename, const char* new_filename) {
     remove(temp_path);
     write_to_shelved(active_branch->name, diff);
     return 0;
-};
+}
 
 internal int
 handle_add(dyna_t* argument_array) {
-    /* if we are in read-only mode we cannot commit or make changes. */
+    /* if we are in read-only mode, we cannot commit or make changes. */
     if (repository->readonly) {
         llog(E_LOGGER_LEVEL_ERROR, "cannot commit changes in read-only mode.\n");
         return -1;
-    };
+    }
 
     /* is there a recursive folder for us to look through? */
     if (all || no_recurse) {
@@ -507,7 +507,6 @@ handle_add(dyna_t* argument_array) {
                 _foreach_it(inodes, inode_t*, inode, j)
                     /* we then need to check if there are any commits before that contain this inode at all. */
                     bool is_new_file = find_recent_commit(inode->name) != 0x0;
-
                     if (is_new_file) {
                         if (modified_inode(inode->path, inode->name) == -1)
                             return -1;
@@ -522,16 +521,15 @@ handle_add(dyna_t* argument_array) {
     }
     else {
         /* otherwise we are adding a single file or folder. */
-        e_proper_arg_ty_t type = E_PROPER_ARG_TYPE_NONE;
-        char* filename;
+        char* filename = 0x0;
         _foreach(argument_array, const argument_t*, argument)
             if (argument->type == E_PARAMETER_TO_ARGUMENT)
                 filename = strdup(argument->value);
-            else if (argument->type == E_PROPER_ARGUMENT)
-                type = argument->details.proper;
         _endforeach;
 
         /* we add the single folder and we are done. */
+        if (filename == 0x0)
+            return -1;
         diff_t* diff = find_recent_commit(filename);
         bool is_new_file = diff != 0x0;
         if (is_new_file) {
@@ -550,7 +548,7 @@ handle_delete(dyna_t* argument_array) {
     if (repository->readonly) {
         llog(E_LOGGER_LEVEL_ERROR, "cannot commit changes in read-only mode.\n");
         return -1;
-    };
+    }
 
     /* is there a recursive folder for us to look through? */
     if (all || no_recurse) {
@@ -574,13 +572,15 @@ handle_delete(dyna_t* argument_array) {
     }
     else {
         /* otherwise we are removing a single file or folder. */
-        char* filename;
+        char* filename = 0x0;
         _foreach(argument_array, const argument_t*, argument)
             if (argument->type == E_PARAMETER_TO_ARGUMENT)
                 filename = strdup(argument->value);
         _endforeach;
 
         /* we add the deleted item and we are done. */
+        if (filename == 0x0)
+            return -1;
         add_delete_inode(filename, E_PROPER_ARG_TYPE_DELETE_INODE);
     }
     return 0;
@@ -610,7 +610,7 @@ handle_create_branch(dyna_t* argument_array) {
     /* print out to the console. */
     _llog(E_LOGGER_LEVEL_INFO, "created branch '%s' from '%s'.\n", branch_name, from_branch_name);
     return 0;
-};
+}
 
 internal int
 handle_delete_branch(dyna_t* argument_array) {
@@ -636,7 +636,7 @@ handle_delete_branch(dyna_t* argument_array) {
     /* write the repository out to the file. */
     write_repository(repository);
     return 0;
-};
+}
 
 internal int
 handle_switch_branch(dyna_t* argument_array) {
@@ -653,7 +653,7 @@ handle_switch_branch(dyna_t* argument_array) {
     switch_branch_repository(repository, branch_name);
     _llog(E_LOGGER_LEVEL_INFO, "switched to branch '%s'.\n", branch_name);
     return 0;
-};
+}
 
 internal int
 handle_rebase_branch(dyna_t* argument_array) {
@@ -678,7 +678,7 @@ handle_rebase_branch(dyna_t* argument_array) {
     /* rebase onto the branch provided. */
     return branch_rebase(repository, destination_branch_name, \
         source_branch_name) == E_REBASE_RESULT_SUCCESS ? 0 : 1;
-};
+}
 
 internal int
 handle_clear_cache() {
@@ -793,7 +793,7 @@ cli_handle(dyna_t* argument_array) {
         case E_PROPER_ARG_TYPE_LOG: {
             setup(argument_array);
             return handle_log();
-        };
+        }
         /* -c | commit to add changes to the repository. */
         case E_PROPER_ARG_TYPE_COMMIT: {
             setup(argument_array);
@@ -850,7 +850,7 @@ cli_handle(dyna_t* argument_array) {
         case E_PROPER_ARG_TYPE_DELETE_TAG: {
             return handle_delete_tag(argument_array);
         }
-        default: {};
+        default: {}
     }
     return 0;
-};
+}

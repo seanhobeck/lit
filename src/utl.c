@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-06
  */
 #include "utl.h"
 
@@ -37,7 +37,7 @@ strdup(const char* str) {
     /* copy the string into the new memory. */
     strcpy(new_str, str);
     return new_str;
-};
+}
 
 /**
  * @brief reduce a string to a specified length of <n>
@@ -67,7 +67,7 @@ strtrm(const char* str, size_t n) {
     new[n-1] = '.';
     new[n] = '\0';
     return new;
-};
+}
 
 /**
  * @brief convert a string to a hash of <n> length.
@@ -99,7 +99,7 @@ strtoha(const char* str, size_t n) {
         hash[i] = (unsigned char) byte;
     }
     return hash;
-};
+}
 
 /**
  * @brief check if a folder path absolutely exists in the filesystem.
@@ -134,7 +134,7 @@ fexistpd(const char* path) {
     }
     free(dpath);
     return 0;
-};
+}
 
 /**
  * @brief write lines out to a file at the specified path.
@@ -169,7 +169,7 @@ fwritels(const char* path, char** lines, size_t n) {
         fprintf(f, "%s\n", lines[i]);
     }
     fclose(f);
-};
+}
 
 /**
  * @brief given some lines from a lcs algorithm, clean them and return
@@ -201,7 +201,7 @@ fcleanls(char** lines, size_t n, size_t* k) {
     }
     *k = m;
     return clines;
-};
+}
 
 /**
  * @brief read a file by lines.
@@ -237,12 +237,13 @@ freadls(FILE* fptr, size_t* size) {
         }
         if (i >= j) {
             /* realloc if required. */
-            data = realloc(data, sizeof(char*) * (j + 1024ul));
+            char** _temp = realloc(data, sizeof(char*) * (j + 1024ul));
             if (!data) {
                 llog(E_LOGGER_LEVEL_ERROR,"realloc failed; could not allocate memory for file data.\n");
                 exit(-1);
             }
-        };
+            data = _temp;
+        }
 
         /* append to our data. */
         data[i] = calloc(1, len);
@@ -253,7 +254,7 @@ freadls(FILE* fptr, size_t* size) {
     /* set our size reference, and return our data. */
     *size = i;
     return data;
-};
+}
 
 /**
  * @brief free lines of n size.
@@ -269,7 +270,7 @@ ffreels(char** lines, size_t n) {
     for (size_t i = 0; i < n; i++)
         free(lines[i]);
     free(lines);
-};
+}
 
 /**
  * @brief given some lines from a lcs algorithm, extract only the original lines

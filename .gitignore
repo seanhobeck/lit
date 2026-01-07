@@ -6,3 +6,6 @@
 
 # Bear build commands for CLion
 compile_commands.json
+
+# Executables
+lit
