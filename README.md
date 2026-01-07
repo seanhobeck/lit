@@ -29,11 +29,11 @@ Here are some commands to get you started on your local repository.
 ```bash
     lit init                     # initialize your repository in the current working directory.
     lit add myFile               # add your file to the version control system.
-    lit commit "added myFile!"   # commit your changes to the origin branch.
-    lit add-branch dev           # create a branch called 'dev' that stems from 'origin'.
+    lit commit                   # commit your changes to the origin branch.
+    lit add-branch dev           # create a branch called 'dev' that stems from 'origin' by default.
     lit switch-branch dev        # switch to the branch 'dev'.
     lit modified myFile          # notify lit that you have modified 'myFile'.
-    lit commit "changed myFile!" # commit your modified changes to lit.
+    lit commit                   # commit your modified changes to lit.
     lit rebase-branch origin dev # rebase the commits on dev onto origin.
     lit delete-branch dev        # delete the 'dev' branch from the repository (this cannot be undone).
     lit add-tag 7fc... rebase_1  # create a tag called 'rebase_1' for important commits and rebases.
@@ -44,11 +44,24 @@ Here are some commands to get you started on your local repository.
     lit --help
 ```
 
+Flags can be added to any command to customize its behavior.
+
+```bash
+    lit add --all some_directory/               # add all files (recursively) in a directory.
+    lit add --no-recurse another_directory/     # add all file in a directory.
+    lit commit --m "this is a commit message!"  # you can add a message to your commit.
+    lit checkout --hard 7fc...                  # checkout a specific commit, deleting all shelved changes.
+    lit ... --quiet                             # suppress all output from lit.
+    lit add-branch staging --from dev           # create a new branch called 'staging' that stems from 'dev'.
+    lit rollback --tag rebase_1                 # rollback to the tag called 'rebase_1'.
+```
+
 ---
 
 ## Building
 
-**Lit** is written in standard C *(C17)* and is fully self-contained, requiring no external dependencies.
+**Lit** is written in standard C *(C17)* and is fully self-contained, requiring no external 
+dependencies.
 This means that all you need to build is simply a **POSIX-compatible** system, a **C compiler** (preferably GCC or Clang), and **Make**.
 
 To build **lit**, simply clone the repository and run make.
@@ -65,13 +78,11 @@ To build **lit**, simply clone the repository and run make.
 
 There are still many things to add and fix, some of which are listed below.
 
-- Add support for rolling back and checking out tags.
-
 - Rebuilding / restoring repositories if tampered with during readonly mode.
 
 - Better configuration support (more things other than verbose output).
 
-- Flags on commands like *'lit add'* / *'lit modified'* ie. *'lit add --all'*.
+- Local server for remote repositories (local upstream).
 
 ---
 

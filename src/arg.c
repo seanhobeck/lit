@@ -52,7 +52,7 @@ internal
 void help_args() {
     /* print out the usage.*/
     llog(E_LOGGER_LEVEL_INFO,
-           "usage: lit [-v | --version] [-h | --help] [-i | init] [-c | commit]\n"
+           "usage: lit [-v | version] [-h | help] [-i | init] [-c | commit]\n"
            "\t[-r | rollback <hash>] [-C | -checkout <hash>] [-l | log] [-sB | switch-branch <name>]\n"
            "\t[-dB | delete-branch <name>] [-aB | add-branch <name>] [-rB | rebase-branch <src> <dest>]\n"
            "\t[-a | add <path>] [-d <hash>| delete <path>] \n"
@@ -285,6 +285,13 @@ parse_arguments(int argc, char** argv) {
         if (!strcmp(cli_arg, "--message") || !strcmp(cli_arg, "--m")) {
             parsed_arg->type = E_FLAG_TO_ARGUMENT;
             parsed_arg->details.flag = E_FLAG_ARG_TYPE_MESSAGE;
+            add_value_to_parsed_argument();
+            expected_parameter_argument(1);
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "--tag")) {
+            parsed_arg->type = E_FLAG_TO_ARGUMENT;
+            parsed_arg->details.flag = E_FLAG_ARG_TYPE_TAG;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
