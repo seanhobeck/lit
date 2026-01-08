@@ -1,8 +1,8 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-06
+ * @date 2026-01-07
  */
-#include "../dyna.h"
+#include "dyna.h"
 
 /*! @uses fprintf. */
 #include <stdio.h>

@@ -1,8 +1,8 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-06
+ * @date 2026-01-07
  */
-#include "../diff.h"
+#include "diff.h"
 
 /*! @uses time, time_t. */
 #include <time.h>
@@ -26,7 +26,7 @@
 #include "utl.h"
 
 /*! @uses llog, E_LOGGER_LEVEL_INFO. */
-#include "../log.h"
+#include "log.h"
 
 /*!~ @note this is a format for the main parts of data that are written at the start (header) of
  *  the file for a diff., stored within a commit, stored within a branch, within the repository. */

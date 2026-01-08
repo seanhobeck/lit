@@ -1,8 +1,8 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-06
+ * @date 2026-01-07
  */
-#include "../conf.h"
+#include "conf.h"
 
 /*! @uses fprintf, fopen, fgets. */
 #include <stdio.h>

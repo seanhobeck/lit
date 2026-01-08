@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-27
+ * @date 2026-01-07
  */
 #ifndef BRANCH_H
 #define BRANCH_H
@@ -9,7 +9,7 @@
 #include "hash.h"
 
 /*! @uses dyna_t, dyna_push, _foreach... */
-#include "../dyna.h"
+#include "dyna.h"
 
 /**
  * a data structure representing a branch within the version control system. a branch is a

@@ -27,7 +27,6 @@ SERVER_SRCS := $(shell find $(SRC_DIR) -name '*.c' ! -path '$(SRC_DIR)/client/*'
 CLIENT_OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/client/%.o,$(CLIENT_SRCS))
 SERVER_OBJS := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/server/%.o,$(SERVER_SRCS))
 
-
 # default target
 .PHONY: all
 all: client server
@@ -46,7 +45,6 @@ $(SERVER_TARGET): $(SERVER_OBJS)
 	@mkdir -p $(@D)
 	$(CC) $(CFLAGS) $^ -o $@
 
-
 # compile source files into object files (two object trees)
 $(BUILD_DIR)/client/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
@@ -56,12 +54,10 @@ $(BUILD_DIR)/server/%.o: $(SRC_DIR)/%.c
 	@mkdir -p $(dir $@)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-
 # debug target (build both with debug flags)
 .PHONY: debug
 debug: CFLAGS += -O0 -g
 debug: all
-
 
 # install / uninstall (installs both)
 .PHONY: install
@@ -78,7 +74,6 @@ uninstall:
 	rm -f $(BINDIR)/$(notdir $(CLIENT_TARGET))
 	rm -f $(BINDIR)/$(notdir $(SERVER_TARGET))
 	@echo "uninstall complete."
-
 
 # clean target
 .PHONY: clean

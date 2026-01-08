@@ -6,7 +6,7 @@
 #define ARG_H
 
 /*! @uses dyna_t. */
-#include "../core/dyna.h"
+#include "dyna.h"
 
 /**
  * enum for all proper argument types (commands), think 'lit commit' or 'lit init' or 'lit log', etc.

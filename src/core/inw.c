@@ -1,8 +1,8 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-06
+ * @date 2026-01-07
  */
-#include "../inw.h"
+#include "inw.h"
 
 /*! @uses mkdir, getcwd. */
 #include <sys/types.h>

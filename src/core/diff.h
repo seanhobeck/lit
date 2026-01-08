@@ -1,15 +1,15 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-07
  */
 #ifndef DIFF_H
 #define DIFF_H
 
 /*! @uses ucrc32_t, crc32. */
-#include "../hash.h"
+#include "hash.h"
 
 /*! @uses dyna_t, dyna_push, etc... */
-#include "../dyna.h"
+#include "dyna.h"
 
 /**
  * enum to differentiate types of diffs/ changes; the difference between deleting,

@@ -2,7 +2,7 @@
  * @author Sean Hobeck
  * @date 2026-01-07
  */
-#include "../arg.h"
+#include "arg.h"
 
 /*! @uses printf, perror, fopen, fclose, fscanf, sprintf. */
 #include <stdio.h>
@@ -17,13 +17,13 @@
 #include <stdbool.h>
 
 /*! @uses internal. */
-#include "../core/utl.h"
+#include "core/utl.h"
 
 /*! @uses llog, E_LOGGER_LEVEL_ERROR. */
-#include "../core/log.h"
+#include "core/log.h"
 
 /* program version macro. */
-#define VERSION "1.16.06"
+#define VERSION "1.16.07"
 
 /* if we are expecting a parameter_argument. */
 #define expected_parameter_argument(number_of_expected_args) \
