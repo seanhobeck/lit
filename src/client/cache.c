@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-07
+ * @date 2026-01-08
  */
 #include "cache.h"
 
@@ -17,19 +17,19 @@
 #include <string.h>
 
 /*! @uses inode_t*, inw_walk. */
-#include "core/inw.h"
+#include "inw.h"
 
 /*! @uses diff_t. */
-#include "core/diff.h"
+#include "diff.h"
 
 /*! @uses commit_t. */
-#include "core/commit.h"
+#include "commit.h"
 
 /*! @uses rpwd. */
-#include "core/utl.h"
+#include "utl.h"
 
 /*! @uses llog. */
-#include "core/log.h"
+#include "log.h"
 
 /**
  * @brief scan the .lit/objects folder for unrelated objects to any current branches,

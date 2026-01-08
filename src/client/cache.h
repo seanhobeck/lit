@@ -1,12 +1,12 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-07
+ * @date 2026-01-08
  */
 #ifndef CACHE_H
 #define CACHE_H
 
 /*! @uses repository_t. */
-#include "core/repo.h"
+#include "repo.h"
 
 /** enum for all possible cache results; some of the explanations provided below. */
 typedef enum {

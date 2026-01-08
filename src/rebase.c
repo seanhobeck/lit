@@ -1,11 +1,8 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-07
+ * @date 2026-01-08
  */
 #include "rebase.h"
-
-/*! @uses checkout_op. */
-#include "ops.h"
 
 /*! @uses bool, true, false. */
 #include <stdbool.h>
@@ -22,8 +19,12 @@
 /*! @uses diff_t. */
 #include "diff.h"
 
+/*! @uses checkout_op. */
+#include "ops.h"
+
 /*! @uses internal. */
 #include "utl.h"
+
 
 /**
  * @brief are the two commits conflicting in their changes at all?

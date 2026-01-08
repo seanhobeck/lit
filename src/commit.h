@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-07
+ * @date 2026-01-08
  */
 #ifndef COMMIT_H
 #define COMMIT_H
@@ -13,9 +13,6 @@
 
 /*! @uses dyna_t, dyna_push, _foreach, ...*/
 #include "dyna.h"
-
-/*! @uses bool, true, false. */
-#include <stdbool.h>
 
 /**
  * a data structure containing information on a commit, think a list of changes made on disk that

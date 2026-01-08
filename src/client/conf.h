@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-27
+ * @date 2026-01-07
  */
 #ifndef CONF_H
 #define CONF_H

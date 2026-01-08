@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-07
+ * @date 2026-01-08
  */
 #include "utl.h"
 
@@ -12,6 +12,15 @@
 
 /*! @uses mkdir. */
 #include <sys/stat.h>
+
+/*! @uses strcpy, strcmp, strdup, etc.. */
+#include <string.h>
+
+/*! @uses malloc, free. */
+#include <stdlib.h>
+
+/*! @uses; assert */
+#include <assert.h>
 
 /*! @uses llog, E_LOGGER_LEVEL_ERROR. */
 #include "log.h"

@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-07
+ * @date 2026-01-08
  */
 #ifndef BRANCH_H
 #define BRANCH_H
@@ -20,7 +20,7 @@
 typedef struct {
     char* name; /* branch name. */
     char* path; /* path to the branch directory. */
-    sha1_t hash; /* hash of the branch. */
+    sha1_t hash; /* hash of the branch. (pad 4 bytes) */
     size_t head; /* index to the head commit. */
     dyna_t* commits; /* array of commits hashes for this branch. */
 } branch_t;

@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-07
+ * @date 2026-01-08
  */
 #include "arg.h"
 
@@ -17,13 +17,13 @@
 #include <stdbool.h>
 
 /*! @uses internal. */
-#include "core/utl.h"
+#include "utl.h"
 
 /*! @uses llog, E_LOGGER_LEVEL_ERROR. */
-#include "core/log.h"
+#include "log.h"
 
 /* program version macro. */
-#define VERSION "1.16.07"
+#define VERSION "1.16.08"
 
 /* if we are expecting a parameter_argument. */
 #define expected_parameter_argument(number_of_expected_args) \

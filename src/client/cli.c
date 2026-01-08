@@ -1,8 +1,11 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-07
+ * @date 2026-01-08
  */
 #include "cli.h"
+
+/*! @uses assert. */
+#include <assert.h>
 
 /*! @uses printf. */
 #include <stdio.h>
@@ -16,14 +19,20 @@
 /*! @uses bool, true, false */
 #include <stdbool.h>
 
+/*! @uses memcpy. */
+#include <string.h>
+
+/*! @uses free. */
+#include <stdlib.h>
+
 /*! @uses diff_create, diff_write, diff_read. */
 #include "diff.h"
 
 /*! @uses repo_create, repository_read, repository_write. */
-#include "core/repo.h"
+#include "repo.h"
 
 /*! @uses branch_create, branch_write, branch_read, branch_add_commit. */
-#include "core/branch.h"
+#include "branch.h"
 
 /*! @uses rebase_branch, e_rebase_result_t. */
 #include "rebase.h"
@@ -41,7 +50,7 @@
 #include "tag.h"
 
 /*! @uses shelve_changes */
-#include "core/shelve.h"
+#include "shelve.h"
 
 /*! @uses config_t, read_config */
 #include "conf.h"

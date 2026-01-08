@@ -1,11 +1,8 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-07
+ * @date 2026-01-08
  */
 #include "branch.h"
-
-/*! @uses commit_t. */
-#include "commit.h"
 
 /*! @uses assert. */
 #include <assert.h>
@@ -21,6 +18,9 @@
 
 /*! @uses strtoha. */
 #include "utl.h"
+
+/*! @uses commit_t. */
+#include "commit.h"
 
 /*!~ @note this is a format for the main parts of data that are written at the start (header) of
  *  the file for a branch stored within the repository. */

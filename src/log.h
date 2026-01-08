@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-15
+ * @date 2026-01-08
  */
 #ifndef LOG_H
 #define LOG_H

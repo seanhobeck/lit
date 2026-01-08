@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-06
+ * @date 2026-01-08
  */
 #include "tag.h"
 
@@ -10,8 +10,8 @@
 /*! @uses exit, calloc. */
 #include <stdlib.h>
 
-/*! @uses strdup. */
-#include "utl.h"
+/*! @uses memcpy. */
+#include <string.h>
 
 /*! @uses sha1_t, sha1. */
 #include "hash.h"
@@ -21,6 +21,9 @@
 
 /*! @uses log, E_LOGGER_LEVEL_ERROR, E_LOGGER_LEVEL_INFO. */
 #include "log.h"
+
+/*! @uses strdup. */
+#include "utl.h"
 
 /**
  * @brief create a tag for a commit with a message.

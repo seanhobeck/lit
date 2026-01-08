@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-28
+ * @date 2026-01-08
  */
 #ifndef UTL_H
 #define UTL_H
@@ -26,21 +26,6 @@
 
 /*! @uses FILE, fopen, fclose, fseek, etc.. */
 #include <stdio.h>
-
-/*! @uses strcpy, strcmp, strdup, etc.. */
-#include <string.h>
-
-/*! @uses malloc, free. */
-#include <stdlib.h>
-
-/*! @uses va_list, va_start, va_end. */
-#include <stdarg.h>
-
-/*! @uses size_t */
-#include <stddef.h>
-
-/*! @uses; assert */
-#include <assert.h>
 
 /**
  * @brief duplicate a string.

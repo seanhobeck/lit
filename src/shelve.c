@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-07
+ * @date 2026-01-08
  */
 #include "shelve.h"
 
@@ -16,11 +16,11 @@
 /*! @uses exit. */
 #include <stdlib.h>
 
-/*! @uses fexistpd. */
-#include "utl.h"
-
 /*! @uses log, E_LOGGER_LEVEL_ERROR, E_LOGGER_LEVEL_INFO. */
 #include "log.h"
+
+/*! @uses fexistpd. */
+#include "utl.h"
 
 /**
  * @brief write changes to a shelved file on a branch.
