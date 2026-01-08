@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-06
+ * @date 2026-01-07
  */
 #include "cli.h"
 
@@ -82,39 +82,39 @@ setup(dyna_t* array) {
         if (argument->type == E_FLAG_TO_ARGUMENT) {
             /* we then set the internal flags AS specified. */
             switch (argument->details.flag) {
-                case E_FLAG_ARG_TYPE_ALL: {
+                case E_FLAG_ARG_ALL: {
                     all = true;
                     break;
                 }
-                case E_FLAG_ARG_TYPE_NO_RECURSE: {
+                case E_FLAG_ARG_NO_RECURSE: {
                     no_recurse = true;
                     break;
                 }
-                case E_FLAG_ARG_TYPE_HARD: {
+                case E_FLAG_ARG_HARD: {
                     hard = true;
                     break;
                 }
-                case E_FLAG_ARG_TYPE_GRAPH: {
+                case E_FLAG_ARG_GRAPH: {
                     graph = true;
                     break;
                 }
-                case E_FLAG_ARG_TYPE_FILTER: {
+                case E_FLAG_ARG_FILTER: {
                     filter = true;
                     break;
                 }
-                case E_FLAG_ARG_TYPE_MAX_COUNT: {
+                case E_FLAG_ARG_MAX_COUNT: {
                     max_count = true;
                     break;
                 }
-                case E_FLAG_ARG_TYPE_VERBOSE: {
+                case E_FLAG_ARG_VERBOSE: {
                     verbose = true;
                     break;
                 }
-                case E_FLAG_ARG_TYPE_QUIET: {
+                case E_FLAG_ARG_QUIET: {
                     quiet = true;
                     break;
                 }
-                case E_FLAG_ARG_TYPE_FROM: {
+                case E_FLAG_ARG_FROM: {
                     from = true;
                     break;
                 }
@@ -185,7 +185,7 @@ handle_commit(dyna_t* argument_array) {
     _foreach_it(argument_array, const argument_t*, argument, i)
         /* if we encounter a --message, whatever follows must be a message in quotes. */
         if (argument->type == E_FLAG_TO_ARGUMENT) {
-            if (argument->details.flag == E_FLAG_ARG_TYPE_MESSAGE) {
+            if (argument->details.flag == E_FLAG_ARG_MESSAGE) {
                 const argument_t* next = _get(argument_array, argument_t*, i + 1);
 
                 /* copy the message over. */
@@ -241,7 +241,7 @@ handle_cr_move(dyna_t* argument_array) {
     _foreach_it(argument_array, const argument_t*, argument, i)
         /* are we encountering a tag? */
         if (argument->type == E_FLAG_TO_ARGUMENT) {
-            if (argument->details.flag == E_FLAG_ARG_TYPE_TAG) {
+            if (argument->details.flag == E_FLAG_ARG_TAG) {
                 const argument_t* next = _get(argument_array, const argument_t*, i + 1);
 
                 /* check if there are any tags. */
@@ -287,14 +287,14 @@ handle_cr_move(dyna_t* argument_array) {
     }
 
     /* find the proper argument in the argument array, then perform the operation. */
-    e_proper_arg_ty_t type = E_PROPER_ARG_TYPE_NONE;
+    e_proper_arg_ty_t type = E_PROPER_ARG_NONE;
     _foreach(argument_array, const argument_t*, argument)
         if (argument->type == E_PROPER_ARGUMENT) {
             type = argument->details.proper;
             break;
         }
     _endforeach;
-    if (type == E_PROPER_ARG_TYPE_ROLLBACK) {
+    if (type == E_PROPER_ARG_ROLLBACK) {
         /* if the commit is newer than the current commit, report the error and return. */
         if (target_idx >= active_branch->head) {
             llog(E_LOGGER_LEVEL_ERROR, "cannot rollback to a commit that is newer than the active commit.\n");
@@ -353,17 +353,17 @@ add_delete_inode(const char* filename, e_proper_arg_ty_t type) {
     diff_t* diff;
     if (filename[strlen(filename) - 1] == '/') {
         diff = create_folder_diff(filename,
-            type == E_PROPER_ARG_TYPE_ADD_INODE ?
+            type == E_PROPER_ARG_ADD_INODE ?
             E_DIFF_FOLDER_NEW : E_DIFF_FOLDER_DELETED);
     }
     else {
         diff = create_file_diff(filename,
-            type == E_PROPER_ARG_TYPE_ADD_INODE ?
+            type == E_PROPER_ARG_ADD_INODE ?
             E_DIFF_FILE_NEW : E_DIFF_FILE_DELETED);
     }
 
     /* if we are deleting a folder/file, we need to remove it. */
-    if (type == E_PROPER_ARG_TYPE_DELETE_INODE) {
+    if (type == E_PROPER_ARG_DELETE_INODE) {
         remove(diff->stored_path);
     }
 
@@ -511,7 +511,7 @@ handle_add(dyna_t* argument_array) {
                         if (modified_inode(inode->path, inode->name) == -1)
                             return -1;
                     }
-                    else if (add_delete_inode(inode->path, E_PROPER_ARG_TYPE_ADD_INODE) == -1)
+                    else if (add_delete_inode(inode->path, E_PROPER_ARG_ADD_INODE) == -1)
                         return -1;
                 _endforeach;
                 dyna_free(inodes);
@@ -536,7 +536,7 @@ handle_add(dyna_t* argument_array) {
             if (modified_inode(diff->stored_path, filename) == -1)
                 return -1;
         }
-        else if (add_delete_inode(filename, E_PROPER_ARG_TYPE_ADD_INODE) == -1)
+        else if (add_delete_inode(filename, E_PROPER_ARG_ADD_INODE) == -1)
             return -1;
     }
     return 0;
@@ -563,7 +563,7 @@ handle_delete(dyna_t* argument_array) {
                 /* iterate through each inode and add it. */
                 _foreach_it(inodes, inode_t*, inode, j)
                     /* we then add the deleted item. */
-                    add_delete_inode(inode->path, E_PROPER_ARG_TYPE_DELETE_INODE);
+                    add_delete_inode(inode->path, E_PROPER_ARG_DELETE_INODE);
                 _endforeach;
                 dyna_free(inodes);
                 break;
@@ -581,7 +581,7 @@ handle_delete(dyna_t* argument_array) {
         /* we add the deleted item and we are done. */
         if (filename == 0x0)
             return -1;
-        add_delete_inode(filename, E_PROPER_ARG_TYPE_DELETE_INODE);
+        add_delete_inode(filename, E_PROPER_ARG_DELETE_INODE);
     }
     return 0;
 }
@@ -592,7 +592,7 @@ handle_create_branch(dyna_t* argument_array) {
     char* branch_name = 0x0, *from_branch_name = 0x0;
     _foreach_it(argument_array, const argument_t*, argument, i)
         if (argument->type == E_FLAG_TO_ARGUMENT) {
-            if (argument->details.flag == E_FLAG_ARG_TYPE_FROM) {
+            if (argument->details.flag == E_FLAG_ARG_FROM) {
                 const argument_t* next = _get(argument_array, argument_t*, i + 1);
                 from_branch_name = strdup(next->value);
             }
@@ -687,6 +687,18 @@ handle_clear_cache() {
 }
 
 internal int
+handle_restore() {
+    /* get the current branch we are on, then simply rollback to the first commit
+     * and checkout the most recent. */
+    commit_t* first, *head;
+    first = dyna_get(active_branch->commits, 0);
+    head = dyna_get(active_branch->commits, active_branch->head);
+    rollback_op(active_branch, first);
+    checkout_op(active_branch, head);
+    return 0;
+}
+
+internal int
 handle_add_tag(dyna_t* argument_array) {
     /* gather the user hash. */
     unsigned char* hash = 0x0;
@@ -776,7 +788,7 @@ handle_delete_tag(dyna_t* argument_array) {
 int
 cli_handle(dyna_t* argument_array) {
     /* iterate through each argument and handle it. */
-    e_proper_arg_ty_t proper_type = E_PROPER_ARG_TYPE_NONE;
+    e_proper_arg_ty_t proper_type = E_PROPER_ARG_NONE;
     _foreach(argument_array, argument_t*, argument)
         /* if we encounter the proper argument, then we set the type. */
         if (argument->type == E_PROPER_ARGUMENT)
@@ -786,68 +798,73 @@ cli_handle(dyna_t* argument_array) {
     /* handle each proper type variant. */
     switch (proper_type) {
         /* -i | init to initialize a new repository. */
-        case E_PROPER_ARG_TYPE_INIT: {
+        case E_PROPER_ARG_INIT: {
             return handle_init();
         }
         /* -l | log to show the status of the repository. */
-        case E_PROPER_ARG_TYPE_LOG: {
+        case E_PROPER_ARG_LOG: {
             setup(argument_array);
             return handle_log();
         }
         /* -c | commit to add changes to the repository. */
-        case E_PROPER_ARG_TYPE_COMMIT: {
+        case E_PROPER_ARG_COMMIT: {
             setup(argument_array);
             return handle_commit(argument_array);
         }
         /* -C | checkout to go forward to a newer commit. */
-        case E_PROPER_ARG_TYPE_CHECKOUT:
+        case E_PROPER_ARG_CHECKOUT:
         /* -r | --rollback to go back to a previous commit. */
-        case E_PROPER_ARG_TYPE_ROLLBACK: {
+        case E_PROPER_ARG_ROLLBACK: {
             setup(argument_array);
             return handle_cr_move(argument_array);
         }
         /* -a | add to add a file or folder to the repository. */
-        case E_PROPER_ARG_TYPE_ADD_INODE: {
+        case E_PROPER_ARG_ADD_INODE: {
             setup(argument_array);
             return handle_add(argument_array);
         }
         /* -d | delete to delete a file or folder from the repository. */
-        case E_PROPER_ARG_TYPE_DELETE_INODE: {
+        case E_PROPER_ARG_DELETE_INODE: {
             setup(argument_array);
             return handle_delete(argument_array);
         }
         /* -aB | add-branch to create a new branch off of the origin branches head. */
-        case E_PROPER_ARG_TYPE_CREATE_BRANCH: {
+        case E_PROPER_ARG_CREATE_BRANCH: {
             setup(argument_array);
             return handle_create_branch(argument_array);
         }
         /* -dB | delete-branch to delete a branch from the repository. */
-        case E_PROPER_ARG_TYPE_DELETE_BRANCH: {
+        case E_PROPER_ARG_DELETE_BRANCH: {
             setup(argument_array);
             return handle_delete_branch(argument_array);
         }
         /* -sB | switch-branch to switch to a different branch in the repository. */
-        case E_PROPER_ARG_TYPE_SWITCH_BRANCH: {
+        case E_PROPER_ARG_SWITCH_BRANCH: {
             setup(argument_array);
             return handle_switch_branch(argument_array);
         }
         /* -rB | rebase-branch to rebase a branch onto another branch (not a squash). */
-        case E_PROPER_ARG_TYPE_REBASE_BRANCH: {
+        case E_PROPER_ARG_REBASE_BRANCH: {
             setup(argument_array);
             return handle_rebase_branch(argument_array);
         }
         /* -cc | clear-cache to clear any caches leftover. */
-        case E_PROPER_ARG_TYPE_CLEAR_CACHE: {
+        case E_PROPER_ARG_CLEAR_CACHE: {
             setup(argument_array);
             return handle_clear_cache();
         }
+        /* -rs | restore to rollback to the first commit, and then checkout the head. */
+        case E_PROPER_ARG_RESTORE: {
+            setup(argument_array);
+            return handle_restore();
+        }
         /* -aT | add-tag to add a tag to the repository for a specified commit. */
-        case E_PROPER_ARG_TYPE_ADD_TAG: {
+        case E_PROPER_ARG_ADD_TAG: {
             setup(argument_array);
             return handle_add_tag(argument_array);
         }
         /* -dT | delete-tag to delete a tag from the repository. */
-        case E_PROPER_ARG_TYPE_DELETE_TAG: {
+        case E_PROPER_ARG_DELETE_TAG: {
             return handle_delete_tag(argument_array);
         }
         default: {}

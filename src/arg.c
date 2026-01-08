@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-06
+ * @date 2026-01-07
  */
 #include "arg.h"
 
@@ -113,21 +113,21 @@ parse_arguments(int argc, char** argv) {
         if (!strcmp(cli_arg, "-i") || !strcmp(cli_arg, "init")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_INIT;
+            parsed_arg->details.proper = E_PROPER_ARG_INIT;
             add_value_to_parsed_argument();
             goto _push;
         }
         if (!strcmp(cli_arg, "-c") || !strcmp(cli_arg, "commit")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_COMMIT;
+            parsed_arg->details.proper = E_PROPER_ARG_COMMIT;
             add_value_to_parsed_argument();
             goto _push;
         }
         if (!strcmp(cli_arg, "-r") || !strcmp(cli_arg, "rollback")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_ROLLBACK;
+            parsed_arg->details.proper = E_PROPER_ARG_ROLLBACK;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
@@ -135,7 +135,7 @@ parse_arguments(int argc, char** argv) {
         if (!strcmp(cli_arg, "-C") || !strcmp(cli_arg, "checkout")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_CHECKOUT;
+            parsed_arg->details.proper = E_PROPER_ARG_CHECKOUT;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
@@ -143,14 +143,14 @@ parse_arguments(int argc, char** argv) {
         if (!strcmp(cli_arg, "-l") || !strcmp(cli_arg, "log")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_LOG;
+            parsed_arg->details.proper = E_PROPER_ARG_LOG;
             add_value_to_parsed_argument();
             goto _push;
         }
         if (!strcmp(cli_arg, "-a") || !strcmp(cli_arg, "add")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_ADD_INODE;
+            parsed_arg->details.proper = E_PROPER_ARG_ADD_INODE;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
@@ -158,7 +158,7 @@ parse_arguments(int argc, char** argv) {
         if (!strcmp(cli_arg, "-d") || !strcmp(cli_arg, "delete")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_DELETE_INODE;
+            parsed_arg->details.proper = E_PROPER_ARG_DELETE_INODE;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
@@ -166,7 +166,7 @@ parse_arguments(int argc, char** argv) {
         if (!strcmp(cli_arg, "-aB") || !strcmp(cli_arg, "add-branch")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_CREATE_BRANCH;
+            parsed_arg->details.proper = E_PROPER_ARG_CREATE_BRANCH;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
@@ -174,7 +174,7 @@ parse_arguments(int argc, char** argv) {
         if (!strcmp(cli_arg, "-sB") || !strcmp(cli_arg, "switch-branch")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_SWITCH_BRANCH;
+            parsed_arg->details.proper = E_PROPER_ARG_SWITCH_BRANCH;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
@@ -182,7 +182,7 @@ parse_arguments(int argc, char** argv) {
         if (!strcmp(cli_arg, "-rB") || !strcmp(cli_arg, "rebase-branch")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_REBASE_BRANCH;
+            parsed_arg->details.proper = E_PROPER_ARG_REBASE_BRANCH;
             add_value_to_parsed_argument();
             expected_parameter_argument(2);
             goto _push;
@@ -190,7 +190,7 @@ parse_arguments(int argc, char** argv) {
         if (!strcmp(cli_arg, "-dB") || !strcmp(cli_arg, "delete-branch")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_DELETE_BRANCH;
+            parsed_arg->details.proper = E_PROPER_ARG_DELETE_BRANCH;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
@@ -198,14 +198,21 @@ parse_arguments(int argc, char** argv) {
         if (!strcmp(cli_arg, "-cc") || !strcmp(cli_arg, "clear-cache")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_CLEAR_CACHE;
+            parsed_arg->details.proper = E_PROPER_ARG_CLEAR_CACHE;
+            add_value_to_parsed_argument();
+            goto _push;
+        }
+        if (!strcmp(cli_arg, "-rs") || !strcmp(cli_arg, "restore")) {
+            check_if_proper_already_captured();
+            parsed_arg->type = E_PROPER_ARGUMENT;
+            parsed_arg->details.proper = E_PROPER_ARG_RESTORE;
             add_value_to_parsed_argument();
             goto _push;
         }
         if (!strcmp(cli_arg, "-aT") || !strcmp(cli_arg, "add-tag")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_ADD_TAG;
+            parsed_arg->details.proper = E_PROPER_ARG_ADD_TAG;
             add_value_to_parsed_argument();
             expected_parameter_argument(2);
             goto _push;
@@ -213,7 +220,7 @@ parse_arguments(int argc, char** argv) {
         if (!strcmp(cli_arg, "-dT") || !strcmp(cli_arg, "delete-tag")) {
             check_if_proper_already_captured();
             parsed_arg->type = E_PROPER_ARGUMENT;
-            parsed_arg->details.proper = E_PROPER_ARG_TYPE_DELETE_TAG;
+            parsed_arg->details.proper = E_PROPER_ARG_DELETE_TAG;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
@@ -226,72 +233,72 @@ parse_arguments(int argc, char** argv) {
         }
         if (!strcmp(cli_arg, "--all")) {
             parsed_arg->type = E_FLAG_TO_ARGUMENT;
-            parsed_arg->details.flag = E_FLAG_ARG_TYPE_ALL;
+            parsed_arg->details.flag = E_FLAG_ARG_ALL;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
         }
         if (!strcmp(cli_arg, "--no-recurse")) {
             parsed_arg->type = E_FLAG_TO_ARGUMENT;
-            parsed_arg->details.flag = E_FLAG_ARG_TYPE_NO_RECURSE;
+            parsed_arg->details.flag = E_FLAG_ARG_NO_RECURSE;
             add_value_to_parsed_argument();
             goto _push;
         }
         if (!strcmp(cli_arg, "--hard")) {
             parsed_arg->type = E_FLAG_TO_ARGUMENT;
-            parsed_arg->details.flag = E_FLAG_ARG_TYPE_HARD;
+            parsed_arg->details.flag = E_FLAG_ARG_HARD;
             add_value_to_parsed_argument();
             goto _push;
         }
         if (!strcmp(cli_arg, "--graph")) {
             parsed_arg->type = E_FLAG_TO_ARGUMENT;
-            parsed_arg->details.flag = E_FLAG_ARG_TYPE_GRAPH;
+            parsed_arg->details.flag = E_FLAG_ARG_GRAPH;
             add_value_to_parsed_argument();
             goto _push;
         }
         if (!strcmp(cli_arg, "--filter")) {
             parsed_arg->type = E_FLAG_TO_ARGUMENT;
-            parsed_arg->details.flag = E_FLAG_ARG_TYPE_FILTER;
+            parsed_arg->details.flag = E_FLAG_ARG_FILTER;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
         }
         if (!strcmp(cli_arg, "--max-count")) {
             parsed_arg->type = E_FLAG_TO_ARGUMENT;
-            parsed_arg->details.flag = E_FLAG_ARG_TYPE_MAX_COUNT;
+            parsed_arg->details.flag = E_FLAG_ARG_MAX_COUNT;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
         }
         if (!strcmp(cli_arg, "--verbose")) {
             parsed_arg->type = E_FLAG_TO_ARGUMENT;
-            parsed_arg->details.flag = E_FLAG_ARG_TYPE_VERBOSE;
+            parsed_arg->details.flag = E_FLAG_ARG_VERBOSE;
             add_value_to_parsed_argument();
             goto _push;
         }
         if (!strcmp(cli_arg, "--quiet")) {
             parsed_arg->type = E_FLAG_TO_ARGUMENT;
-            parsed_arg->details.flag = E_FLAG_ARG_TYPE_QUIET;
+            parsed_arg->details.flag = E_FLAG_ARG_QUIET;
             add_value_to_parsed_argument();
             goto _push;
         }
         if (!strcmp(cli_arg, "--from")) {
             parsed_arg->type = E_FLAG_TO_ARGUMENT;
-            parsed_arg->details.flag = E_FLAG_ARG_TYPE_FROM;
+            parsed_arg->details.flag = E_FLAG_ARG_FROM;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
         }
         if (!strcmp(cli_arg, "--message") || !strcmp(cli_arg, "--m")) {
             parsed_arg->type = E_FLAG_TO_ARGUMENT;
-            parsed_arg->details.flag = E_FLAG_ARG_TYPE_MESSAGE;
+            parsed_arg->details.flag = E_FLAG_ARG_MESSAGE;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;
         }
         if (!strcmp(cli_arg, "--tag")) {
             parsed_arg->type = E_FLAG_TO_ARGUMENT;
-            parsed_arg->details.flag = E_FLAG_ARG_TYPE_TAG;
+            parsed_arg->details.flag = E_FLAG_ARG_TAG;
             add_value_to_parsed_argument();
             expected_parameter_argument(1);
             goto _push;

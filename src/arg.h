@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2025-12-15
+ * @date 2026-01-07
  */
 #ifndef ARG_H
 #define ARG_H
@@ -14,23 +14,24 @@
  *  program; also may have proceeding flag or parameter arguments to modify their behavior.
  */
 typedef enum {
-    E_PROPER_ARG_TYPE_NONE = 0, /* no command type specified. */
-    E_PROPER_ARG_TYPE_INIT = 0x1, /* initialize a new repository. */
-    E_PROPER_ARG_TYPE_COMMIT = 0x2, /* commit changes to the repository. */
-    E_PROPER_ARG_TYPE_ROLLBACK = 0x3, /* rollback to a previous commit. */
-    E_PROPER_ARG_TYPE_CHECKOUT = 0x4, /* checkout a branch or commit. */
-    E_PROPER_ARG_TYPE_LOG = 0x5, /* show the log of the repository. */
-    E_PROPER_ARG_TYPE_CREATE_BRANCH = 0x6, /* create a branch. */
-    E_PROPER_ARG_TYPE_SWITCH_BRANCH = 0x7, /* switch to a branch. */
-    E_PROPER_ARG_TYPE_REBASE_BRANCH = 0x8, /* rebase a branch onto another. */
-    E_PROPER_ARG_TYPE_DELETE_BRANCH = 0x9, /* delete a branch. */
-    E_PROPER_ARG_TYPE_ADD_INODE = 0xa, /* add a file or folder to the branch. */
-    E_PROPER_ARG_TYPE_DELETE_INODE = 0xb, /* delete a file or folder from the branch. */
-    E_PROPER_ARG_TYPE_HELP = 0xc, /* show the help message. */
-    E_PROPER_ARG_TYPE_VERSION = 0xd, /* show the version of the program. */
-    E_PROPER_ARG_TYPE_CLEAR_CACHE = 0xe, /* clear the object cache. */
-    E_PROPER_ARG_TYPE_ADD_TAG = 0xf, /* add a tag for a commit. */
-    E_PROPER_ARG_TYPE_DELETE_TAG = 0x10, /* delete a tag for a commit. */
+    E_PROPER_ARG_NONE = 0, /* no command type specified. */
+    E_PROPER_ARG_INIT = 0x1, /* initialize a new repository. */
+    E_PROPER_ARG_COMMIT = 0x2, /* commit changes to the repository. */
+    E_PROPER_ARG_ROLLBACK = 0x3, /* rollback to a previous commit. */
+    E_PROPER_ARG_CHECKOUT = 0x4, /* checkout a branch or commit. */
+    E_PROPER_ARG_LOG = 0x5, /* show the log of the repository. */
+    E_PROPER_ARG_CREATE_BRANCH = 0x6, /* create a branch. */
+    E_PROPER_ARG_SWITCH_BRANCH = 0x7, /* switch to a branch. */
+    E_PROPER_ARG_REBASE_BRANCH = 0x8, /* rebase a branch onto another. */
+    E_PROPER_ARG_DELETE_BRANCH = 0x9, /* delete a branch. */
+    E_PROPER_ARG_ADD_INODE = 0xa, /* add a file or folder to the branch. */
+    E_PROPER_ARG_DELETE_INODE = 0xb, /* delete a file or folder from the branch. */
+    E_PROPER_ARG_HELP = 0xc, /* show the help message. */
+    E_PROPER_ARG_VERSION = 0xd, /* show the version of the program. */
+    E_PROPER_ARG_CLEAR_CACHE = 0xe, /* clear the object cache. */
+    E_PROPER_ARG_RESTORE = 0xf, /* restore the entire branch. */
+    E_PROPER_ARG_ADD_TAG = 0x10, /* add a tag for a commit. */
+    E_PROPER_ARG_DELETE_TAG = 0x11, /* delete a tag for a commit. */
 } e_proper_arg_ty_t;
 
 /**
@@ -40,17 +41,17 @@ typedef enum {
  *  argument they are modifying, they are also very strictly enforced.
  */
 typedef enum {
-    E_FLAG_ARG_TYPE_ALL = 0x0, /* --all with a proceeding subdirectory to be recursed over. */
-    E_FLAG_ARG_TYPE_NO_RECURSE = 0x1, /* --no-recurse with a proceeding subdirectory. */
-    E_FLAG_ARG_TYPE_HARD = 0x2, /* --hard flag for rollback/checkout. */
-    E_FLAG_ARG_TYPE_GRAPH = 0x3, /* --graph flag for log. */
-    E_FLAG_ARG_TYPE_FILTER = 0x4, /* --filter flag for log with a proceeding filter string. */
-    E_FLAG_ARG_TYPE_MAX_COUNT = 0x5, /* --max-count flag for a log with a proceeding integer. */
-    E_FLAG_ARG_TYPE_VERBOSE = 0x6, /* --verbose flag for log. */
-    E_FLAG_ARG_TYPE_QUIET = 0x7, /* --quiet flag for log. */
-    E_FLAG_ARG_TYPE_FROM = 0x8, /* --from flag for creation of a branch. */
-    E_FLAG_ARG_TYPE_MESSAGE = 0x9, /* --m | ch--message flag for creation of a commit. */
-    E_FLAG_ARG_TYPE_TAG = 0xa, /* --tag flag for rollback/checkout. */
+    E_FLAG_ARG_ALL = 0x0, /* --all with a proceeding subdirectory to be recursed over. */
+    E_FLAG_ARG_NO_RECURSE = 0x1, /* --no-recurse with a proceeding subdirectory. */
+    E_FLAG_ARG_HARD = 0x2, /* --hard flag for rollback/checkout. */
+    E_FLAG_ARG_GRAPH = 0x3, /* --graph flag for log. */
+    E_FLAG_ARG_FILTER = 0x4, /* --filter flag for log with a proceeding filter string. */
+    E_FLAG_ARG_MAX_COUNT = 0x5, /* --max-count flag for a log with a proceeding integer. */
+    E_FLAG_ARG_VERBOSE = 0x6, /* --verbose flag for log. */
+    E_FLAG_ARG_QUIET = 0x7, /* --quiet flag for log. */
+    E_FLAG_ARG_FROM = 0x8, /* --from flag for creation of a branch. */
+    E_FLAG_ARG_MESSAGE = 0x9, /* --m | ch--message flag for creation of a commit. */
+    E_FLAG_ARG_TAG = 0xa, /* --tag flag for rollback/checkout. */
 } e_flag_arg_ty_t;
 
 /**
