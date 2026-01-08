@@ -39,6 +39,8 @@ Here are some commands to get you started on your local repository.
     lit add-tag 7fc... rebase_1  # create a tag called 'rebase_1' for important commits and rebases.
     lit delete-tag rebase_1      # remove the tag called 'rebase_1' (this cannot be undone).
     lit clear-cache              # clear any remaining cache from the repository.
+    lit log                      # view the commit history of the current branch.
+    lit restore                  # restore the entire state of the repository to the head commit.
     
     # confused or lost with commands? simply run...
     lit --help
@@ -77,8 +79,6 @@ To build **lit**, simply clone the repository and run make.
 ## Roadmap
 
 There are still many things to add and fix, some of which are listed below.
-
-- Rebuilding / restoring repositories if tampered with during readonly mode.
 
 - Better configuration support (more things other than verbose output).
 
