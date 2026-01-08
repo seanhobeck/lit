@@ -2,7 +2,7 @@
  * @author Sean Hobeck
  * @date 2026-01-07
  */
-#include "cli.h"
+#include "../cli.h"
 
 /*! @uses printf. */
 #include <stdio.h>
@@ -17,40 +17,40 @@
 #include <stdbool.h>
 
 /*! @uses diff_create, diff_write, diff_read. */
-#include "diff.h"
+#include "../diff.h"
 
 /*! @uses repo_create, repository_read, repository_write. */
-#include "repo.h"
+#include "../core/repo.h"
 
 /*! @uses branch_create, branch_write, branch_read, branch_add_commit. */
-#include "branch.h"
+#include "../core/branch.h"
 
 /*! @uses rebase_branch, e_rebase_result_t. */
-#include "rebase.h"
+#include "../rebase.h"
 
 /*! @uses rollback, checkout. */
-#include "ops.h"
+#include "../ops.h"
 
 /*! @uses pvc_t*, pvc_inode_t*, pvc_collect. */
-#include "inw.h"
+#include "../inw.h"
 
 /*! @uses scan_object_cache */
 #include "cache.h"
 
 /*! @uses tag_t, create_tag, write_tag, ... */
-#include "tag.h"
+#include "../tag.h"
 
 /*! @uses shelve_changes */
-#include "shelve.h"
+#include "../core/shelve.h"
 
 /*! @uses config_t, read_config */
 #include "conf.h"
 
 /*! @uses log, E_LOG_... */
-#include "log.h"
+#include "../log.h"
 
 /*! @uses a lot of things. */
-#include "utl.h"
+#include "../utl.h"
 
 /* internal ptrs. */
 internal repository_t* repository;

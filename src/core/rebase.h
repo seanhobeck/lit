@@ -6,7 +6,7 @@
 #define REBASE_H
 
 /*! @uses repository_t, find_common_ancestor, find_index_commit. */
-#include "repo.h"
+#include "../repo.h"
 
 /**
  * enum to describe the possible results of calling the rebase operation on two branches. these

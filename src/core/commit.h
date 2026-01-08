@@ -6,13 +6,13 @@
 #define COMMIT_H
 
 /*! @uses sha1_t, sha1, strsha1. */
-#include "hash.h"
+#include "../hash.h"
 
 /*! @uses time_t */
 #include <time.h>
 
 /*! @uses dyna_t, dyna_push, _foreach, ...*/
-#include "dyna.h"
+#include "../dyna.h"
 
 /*! @uses bool, true, false. */
 #include <stdbool.h>

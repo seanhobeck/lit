@@ -2,7 +2,7 @@
  * @author Sean Hobeck
  * @date 2026-01-06
  */
-#include "tag.h"
+#include "../tag.h"
 
 /*! @uses assert. */
 #include <assert.h>
@@ -11,7 +11,7 @@
 #include <stdlib.h>
 
 /*! @uses strdup. */
-#include "utl.h"
+#include "../utl.h"
 
 /*! @uses sha1_t, sha1. */
 #include "hash.h"

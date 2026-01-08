@@ -2,7 +2,7 @@
  * @author Sean Hobeck
  * @date 2026-01-06
  */
-#include "repo.h"
+#include "../repo.h"
 
 /*! @uses assert. */
 #include <assert.h>

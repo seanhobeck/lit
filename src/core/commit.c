@@ -2,7 +2,7 @@
  * @author Sean Hobeck
  * @date 2026-01-06
  */
-#include "commit.h"
+#include "../commit.h"
 
 /*! @uses mkdir, getcwd. */
 #include <sys/stat.h>
@@ -23,13 +23,13 @@
 #include <assert.h>
 
 /*! @uses diff_t. */
-#include "diff.h"
+#include "../diff.h"
 
 /*! @uses MKDIR_MOWNER. */
 #include "utl.h"
 
 /*! @uses llog, E_LOGGER_LEVEL_INFO. */
-#include "log.h"
+#include "../log.h"
 
 /*!~ @note this is a format for the main parts of data that are written at the start (header) of
  *  the file for a commit, stored within a branch, within the repository. */

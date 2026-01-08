@@ -2,7 +2,7 @@
  * @author Sean Hobeck
  * @date 2026-01-06
  */
-#include "rebase.h"
+#include "../rebase.h"
 
 /*! @uses checkout_op. */
 #include "ops.h"

@@ -9,7 +9,7 @@
 #include "hash.h"
 
 /*! @uses dyna_t, dyna_push, _foreach... */
-#include "dyna.h"
+#include "../dyna.h"
 
 /**
  * a data structure representing a branch within the version control system. a branch is a

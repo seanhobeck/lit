@@ -2,7 +2,7 @@
  * @author Sean Hobeck
  * @date 2026-01-06
  */
-#include "shelve.h"
+#include "../shelve.h"
 
 /*! @uses mkdir. */
 #include <sys/stat.h>
@@ -17,7 +17,7 @@
 #include <stdlib.h>
 
 /*! @uses fexistpd. */
-#include "utl.h"
+#include "../utl.h"
 
 /*! @uses log, E_LOGGER_LEVEL_ERROR, E_LOGGER_LEVEL_INFO. */
 #include "log.h"

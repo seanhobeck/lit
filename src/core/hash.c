@@ -2,7 +2,7 @@
  * @author Sean Hobeck
  * @date 2026-01-06
  */
-#include "hash.h"
+#include "../hash.h"
 
 /*! @uses calloc, free, itoa. */
 #include <stdlib.h>

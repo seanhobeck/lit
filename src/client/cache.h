@@ -6,7 +6,7 @@
 #define CACHE_H
 
 /*! @uses repository_t. */
-#include "repo.h"
+#include "../core/repo.h"
 
 /** enum for all possible cache results; some of the explanations provided below. */
 typedef enum {

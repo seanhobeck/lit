@@ -2,7 +2,7 @@
  * @author Sean Hobeck
  * @date 2026-01-06
  */
-#include "log.h"
+#include "../log.h"
 
 /*! @uses va_list, va_start, va_end.. */
 #include <stdarg.h>

@@ -2,7 +2,7 @@
  * @author Sean Hobeck
  * @date 2026-01-07
  */
-#include "arg.h"
+#include "../arg.h"
 
 /*! @uses printf, perror, fopen, fclose, fscanf, sprintf. */
 #include <stdio.h>
@@ -17,10 +17,10 @@
 #include <stdbool.h>
 
 /*! @uses internal. */
-#include "utl.h"
+#include "../core/utl.h"
 
 /*! @uses llog, E_LOGGER_LEVEL_ERROR. */
-#include "log.h"
+#include "../core/log.h"
 
 /* program version macro. */
 #define VERSION "1.16.06"

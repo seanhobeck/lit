@@ -2,10 +2,10 @@
  * @author Sean Hobeck
  * @date 2026-01-06
  */
-#include "branch.h"
+#include "../branch.h"
 
 /*! @uses commit_t. */
-#include "commit.h"
+#include "../commit.h"
 
 /*! @uses assert. */
 #include <assert.h>
