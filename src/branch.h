@@ -5,6 +5,9 @@
 #ifndef BRANCH_H
 #define BRANCH_H
 
+/*! @uses snprintf, FILE*. */
+#include <stdio.h>
+
 /*! @uses sha1_t, sha1, sha256_t, sha256. */
 #include "hash.h"
 
@@ -43,6 +46,15 @@ void
 write_branch(const branch_t* branch);
 
 /**
+ * @brief write the branch pointer to a generic open file stream.
+ *
+ * @param stream the stream from fopen() on some file descriptor.
+ * @param branch the branch to be written to the stream.
+ */
+void
+write_branch_to_stream(FILE* stream, const branch_t* branch);
+
+/**
  * @brief read a branch from a file in our '.lit' directory.
  *
  * @param name the name of our branch.
@@ -50,4 +62,13 @@ write_branch(const branch_t* branch);
  */
 branch_t*
 read_branch(const char* name);
+
+/**
+ * @brief read a branch from a generic open file stream.
+ *
+ * @param stream the stream from which to read from.
+ * @return a pointer to an allocated branch with all the data.
+ */
+branch_t*
+read_branch_from_stream(FILE* stream);
 #endif /* BRANCH_H */

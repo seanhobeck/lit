@@ -5,6 +5,12 @@
 #ifndef DIFF_H
 #define DIFF_H
 
+/*! @uses FILE*. */
+#include <stdio.h>
+
+/*! @uses bool, true, false. */
+#include <stdbool.h>
+
 /*! @uses ucrc32_t, crc32. */
 #include "hash.h"
 
@@ -78,6 +84,15 @@ void
 write_diff(const diff_t* diff, const char* path);
 
 /**
+ * @brief
+ *
+ * @param stream the stream from fopen() on some file descriptor.
+ * @param diff the diff to be written to the stream.
+ */
+void
+write_diff_from_stream(FILE* stream, const diff_t* diff);
+
+/**
  * @brief read a diff file from disk and return a diff structure.
  *
  * @param path the path to the diff file to read.
@@ -85,4 +100,13 @@ write_diff(const diff_t* diff, const char* path);
  */
 diff_t*
 read_diff(const char* path);
+
+/**
+ * @brief read a diff from a generic open file stream.
+ *
+ * @param stream the stream from which to read from.
+ * @return a pointer to an allocated diff with all the data.
+ */
+diff_t*
+read_diff_from_stream(FILE* stream);
 #endif /* DIFF_H */

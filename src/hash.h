@@ -1,15 +1,18 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-08
+ * @date 2026-01-09
  */
 #ifndef HASH_H
 #define HASH_H
 
 /* type definition for a sha1 hash, 20 bytes long. */
 typedef unsigned char sha1_t[20ul];
+#define SHA1_SIZE 20u
+#define SHA1_MAX_CHARS 40u /* plus null term. */
 
 /* type definition for a crc32 hash, 10 bytes long. */
 typedef unsigned int ucrc32_t;
+#define UCRC32_MAX_CHARS 8u /* plus null term. */
 
 /**
  * @brief generate a sha1 hash from the given data.

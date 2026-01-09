@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-08
+ * @date 2026-01-09
  */
 #include "diff.h"
 
@@ -27,10 +27,6 @@
 
 /*! @uses llog, E_LOGGER_LEVEL_INFO. */
 #include "log.h"
-
-/*!~ @note this is a format for the main parts of data that are written at the start (header) of
- *  the file for a diff., stored within a commit, stored within a branch, within the repository. */
-#define DIFF_HEADER_FORMAT "type:%d\nstored:%127[^\n]\nnew:%127[^\n]\ncrc32:%u\n"
 
 /**
  * @brief calculate the crc32 hash of a file based on its contents.
@@ -125,7 +121,7 @@ append_to_diff(diff_t* diff, const char* fmt, ...) {
     assert(fmt != 0x0);
 
     /* create a buffer for the line. */
-    char buffer[MAX_LINE_LEN];
+    char buffer[LINE_MAX_CHARS];
     va_list args;
     va_start(args, fmt);
     vsnprintf(buffer, sizeof buffer, fmt, args);
@@ -347,29 +343,40 @@ write_diff(const diff_t* diff, const char* path) {
     assert(path != 0x0);
 
     /* open the file for writing. */
-    FILE* f = fopen(path, "w");
-    if (!f) {
+    FILE* stream = fopen(path, "w");
+    if (!stream) {
         llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open file for writing.\n");
         exit(EXIT_FAILURE); /* exit on failure. */
     }
 
+    /* write and then close. */
+    write_diff_from_stream(stream, diff);
+    fclose(stream);
+}
+
+/**
+ * @brief
+ *
+ * @param stream the stream from fopen() on some file descriptor.
+ * @param diff the diff to be written to the stream.
+ */
+void
+write_diff_from_stream(FILE* stream, const diff_t* diff) {
     /* write the header, including the hash. */
-    fprintf(f, "type:%d\nstored:%s\nnew:%s\ncrc32:%u\n\n", diff->type, \
+    fprintf(stream, "type:%d\nstored:%s\nnew:%s\ncrc32:%u\n\n", diff->type, \
         diff->stored_path, diff->new_path, diff->crc);
 
     /* if the type is none, or something to do with the folder,
        we haven't written anything, and it can be ignored. */
     if (diff->type == E_DIFF_TYPE_NONE || diff->type == E_DIFF_FOLDER_NEW || \
         diff->type == E_DIFF_FOLDER_MODIFIED || diff->type == E_DIFF_FOLDER_DELETED) {
-        fclose(f);
         return;
     }
 
     /* then continuously write the lines. */
     _foreach(diff->lines, char*, line)
-        fprintf(f, "%s\n", line);
+        fprintf(stream, "%s\n", line);
     _endforeach;
-    fclose(f);
 }
 
 /**
@@ -383,19 +390,33 @@ read_diff(const char* path) {
     /* assert on the path. */
     assert(path != 0x0);
 
-    /* create a temporary diff structure. */
-    diff_t* diff = calloc(1, sizeof *diff);
-
     /* open the file for reading. */
-    FILE* f = fopen(path, "r");
-    if (!f) {
+    FILE* stream = fopen(path, "r");
+    if (!stream) {
         llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open file for reading.\n");
         exit(EXIT_FAILURE); /* exit on failure. */
     }
 
+    /* return the diff structure. */
+    diff_t* diff = read_diff_from_stream(stream);
+    fclose(stream);
+    return diff;
+}
+
+/**
+ * @brief read a diff from a generic open file stream.
+ *
+ * @param stream the stream from which to read from.
+ * @return a pointer to an allocated diff with all the data.
+ */
+diff_t*
+read_diff_from_stream(FILE* stream) {
+    /* create a temporary diff structure. */
+    diff_t* diff = calloc(1, sizeof *diff);
+
     /* read the header first. */
-    diff->stored_path = calloc(1, 128);
-    diff->new_path = calloc(1, 128);
+    diff->stored_path = calloc(1, PATH_MAX);
+    diff->new_path = calloc(1, PATH_MAX);
 
     /* create the dynamically allocated list. */
     diff->lines = dyna_create();
@@ -403,15 +424,28 @@ read_diff(const char* path) {
     /* allocate memory for the names. */
     if (!diff->stored_path || !diff->new_path) {
         llog(E_LOGGER_LEVEL_ERROR,"calloc failed; could not allocate memory for diff header.\n");
-        fclose(f);
         exit(EXIT_FAILURE); /* exit on failure. */
     }
-    int scanned = fscanf(f, DIFF_HEADER_FORMAT, \
-        &diff->type, diff->stored_path, diff->new_path, &diff->crc);
+
+    /* scan the header. */
+    char type_string[32 + 1], crc32_string[32 + 1]; /* plus null term. */
+    int scanned = fscanf(stream,
+        "type:%32[0-9]\n"
+        "stored:%4095[^\n]\n"
+        "new:%4095[^\n]\n"
+        "crc32:%32[0-9]\n",
+        type_string,
+        diff->stored_path,
+        diff->new_path,
+        crc32_string);
     if (scanned != 4) {
         llog(E_LOGGER_LEVEL_ERROR,"fscanf failed; could not read diff header.\n");
         exit(EXIT_FAILURE); /* exit on failure. */
     }
+
+    /* use strtoul & strtol for conversion. */
+    diff->type = sstrtosz(type_string);
+    diff->crc = sstrtosz(crc32_string);
 
     /* if the type is none, or something to do with the folder,
        we haven't written anything, and it can be ignored. */
@@ -421,8 +455,8 @@ read_diff(const char* path) {
     }
 
     /* we now read each of the lines in the diff file. */
-    char buffer[MAX_LINE_LEN];
-    while (fgets(buffer, 256, f)) {
+    char buffer[PATH_MAX];
+    while (fgets(buffer, PATH_MAX, stream)) {
         /* strip newline. */
         size_t len = strlen(buffer);
         if (len > 0 && buffer[len - 1] == '\n') {
@@ -433,7 +467,6 @@ read_diff(const char* path) {
         append_to_diff(diff, "%s", buffer);
     }
 
-    /* return the diff structure. */
-    fclose(f);
+    /* return the diff. */
     return diff;
 }

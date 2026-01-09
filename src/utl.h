@@ -1,15 +1,27 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-08
+ * @date 2026-01-09
  */
 #ifndef UTL_H
 #define UTL_H
+
+/*! @uses PATH_MAX. */
+#include <linux/limits.h>
 
 /* the starting size to calculate for is 8192 lines of 256 chars per line. */
 #define MAX_LINES 8192ul
 
 /* at the most 256 characters can be stored in a line. */
-#define MAX_LINE_LEN 256ul
+#define LINE_MAX_CHARS 256ul
+
+/* at the most 256 characters can be used in a name. */
+#define NAME_MAX_CHARS 256ul
+
+/* at the most 8192 characters in a message for a commit. */
+#define MESSAGE_MAX_CHARS 8192ul
+
+/* at the most 80 chars in a timestamp. */
+#define TIMESTAMP_MAX_CHARS 80ul
 
 /* owner(user) only read/write permissions on a folder. */
 #define MKDIR_MOWNER 0755
@@ -138,4 +150,13 @@ fforwardls(char** lines, size_t n, size_t* k);
  */
 char*
 rpwd(const char* path);
+
+/**
+ * @brief a safe strtoul implementation that reports on errors.
+ *
+ * @param string the string to be converted.
+ * @return the conversion of the string to a size_t.
+ */
+size_t
+sstrtosz(const char* string);
 #endif /* UTL_H */

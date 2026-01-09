@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-08
+ * @date 2026-01-09
  */
 #include "branch.h"
 
@@ -13,18 +13,14 @@
 /*! @uses strlen, strncpy. */
 #include <string.h>
 
-/*! @uses snprintf. */
-#include <stdio.h>
-
 /*! @uses strtoha. */
 #include "utl.h"
 
 /*! @uses commit_t. */
 #include "commit.h"
 
-/*!~ @note this is a format for the main parts of data that are written at the start (header) of
- *  the file for a branch stored within the repository. */
-#define BRANCH_HEADER_FORMAT "name:%128[^\n]\nsha1:%40[^\n]\nidx:%lu\ncount:%lu\n"
+/*! @uses llog, E_LOGGER_LEVEL_ERROR. */
+#include "log.h"
 
 
 /**
@@ -49,11 +45,11 @@ create_branch(const char* name) {
     branch->commits = dyna_create();
 
     /* create the branch path based on the cwd. */
-    branch->path = calloc(1, 256);
+    branch->path = calloc(1, PATH_MAX);
     sprintf(branch->path, ".lit/refs/heads/%s", branch->name);
 
     /* calculate the sha1 based on the name, and randomized pointer addresses in memory to the
-     *  branch and to the branches fields (path and name) respectively. */
+     *  branch and to the branches fields (path and name) respectively. todo: fix this. */
     unsigned char* random = calloc(1, 256);
     snprintf((char*) random, 256, "%p%s%s", &branch, branch->name, branch->path);
     sha1(random, 256, branch->hash);
@@ -72,21 +68,33 @@ write_branch(const branch_t* branch) {
     assert(branch != 0x0);
 
     /* create a file for the branch. */
-    FILE* f = fopen(branch->path, "w");
-    if (!f) {
-        fprintf(stderr,"fopen failed; could not open branch file for writing.\n");
+    FILE* stream = fopen(branch->path, "w");
+    if (!stream) {
+        llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open branch file for writing.\n");
         exit(EXIT_FAILURE); /* exit on failure. */
     }
 
-    /* write the branch name and hash to the file. */
-    fprintf(f, "name:%s\nsha1:%s\nidx:%lu\ncount:%lu\n", \
+    /* call to write everything. */
+    write_branch_to_stream(stream, branch);
+    fclose(stream);
+}
+
+/**
+ * @brief write the branch pointer to a generic open file stream.
+ *
+ * @param stream the stream from fopen() on some file descriptor.
+ * @param branch the branch to be written to the stream.
+ */
+void
+write_branch_to_stream(FILE* stream, const branch_t* branch) {
+    /* write the branch name and hash to the stream. */
+    fprintf(stream, "name:%s\nsha1:%s\nidx:%zu\ncount:%zu\n", \
         branch->name, strsha1(branch->hash), branch->head, branch->commits->length);
 
     /* write out each respective sha1 hash for every commit. */
     _foreach(branch->commits, commit_t*, commit)
-        fprintf(f, "%s\n", strsha1(commit->hash));
+        fprintf(stream, "%s\n", strsha1(commit->hash));
     _endforeach;
-    fclose(f);
 }
 
 /**
@@ -100,56 +108,87 @@ read_branch(const char* name) {
     /* assert on the name. */
     assert(name != 0x0);
 
+    /* create the branch path based on the cwd. */
+    char* path = calloc(1, PATH_MAX);
+    sprintf(path, ".lit/refs/heads/%s", name);
+
+    /* open the branch file for reading. */
+    FILE* stream = fopen(path, "r");
+    if (!stream) {
+        llog(E_LOGGER_LEVEL_ERROR,"fopen failed; could not open branch file for reading.\n");
+        exit(EXIT_FAILURE); /* exit on failure. */
+    }
+
+    /* call function to do this for us. */
+    branch_t* result = read_branch_from_stream(stream);
+    result->path = strdup(path);
+    free(path);
+    return result;
+}
+
+/**
+ * @brief read a branch from a generic open file stream.
+ *
+ * @param stream the stream from which to read from.
+ * @return a pointer to an allocated branch with all the data.
+ */
+branch_t*
+read_branch_from_stream(FILE* stream) {
     /* create a temporary branch structure. */
     branch_t* branch = calloc(1, sizeof *branch);
 
     /* create the dynamic array as well. */
     branch->commits = dyna_create();
 
-    /* create the branch path based on the cwd. */
-    branch->path = calloc(1, 256);
-    sprintf(branch->path, ".lit/refs/heads/%s", name);
-
-    /* open the branch file for reading. */
-    FILE* f = fopen(branch->path, "r");
-    if (!f) {
-        fprintf(stderr,"fopen failed; could not open branch file for reading.\n");
-        exit(EXIT_FAILURE); /* exit on failure. */
-    }
-
     /* read the branch information from the file. */
-    size_t count = 0;
-    branch->name = calloc(1, 129);
-    char *branch_hash = calloc(1, 41);
-    int scanned = fscanf(f, BRANCH_HEADER_FORMAT, \
-        branch->name, branch_hash, &branch->head, &count);
+    branch->name = calloc(1, NAME_MAX_CHARS + 1);
+    char* branch_hash = calloc(1, SHA1_MAX_CHARS + 1);
+    char* head_string = calloc(1, 64 + 1);
+    char* count_string = calloc(1, 64 + 1); /* ^ plus null term. */
+    int scanned = fscanf(stream,
+        "name:%128[^\n]\n"
+        "sha1:%41[^\n]\n"
+        "idx:%64[0-9]\n"
+        "count:%64[0-9]\n", \
+        branch->name,
+        branch_hash,
+        head_string,
+        count_string);
     if (scanned != 4) {
-        fprintf(stderr,"fscanf failed; could not read branch header.\n");
-        fclose(f);
+        llog(E_LOGGER_LEVEL_ERROR,"fscanf failed; could not read branch header.\n");
         exit(EXIT_FAILURE); /* exit on failure. */
     }
+
+    /* convert to integers using sstrtosz. */
+    size_t count = sstrtosz(count_string);
+    branch->head = sstrtosz(head_string);
+    free(count_string);
+    free(head_string);
 
     /* convert to hashes. */
-    unsigned char* _hash = strtoha(branch_hash, 20);
-    memcpy(branch->hash, _hash, 20);
-    free(_hash);
+    unsigned char* temp_hash = strtoha(branch_hash, SHA1_SIZE);
+    memcpy(branch->hash, temp_hash, SHA1_SIZE);
     free(branch_hash);
+    free(temp_hash);
 
-    /* start reading the file for the count of commits, then use the first byte (2 chars) as the
-     *  folder path in .lit/objects/commits/xx, and then the rest (name+2) as the file name. */
+    /* read all the hashes for the commits. */
     for (size_t i = 0; i < count; i++) {
         /* allocate and scan the hash. */
-        char* hash = calloc(1, 41);
-        fscanf(f, "%40[^\n]\n", hash);
+        char* hash = calloc(1, SHA1_MAX_CHARS + 1);
+        if (fscanf(stream, "%40[^\n]\n", hash) != 1) {
+            llog(E_LOGGER_LEVEL_ERROR,"fscanf failed; could not read commit hash for branch.\n");
+            exit(EXIT_FAILURE);
+        }
 
         /* construct the file location from the hash. */
-        char path[256];
-        snprintf(path, 256, ".lit/objects/commits/%.2s/%38s", hash, hash + 2);
+        char* path = calloc(1, PATH_MAX);
+        sprintf(path, ".lit/objects/commits/%.2s/%38s", hash, hash + 2u);
         commit_t* commit = read_commit(path);
 
         /* push to the dynamic array. */
         dyna_push(branch->commits, commit);
         free(hash);
+        free(path);
     }
 
     /* return the branch we have read. */

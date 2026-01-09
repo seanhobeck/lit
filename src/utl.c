@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-08
+ * @date 2026-01-09
  */
 #include "utl.h"
 
@@ -225,7 +225,7 @@ freadls(FILE* fptr, size_t* size) {
     assert(fptr != 0x0);
 
     /* make a maximum line buffer, and allocate the data of the file. */
-    char buffer[MAX_LINE_LEN];
+    char buffer[LINE_MAX_CHARS];
     char** data = calloc(1, sizeof(char*) * MAX_LINES);
     size_t j = MAX_LINES;
 
@@ -236,7 +236,7 @@ freadls(FILE* fptr, size_t* size) {
         size_t len = strlen(buffer);
 
         /* if line is too long and doesn't end in '\n', flush the rest. */
-        if (len == MAX_LINE_LEN - 1 && buffer[len - 1] != '\n') {
+        if (len == LINE_MAX_CHARS - 1 && buffer[len - 1] != '\n') {
             int ch;
             while ((ch = fgetc(fptr)) != '\n' && ch != EOF);
         }
@@ -370,3 +370,21 @@ rpwd(const char* path) {
     }
     return 0x0;
 }
+
+/**
+ * @brief a safe strtoul implementation that reports on errors.
+ *
+ * @param string the string to be converted.
+ * @return the conversion of the string to a size_t.
+ */
+size_t
+sstrtosz(const char* string) {
+    errno = 0x0;
+    char* end = 0x0;
+    size_t result = strtoul(string, &end, 10);
+    if (errno != 0x0 || end == string) {
+        llog(E_LOGGER_LEVEL_ERROR,"strtoul failed; could not convert string to size_t.\n");
+        exit(-1);
+    }
+    return result;
+};

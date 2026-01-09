@@ -8,6 +8,9 @@
 /*! @uses sha1_t, sha1, strsha1. */
 #include "hash.h"
 
+/*! @uses FILE*. */
+#include <stdio.h>
+
 /*! @uses time_t */
 #include <time.h>
 
@@ -49,6 +52,15 @@ void
 write_commit(const commit_t* commit);
 
 /**
+ * @brief write the commit pointer to a generic open file stream.
+ *
+ * @param stream the stream from fopen() on some file descriptor.
+ * @param commit the commit to be written to the stream.
+ */
+void
+write_commit_to_stream(FILE* stream, const commit_t* commit);
+
+/**
  * @brief read a commit from a file in our '.lit' directory under our current branch.
  *
  * @param path the path to the commit file.
@@ -56,4 +68,13 @@ write_commit(const commit_t* commit);
  */
 commit_t*
 read_commit(const char* path);
+
+/**
+ * @brief read a commit from a generic open file stream.
+ *
+ * @param stream the stream from which to read from.
+ * @return a pointer to an allocated commit with all the data.
+ */
+commit_t*
+read_commit_from_stream(FILE* stream);
 #endif /* COMMIT_H */

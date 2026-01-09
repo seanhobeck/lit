@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-08
+ * @date 2026-01-09
  */
 #include "repo.h"
 
@@ -79,8 +79,8 @@ find_index_commit(branch_t* branch, commit_t* commit) {
     /* assert the branch and the commit. */
     assert(branch);
     assert(commit);
-    _foreach_it(branch->commits, const commit_t*, _commit, i)
-        if (memcmp(_commit->hash, commit->hash, 32) == 0) {
+    _foreach_it(branch->commits, const commit_t*, iter_commit, i)
+        if (memcmp(iter_commit->hash, commit->hash, SHA1_SIZE) == 0) {
             return (long) i;
         }
     _endforeach;
@@ -95,7 +95,7 @@ find_index_commit(branch_t* branch, commit_t* commit) {
 repository_t*
 create_repository() {
     /* get the cwd. */
-    char cwd[256];
+    char cwd[PATH_MAX];
     if (getcwd(cwd, sizeof cwd) == 0x0) {
         llog(E_LOGGER_LEVEL_ERROR,"getcwd failed; could not get current working directory.\n");
         exit(EXIT_FAILURE);
@@ -179,14 +179,15 @@ read_repository() {
     }
 
     /* read the current branch index. */
-    size_t length = 0;
-    int scanned = fscanf(f, "active:%lu\ncount:%lu\nreadonly:%b", &repo->idx, \
-        &length, &repo->readonly);
+    size_t length = 0, readonly = 0;
+    int scanned = fscanf(f, "active:%lu\ncount:%lu\nreadonly:%lu", &repo->idx, \
+        &length, &readonly);
     if (scanned != 3) {
         llog(E_LOGGER_LEVEL_ERROR,"fscanf failed; could not read current branch header.\n");
         fclose(f);
         exit(EXIT_FAILURE);
     }
+    repo->readonly = readonly; /* yes narrowing i know. */
 
     /* if there are no branches, return the repository. */
     if (length == 0u) {
@@ -201,21 +202,22 @@ read_repository() {
     /* iterate through the count. */
     for (size_t i = 0; i < length; i++) {
         /* allocate and read. */
-        char* branch_name = calloc(1, 129);
-        scanned = fscanf(f, "%lu:%128[^\n]\n", &i, branch_name);
+        char* branch_name = calloc(1, NAME_MAX_CHARS + 1);
+        scanned = fscanf(f, "%*[^:]:%128[^\n]\n", branch_name);
         if (scanned != 2) {
             llog(E_LOGGER_LEVEL_ERROR,"fscanf failed; could not read branch name.\n");
             fclose(f);
             free(repo->branches);
+            free(branch_name);
             return repo;
         }
 
         /* read the branch from refs/heads/ */
-        char *path = calloc(1, 257);
-        snprintf(path, 256, ".lit/refs/heads/%s", branch_name);
+        char *path = calloc(1, PATH_MAX);
+        sprintf(path, ".lit/refs/heads/%s", branch_name);
         dyna_push(repo->branches, read_branch(branch_name));
-        free(path);
         free(branch_name);
+        free(path);
     };
     return repo;
 }
@@ -269,13 +271,13 @@ create_branch_repository(repository_t* repository, const char* name, const char*
 
     /* copy all the commits over to the new branch. */
     _foreach(from_branch->commits, commit_t*, commit)
-        commit_t* _commit = calloc(1, sizeof *_commit);
-        memcpy(_commit, commit, sizeof *_commit);
+        commit_t* new_commit = calloc(1, sizeof *new_commit);
+        memcpy(new_commit, commit, sizeof *new_commit);
 
         /* keep the sha1 hash on the commit, if we delete a branch
          *  and the changes aren't kept then we simply just removed
          *  them as they are just 'cache'. */
-        dyna_push(branch->commits, commit);
+        dyna_push(branch->commits, new_commit);
     _endforeach;
     branch->head = from_branch->head;
 
@@ -316,9 +318,10 @@ delete_branch_repository(repository_t* repository, const char* name) {
     }
 
     /* remove the branch directory. */
-    char path[256];
-    snprintf(path, 256, ".lit/refs/heads/%s", name);
+    char* path = calloc(1, PATH_MAX);
+    sprintf(path, ".lit/refs/heads/%s", name);
     remove(path);
+    free(path);
 
     /* pop and move the branches down (if there are any). */
     dyna_pop(repository->branches, i);

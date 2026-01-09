@@ -1,6 +1,6 @@
 /**
  * @author Sean Hobeck
- * @date 2026-01-08
+ * @date 2026-01-09
  */
 #include "hash.h"
 
@@ -147,7 +147,7 @@ strsha1(const sha1_t hash) {
     assert(hash != 0x0);
 
     /* convert the sha1 hash to a string representation. */
-    char* str = malloc(41); /* 40 hex chars + null terminator. */
+    char* str = malloc(SHA1_MAX_CHARS + 1); /* 40 decimal chars + null terminator. */
     for (unsigned long i = 0u; i < 20; i++)
         sprintf(str + i * 2, "%02x", hash[i]);
     str[40] = '\0'; /* null-terminate the string. */
@@ -188,7 +188,7 @@ char*
 strcrc32(const ucrc32_t hash) {
     /* assert on the hash. */
     assert(hash != 0x0);
-    char* string = calloc(1, 11); /* 10 hex chars + null terminator. */
+    char* string = calloc(1, UCRC32_MAX_CHARS + 1); /* 32 decimal chars + null terminator. */
     sprintf(string, "%d", hash);
     return string;
 }
